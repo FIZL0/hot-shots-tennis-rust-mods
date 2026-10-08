@@ -1,7 +1,8 @@
-# HST-MODS
+# Hot Shots Tennis Rust Mods
 
 Tools that pull the playable characters out of other Hot Shots games and turn them into character mods for the
-Hot Shots Tennis (PS2) remaster, [HST-Remastered](../HST-Remastered). They extract models, textures, animations,
+Hot Shots Tennis (PS2) remaster, [Hot Shots Tennis Rust](https://github.com/FIZL0/hot-shots-tennis-rust)
+(HST below). They extract models, textures, animations,
 faces and voices, then rerig each character onto HST's player skeleton.
 
 The remaster has no mod loader yet. `standard/` defines what one should load.
@@ -24,7 +25,7 @@ standard/   the character mod standard, the HST skeleton as JSON, and a step-by-
 notes/      format notes for each game: where things live, file layouts, rosters, known gaps
 tools/
   unxb/       Rust: unpacks the `xe\0\x01` archives every game uses (little-endian on PS2/PSP, big-endian on PS3)
-  fore2gltf/  Rust: Fore! (and HST's own) MDL/MTL/TM2/ANI/MOR to glTF, using HST-Remastered's hst-data crate
+  fore2gltf/  Rust: Fore! (and HST's own) MDL/MTL/TM2/ANI/MOR to glTF, using Hot Shots Tennis Rust's hst-data crate
   psp2gltf/   Python: GIM/I3R/I3M/TAT (Get a Grip, Open Tee 1/2) to glTF; render.py is a small software renderer
   oob2gltf/   Python: REM/MOT/MOR/DDS (Out of Bounds) to glTF
   audio.py    every sound bank to WAV (vgmstream; Fore!'s PS2 banks are decoded directly)
@@ -34,7 +35,8 @@ tools/
 
 ## Requirements
 
-- Rust (cargo), and a checkout of `HST-Remastered` next to this one, since `fore2gltf` depends on its `hst-data` crate.
+- Rust (cargo), and a checkout of [Hot Shots Tennis Rust](https://github.com/FIZL0/hot-shots-tennis-rust) next to this
+  one as `../HST-Remastered`, since `fore2gltf` depends on its `hst-data` crate.
 - Python 3 with numpy, scipy and Pillow.
 - `vgmstream-cli`, `ffmpeg` and `7z`.
 - Optional: `npx` with the `gltf-validator` npm package, for checking output files.
@@ -104,6 +106,6 @@ All the detail is in `standard/HST-CHARACTER-STANDARD.md`. For how to rerig a ch
   - sorting the voice lines for every game but Get a Grip;
   - labelling Open Tee's face textures;
   - confirming handedness;
-  - the mod loader itself, in HST-Remastered.
+  - the mod loader itself, in Hot Shots Tennis Rust.
 
 Known gaps for each game are in `notes/<game>.md`.
