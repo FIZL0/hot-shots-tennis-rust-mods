@@ -1,0 +1,10 @@
+[package]
+name = "fore2gltf"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hst-data = { path = "/home/ryha/repos/HST-Remastered/crates/hst-data" }
+hst-sim = { path = "/home/ryha/repos/HST-Remastered/crates/hst-sim" }
+png = "0.18.1"
+serde_json = "1"
