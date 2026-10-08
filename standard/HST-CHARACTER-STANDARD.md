@@ -25,6 +25,7 @@ mods/<id>/
 - One skin. Skinned vertices are in game space; inverse bind matrices are game space too. **Rest pose = bind
   pose** (node locals compose to the inverse of the IBMs).
 - ≤ 4 influences per vertex (JOINTS_0/WEIGHTS_0), weights sum to 1.
+- A mesh node without a skin rides the nearest joint at or above it, whole (PSP heads and faces).
 - Materials: base-colour PNG embedded; `KHR_materials_unlit` allowed (the GS path lights per vertex anyway).
   Texture alpha is *not* coverage on HST bodies (it holds shading masks); mark real cut-outs `alphaMode: MASK`
   (alpha test, HST's ≥ 0x40) and see-through parts `BLEND` (HST's two-pass ≥ / < 0x70 with blending).
@@ -80,12 +81,13 @@ doki←surprise/amaze/awa/shy/open/o; left and right halves (`close_eyeL` + `clo
 
 ### 4b. Texture faces (PSP sources: Get a Grip, Open Tee)
 
-These games swap one whole-face texture (eyes + mouth together) instead of morphing; Get a Grip's face mesh has
-two materials, `face` and `faceL` (mirrored halves; they differ only for winks). `face.json` (one entry from
-`out/models/getagrip/faces.json`): `{"materials": ["face","faceL"], "neutral": "<png>", "channels":
-{"joy_eye": "<png>", "joy_mouth": "<same png>", …}}` — the loader shows the texture of the strongest channel
-above 0.5, else neutral. The game's own per-motion swaps are in `out/anims/getagrip/face_tracks.json` if a mod
-wants them exactly. (Needs loader support; not in HST yet.)
+These games swap one whole-face texture (eyes + mouth together) instead of morphing. `face.json`:
+`{"materials": ["<glTF material>", …], "neutral": "<png>", "channels": {"joy_eye": "<png>", "joy_mouth": "<same png>",
+…}}`. `materials` names the costume's face materials (Get a Grip: `<stem>_face0`; its mirrored halves `face`/`faceL`
+are one material in the glTF). Each channel with a png is a weight driven by the donor's `.MOR` track of that name;
+the loader shows the texture of the strongest channel above 0.5 (on a tie the first by channel name), else neutral. A `null`
+channel stays neutral; other keys are ignored. The game's own per-motion swaps are in `out/anims/getagrip/face_tracks.json` if a mod
+wants them exactly.
 
 ## 5. Voice
 

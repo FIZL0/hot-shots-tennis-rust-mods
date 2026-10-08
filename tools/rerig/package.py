@@ -94,7 +94,7 @@ def main():
                     def local(p):
                         link(os.path.join(ROOT, p), os.path.join(mod, "face", os.path.basename(p)))
                         return "face/" + os.path.basename(p)
-                    f = dict(f, neutral=local(f["neutral"]), channels={k: v and local(v) for k, v in f["channels"].items()})
+                    f = dict(f, materials=[f["face_material"]], neutral=local(f["neutral"]), channels={k: v and local(v) for k, v in f["channels"].items()})
                     json.dump(f, open(os.path.join(mod, "face.json"), "w"), indent=1)
                     manifest["face"] = "texture"
                 manifest["voice"] = "voice/"
