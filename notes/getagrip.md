@@ -32,8 +32,21 @@ left out. (Head/Acce `Site` is not the hat flag: Head `Site` is 0 everywhere.)
 Costume accessories: `Acce_3NN`/`Acce_4NN` (PC_ONLY_1 = NN) → `etc/etc3NN`/`etc4NN`: Brad 304/404 wristband
 (RForearm), Rosetta 305/405 top hat, Paola 307/407 flower, Fan 308/408 glasses, Suzuki 312/412 sunglasses,
 Helghast 314/414 belt (Spine1). Other PCs have none. `Acce_6xx`/`Head_6xx`/`Body_6xx` are shop items (Price
-set), not costume sets. Every PC's default racket is `Racket_000` (racket000), not packaged (the mod uses the
-donor's racket; see Gaps).
+set), not costume sets. Every PC's default racket is `Racket_000` (racket000.xb → `parts/racket/racket00.glb`;
+Racket_param: owned from the start, price 0, No 0, all stats 0), packaged as each mod's `racket.glb` by
+`tools/rerig/racket.py`: the source grip on the hand kept (scaled with the body), resized about the hand to HST's
+0.944 m racket, baked into the `Racket` joint's space. Checked on Emi: in the hand frame its handle axis is within
+3.7° and its string normal within 3.2° of HST pc00's; grip −0.01–0.31 m vs HST 0–0.32 m. (`Racket_500`, also owned
+with zero stats, No 1, is not a default.)
+
+## Size (tools/rerig/sizing.py, standard §3)
+All 15 PCs share one skeleton (Bip01 0.5786 m, chibi head ratio ~0.93 vs HST's 0.538). Height: the roster's
+height class (cm) × HST's metres per cm for the PC's sex (Parts_Body `PC_SEX` of Body_3NN: Emi, Wendy, Rosetta,
+Paola, Rachel, Norma, Gloria women), × one game factor 0.9394 so Schneider (190) lands at 0.95 m: Emi 0.779, Ban
+0.800, Taiga 0.800, Wendy 0.828, Brad 0.900, Rosetta 0.731, Mitsuzane 0.850, Paola 0.682, Fan 0.850, Rachel 0.828,
+Schneider 0.950, Norma 0.828, Suzuki 0.800, Gloria 0.828, Helghast 0.900. Heads shrink about the neck by a
+per-character factor (half way to HST's median head ratio; Helghast kept at 1 by the user's eye), 0.72–0.80;
+`out/rerig/getagrip/sizing.json` has each. Donor: nearest Bip01 among HST's same-sex standard bodies.
 
 ## Exported (out/ is git-ignored)
 - `out/models/getagrip/pcNN_<name>/pcNN_<name>_set{3,4}.glb` — 30 assembled characters (face + head + body +
@@ -88,8 +101,6 @@ Not 1:1. Same 3ds Max Biped naming, so a **name-based** map covers every GaG bon
 ⇒ Retarget in model space (per-bone world rotation delta from bind, by name), not by copying locals.
 
 ## Gaps
-- No `racket.glb` in the mods: GaG's racket000 (`Bip01RHand9racket00`) would need placing in HST's `Racket`
-  joint frame (grip axis/orientation differ); the remaster draws the donor's racket meanwhile.
 - Position/scale tangent basis inferred (see formats); rotation exact. A/B layer pairing per shot is game code
   (EBOOT encrypted), so layers are exported as separate animations — combine A_* (upper) + B_* (lower) yourself.
 - `body_type` per character unknown: 41 = 8 height classes × 5 builds (+040); height class from the roster

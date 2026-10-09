@@ -157,12 +157,14 @@ def load_standard():
     return J, s
 
 
-def fit(J, src):
-    """The HST core skeleton fitted to source binds `src` (name -> game-space matrix): name -> new bind matrix."""
+def fit(J, src, s=None):
+    """The HST core skeleton fitted to source binds `src` (name -> game-space matrix): name -> new bind matrix.
+    `s`: source size / HST's, for synthesized joints (default: from the pelvis-head distance)."""
     Ph = {n: m[:3, 3] for n, (_, m) in J.items()}
     par = {n: p for n, (p, _) in J.items()}
-    s = 1.0
-    if "Bip01Head" in src and "Bip01Pelvis" in src:
+    if s is None:
+        s = 1.0
+    if s == 1.0 and "Bip01Head" in src and "Bip01Pelvis" in src:
         s = np.linalg.norm(src["Bip01Head"][:3, 3] - src["Bip01Pelvis"][:3, 3]) / np.linalg.norm(Ph["Bip01Head"] - Ph["Bip01Pelvis"])
     P, D = {}, {}
 
@@ -247,7 +249,18 @@ def face_names(names):
     return short, alias
 
 
-def rerig(src_path, out_path, donor=None, motions=None):
+def fit_scale(J, src):
+    """Source size / HST's, from the pelvis-head distance (what fit() places synthesized joints by)."""
+    Ph = {n: m[:3, 3] for n, (_, m) in J.items()}
+    if "Bip01Head" in src and "Bip01Pelvis" in src:
+        return np.linalg.norm(src["Bip01Head"][:3, 3] - src["Bip01Pelvis"][:3, 3]) / np.linalg.norm(Ph["Bip01Head"] - Ph["Bip01Pelvis"])
+    return 1.0
+
+
+def rerig(src_path, out_path, donor=None, motions=None, height=None, head=1.0):
+    """height: scale the whole character uniformly so its Bip01 rest height is `height` m (standard §2 sizing);
+    head: first scale the head (Bip01Head and everything under it, skinned vertices by their head weight) by this
+    factor about the Bip01Neck joint, to bring chibi head-to-body ratios to HST's."""
     J, std = load_standard()
     g, b = glb.read(src_path)
     nodes = g["nodes"]
@@ -257,7 +270,34 @@ def rerig(src_path, out_path, donor=None, motions=None):
     for j in SB:
         by_name.setdefault(norm(nodes[j]["name"]), j)
     core_src = {n: by_name[n] for n in J if n in by_name}
-    new = fit(J, {n: SB[j] for n, j in core_src.items()})
+    fs = fit_scale(J, {n: SB[j] for n, j in core_src.items()})
+
+    # head shrink: H scales game-space points about the neck; `in_head` = the source head joint and its subtree
+    def in_head(i):
+        while True:
+            if norm(nodes[i].get("name", "")) == "Bip01Head":
+                return True
+            if i not in parent:
+                return False
+            i = parent[i]
+    H = np.eye(4)
+    if head != 1.0:
+        pn = SB[core_src["Bip01Neck"]][:3, 3]
+        H[:3, :3] *= head
+        H[:3, 3] = pn - head * pn
+        for j in SB:
+            if in_head(j):
+                SB[j] = SB[j].copy()
+                SB[j][:3, 3] = H[:3, :3] @ SB[j][:3, 3] + H[:3, 3]
+    new = fit(J, {n: SB[j] for n, j in core_src.items()}, fs)
+    # overall size: every position times s (rotations kept)
+    s = 1.0 if height is None else height / -new["Bip01"][1, 3]
+    S = np.diag([s, s, s, 1.0])
+    for n in new:
+        new[n][:3, 3] *= s
+    for j in SB:
+        SB[j] = SB[j].copy()
+        SB[j][:3, 3] *= s
 
     # source nodes above the core (scene roots, locators) are dropped; the rest are kept as extras
     mapped_nodes = set(core_src.values())
@@ -304,7 +344,7 @@ def rerig(src_path, out_path, donor=None, motions=None):
         while p is not None and keep(p) is None:
             p = parent.get(p)
         pn = keep(p) if p is not None else None
-        Mi = SB[i] if i in SB else G @ W[i]
+        Mi = SB[i] if i in SB else S @ ((H if in_head(i) else np.eye(4)) @ (G @ W[i]))
         Mp = np.eye(4) if pn is None else M[pn]
         loc = np.linalg.inv(Mp) @ Mi
         name = norm(nodes[i].get("name", f"node{i}"))
@@ -371,17 +411,28 @@ def rerig(src_path, out_path, donor=None, motions=None):
         T = (G @ Kx)[:3, 3] if skinned else np.zeros(3)
         sj = g["skins"][n["skin"]]["joints"] if skinned else []
         jmap = np.array([jpos.get(src_new.get(j), fallback) for j in sj] or [0], dtype=np.uint16)
+        hj = np.array([in_head(j) for j in sj] or [False])
         names = m.get("extras", {}).get("targetNames", [])
         short, alias = face_names(names) if names else ([], [])
         prims = []
         cache = {}
         for pr in m["primitives"]:
             at = {}
+            # per vertex: game-space point -> shrunk head (by its weight on head joints) -> overall size
+            wh = 0.0
+            if skinned and head != 1.0 and "JOINTS_0" in pr["attributes"]:
+                wh = (read(g, b, pr["attributes"]["WEIGHTS_0"]) * hj[read(g, b, pr["attributes"]["JOINTS_0"]).astype(np.int64)]).sum(1)[:, None]
+
+            def place(y, wh=wh):
+                return s * (y + wh * (y @ H[:3, :3].T + H[:3, 3] - y))
+
+            def stretch(d, wh=wh):  # a morph offset
+                return s * d * (1 + wh * (head - 1))
             for k, v in pr["attributes"].items():
                 if not skinned:
                     at[k] = acc(v)
                 elif k == "POSITION":
-                    at[k] = acc(v, lambda x: x @ A.T + T)
+                    at[k] = acc(v, lambda x: place(x @ A.T + T))
                 elif k in ("NORMAL", "TANGENT"):
                     def f(x, k=k):
                         y = x[:, :3] @ A.T
@@ -402,7 +453,7 @@ def rerig(src_path, out_path, donor=None, motions=None):
                     for k, v in t.items():
                         if (k, v) not in cache:
                             if k in ("POSITION", "NORMAL", "TANGENT") and skinned:
-                                cache[k, v] = acc(v, lambda x: x[:, :3] @ A.T)
+                                cache[k, v] = acc(v, lambda x: stretch(x[:, :3] @ A.T) if k == "POSITION" else x[:, :3] @ A.T)
                             else:
                                 cache[k, v] = acc(v)
                         d[k] = cache[k, v]
@@ -420,7 +471,9 @@ def rerig(src_path, out_path, donor=None, motions=None):
             prims.append(p2)
         m2 = {"name": m.get("name", ""), "primitives": prims}
         if m.get("extras"):  # e.g. `noise` deformers (standard §3a)
-            m2["extras"] = dict(m["extras"])
+            m2["extras"] = json.loads(json.dumps(m["extras"]))
+            for d in m2["extras"].get("noise", []):  # amplitudes are lengths
+                d["amp"] = [a * s for a in d.get("amp", [])]
         if names:
             m2["extras"] = dict(m2.get("extras", {}), targetNames=short + [a for a, _ in alias])
             m2["weights"] = [0.0] * len(m2["extras"]["targetNames"])
@@ -440,7 +493,7 @@ def rerig(src_path, out_path, donor=None, motions=None):
 
     if donor:
         preview(out, donor, idx, M, face_meshes, motions)
-    out.g["extras"] = {"hst_standard": 1, "source": os.path.basename(src_path),
+    out.g["extras"] = {"hst_standard": 1, "source": os.path.basename(src_path), "scale": s, "head_scale": head,
                        "mapped": sorted(core_src), "synthesized": sorted(set(J) - set(core_src))}
     out.write(out_path)
     return out

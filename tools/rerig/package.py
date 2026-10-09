@@ -20,6 +20,8 @@ sys.path.insert(0, os.path.join(ROOT, "tools/psp2gltf"))
 sys.path.insert(0, HERE)
 import glb  # noqa: E402
 from rerig import binds  # noqa: E402
+import racket  # noqa: E402
+import sizing  # noqa: E402
 
 GAME_NAME = {"fore": "Hot Shots Golf Fore! (PS2)", "oob": "Hot Shots Golf: Out of Bounds (PS3)",
              "getagrip": "Hot Shots Tennis: Get a Grip (PSP)", "opentee": "Hot Shots Golf: Open Tee (PSP)",
@@ -65,6 +67,7 @@ def main():
             m = re.match(r"Pc_(\d+)_00", r[0])
             if m:
                 gag_stats[int(m.group(1))] = dict(zip(head[1:], r[1:]))
+    gag_sex = {"getagrip": sizing.getagrip()} if os.path.isdir(os.path.join(ROOT, "out/files/getagrip")) else {}
     made = 0
     for game in GAME_NAME:
         for cdir in sorted(glob.glob(os.path.join(ROOT, f"out/rerig/{game}/*/"))):
@@ -80,11 +83,15 @@ def main():
                 link(c, os.path.join(mod, "model", os.path.basename(c)))
             g, b = glb.read(costumes[0])
             h = -binds(g, b)[0]["Bip01"][1, 3]
-            donor = min(hst, key=lambda c: abs(c["bip01_height"] - h))
+            pool, why = hst, "nearest Bip01 height"
+            if game in gag_sex:  # sex known: nearest of HST's same-sex standard bodies
+                pool = [c for c in hst if c["sex"] == gag_sex[game][n][0] and c["model_type"] in sizing.STANDARD_BODY]
+                why = f"nearest Bip01 height among HST's standard-body {'women' if gag_sex[game][n][0] == 'f' else 'men'}"
+            donor = min(pool, key=lambda c: abs(c["bip01_height"] - h))
             manifest = {"standard": 1, "id": f"{game}_pc{n:02d}_{name}", "name": name.replace("_", " ").title(),
                         "source": f"{GAME_NAME[game]} pc{n:02d}",
                         "costumes": [f"model/{os.path.basename(c)}" for c in costumes],
-                        "donor": donor["index"], "donor_why": f"nearest Bip01 height ({h:.3f} m vs {donor['name']} {donor['bip01_height']} m)",
+                        "donor": donor["index"], "donor_why": f"{why} ({h:.3f} m vs {donor['name']} {donor['bip01_height']} m)",
                         "hand": "right", "params": {"base": donor["index"], "override": {}},
                         "ai_row": donor["index"], "face": "morph", "voice": None, "todo": []}
             if game in ("getagrip",):
@@ -97,6 +104,16 @@ def main():
                     f = dict(f, materials=[f["face_material"]], neutral=local(f["neutral"]), channels={k: v and local(v) for k, v in f["channels"].items()})
                     json.dump(f, open(os.path.join(mod, "face.json"), "w"), indent=1)
                     manifest["face"] = "texture"
+                # the default racket (Racket_param Racket_000: owned from the start, price 0, all stats 0) as racket.glb
+                part = os.path.join(ROOT, "out/models/getagrip/parts/racket/racket00.glb")
+                if os.path.exists(part):
+                    racket.make(part, costumes[0], os.path.join(mod, "racket.glb"))
+                    manifest["racket_why"] = "Get a Grip default racket Racket_000 (racket000.xb), source grip on the hand, resized to HST's 0.944 m"
+                sz = os.path.join(ROOT, "out/rerig/getagrip/sizing.json")
+                if os.path.exists(sz):
+                    sz = json.load(open(sz))
+                    ch = sz["characters"][f"pc{n:02d}"]
+                    manifest["size_why"] = f"{ch['why']}; head × {ch['head_factor']:.4f} about the neck ({ch['head_why']})"
                 manifest["voice"] = "voice/"
                 manifest["voice_counts"] = gag_voices(n, mod)
                 manifest["source_stats"] = gag_stats.get(n, {})

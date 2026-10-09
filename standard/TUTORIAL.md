@@ -85,7 +85,8 @@ Known failure signs and fixes (the first three bit us already and are handled):
 ## 4. Package
 
 `package.py` makes `out/mods/<id>/`: costumes, `mod.json`, voices. What it can't decide is in each `todo`:
-- `donor` is the HST character with the nearest `Bip01` height — a placeholder. Pick by play style and body
+- `donor` is the HST character with the nearest `Bip01` height (for sized games like Get a Grip, among HST's
+  same-sex standard bodies) — a placeholder. Pick by play style and body
   (`research/characters.md`) and set `params.base`/`ai_row` to match.
 - `params.override`: map the source stats (`source_stats` for Get a Grip; Fore/OOB/Open Tee stats aren't
   extracted yet) onto TParam columns, one mapping per game (PLAN M8).
