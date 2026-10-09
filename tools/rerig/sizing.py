@@ -6,8 +6,7 @@ game's data, then one factor for the whole game (≤ 1) so its tallest lands at 
 per game keeps the source's relative heights; per-sex metres-per-cm keeps HST's women/men proportions.
 Head: chibi games (Get a Grip) shrink each character's head about the neck by its own factor: HEAD_SHARE of the way
 from 1 to the factor that would bring that character's head ratio (neck joint to the top of the head mesh, over Bip01
-height; the smallest over its costumes, so a hat doesn't count) to the median of HST's standard bodies; never grown;
-HEAD_KEEP characters stay at 1.
+height; the smallest over its costumes, so a hat doesn't count) to the median of HST's standard bodies; never grown.
 """
 import csv
 import glob
@@ -29,8 +28,6 @@ TOP = 0.95  # standard §2: HST's Bip01 range 0.58–0.95 m
 # each head factor goes this far from 1 toward the full match of HST's median head ratio: the full match looked a
 # little small-headed on Get a Grip's bodies (user, 2026-10-08), so half of it
 HEAD_SHARE = 0.5
-# characters whose head is left unshrunk, by the user's eye on the sized model (2026-10-08)
-HEAD_KEEP = {"getagrip": {14: "user: Helghast's head looked right unshrunk"}}
 
 
 def head_ratio(path):
@@ -105,7 +102,5 @@ def plan(game, models):
         r = min(head_ratio(p) for p in models[n])
         f = min(1.0, 1 - HEAD_SHARE * (1 - want / r))
         why = f"head ratio {r:.3f}, {HEAD_SHARE:g} of the way to HST's {want:.3f}"
-        if n in HEAD_KEEP.get(game, {}):
-            f, why = 1.0, f"head ratio {r:.3f}, kept: {HEAD_KEEP[game][n]}"
         heads[n] = (f, why)
     return sizes, heads, {"hst_m_per_cm": k, "game_factor": c, "head_ratio_hst": want, "head_share": HEAD_SHARE}

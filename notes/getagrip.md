@@ -45,7 +45,7 @@ height class (cm) × HST's metres per cm for the PC's sex (Parts_Body `PC_SEX` o
 Paola, Rachel, Norma, Gloria women), × one game factor 0.9394 so Schneider (190) lands at 0.95 m: Emi 0.779, Ban
 0.800, Taiga 0.800, Wendy 0.828, Brad 0.900, Rosetta 0.731, Mitsuzane 0.850, Paola 0.682, Fan 0.850, Rachel 0.828,
 Schneider 0.950, Norma 0.828, Suzuki 0.800, Gloria 0.828, Helghast 0.900. Heads shrink about the neck by a
-per-character factor (half way to HST's median head ratio; Helghast kept at 1 by the user's eye), 0.72–0.80;
+per-character factor (half way from its own head ratio to HST's median), 0.72–0.80;
 `out/rerig/getagrip/sizing.json` has each. Donor: nearest Bip01 among HST's same-sex standard bodies.
 
 ## Exported (out/ is git-ignored)
