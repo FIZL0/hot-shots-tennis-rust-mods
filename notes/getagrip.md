@@ -48,6 +48,39 @@ Schneider 0.950, Norma 0.828, Suzuki 0.800, Gloria 0.828, Helghast 0.900. Heads 
 per-character factor (half way from its own head ratio to HST's median), 0.72–0.80;
 `out/rerig/getagrip/sizing.json` has each. Donor: nearest Bip01 among HST's same-sex standard bodies.
 
+## Stats → HST TParam (`tools/rerig/gag_stats.py`, run by `package.py`)
+`character.csv` (`Pc_NN_00` rows, in each mod's `source_stats`) is mapped onto `params.override` **by rank**: a
+character's position among Get a Grip's 15 on the source stat (ties share their average rank) picks the cell at the
+same position in HST's 14 sorted values of that TParam column. Relative strengths stay Get a Grip's, every value is
+one HST's own cast has (integers stay integers, `a/b/c` cells are whole HST cells). Each mod's `params_why` lists
+source value, rank and result per column. All mapped directions: higher source → higher HST value.
+
+| TParam column | Get a Grip source | note |
+|---|---|---|
+| Serv POW | mean(FlatservePower, SpinservePower, SliceservePower) | |
+| Strk POW, LOW POW | Power | HST keeps LOW POW = Strk POW |
+| Voley POW, V LOW POW | VolleyPower | |
+| Lob POW, Lob POW2 | LobPower | only Taiga differs (82.5) → top, rest mid |
+| Top SPIN | TopSpin | |
+| Slice SPIN, Drop SPIN | Spin (overall) | Get a Grip's SliceSpin/DropSpin are the same for all 15 |
+| Strk CON | Technique (overall) | CON = widest aim angle, higher = more control |
+| Voley CON | VolleyTechnique | |
+| Serv CON | mean(Flat/Spin/Sliceserve Technique) | |
+| ショット ウサギIMP, ショット カメIMP | Impact | inferred: Impact 8 (Emi, Ban) … 2 (Gloria) = timing-window size, as HST's 9/0/10 (Ashley) … 1/1/8 (Will); Usa/Kame in both games = early/late |
+| SPE | Speed | |
+| STA | Stamina | HST is 40 for all but Suzuki (35) → only GaG Suzuki (1.0) gets 35 |
+| Agili | Acceleration | |
+| リーチ(cm) | Leach (90/95/100) | Paola → 60, 95s → 90, Brad/Schneider/Helghast → 100 |
+| 飛びつき（遠）開始, 飛びつき限界 | Leach | HST's dive start/limit are 2×/4× reach in every row; ranking keeps that |
+| タイプ | Playstyle | 1 → オール, 2 → ベース, 3 → ネット (3 = best volley technique and forward speed; 2 = worst volleys, rising/air/lob specialists) |
+
+Left at the donor row (`params.base` = donor): heights (最適高度, smash/serve/underhand heights), リーチ基点, collision,
+toss timing (強/弱トス IMP), Body/Vbdy/Back/Rizing ADJ, stamina costs, DWN columns — they belong to the donor's body and
+motions (contact heights must match the motions the mod plays), or Get a Grip has no varying source (`Height`,
+`HeightLimitServe`/`Toss` are its own body heights). `SwingBack` 1/2 (one-/two-handed backhand?) has no TParam column.
+`ai_row`: an HST character of the same タイプ, same sex if one exists, nearest Bip01 height (`ai_row_why`); the body
+donor keeps the same-sex nearest-height rule. Female ベース has only Carol; ネット men only Kaito.
+
 ## Exported (out/ is git-ignored)
 - `out/models/getagrip/pcNN_<name>/pcNN_<name>_set{3,4}.glb` — 30 assembled characters (face + head + body +
   costume accessory); `characters.json` lists the parts/tone/hat/acce per file.

@@ -4,8 +4,10 @@ python3 tools/rerig/package.py      (after batch.py)  ->  out/mods/<game>_<slug>
 
 Files are hard links into out/ (game data: never commit). Filled in: costumes, donor (the HST character with the
 nearest Bip01 height), face mode (+ face.json for Get a Grip), voices (Get a Grip mapped onto HST programs; other
-games copied raw to voice/unsorted/ until their cues are identified), the source game's raw stats where known.
-Left for a human or agent: params.override (per-game stat mapping, PLAN M8), handedness, voice cues outside Get a Grip.
+games copied raw to voice/unsorted/ until their cues are identified), the source game's raw stats where known, and
+for Get a Grip params.override from its stats (gag_stats.py, ranked onto TParam; needs HST's TParam.csv: HST_TPARAM or
+../HST-Remastered/context/xb) with ai_row by play style.
+Left for a human or agent: other games' stat mappings (PLAN M8), handedness, voice cues outside Get a Grip.
 """
 import glob
 import json
@@ -22,6 +24,7 @@ import glb  # noqa: E402
 from rerig import binds  # noqa: E402
 import racket  # noqa: E402
 import sizing  # noqa: E402
+import gag_stats as gagmap  # noqa: E402
 
 GAME_NAME = {"fore": "Hot Shots Golf Fore! (PS2)", "oob": "Hot Shots Golf: Out of Bounds (PS3)",
              "getagrip": "Hot Shots Tennis: Get a Grip (PSP)", "opentee": "Hot Shots Golf: Open Tee (PSP)",
@@ -68,6 +71,10 @@ def main():
             if m:
                 gag_stats[int(m.group(1))] = dict(zip(head[1:], r[1:]))
     gag_sex = {"getagrip": sizing.getagrip()} if os.path.isdir(os.path.join(ROOT, "out/files/getagrip")) else {}
+    # Get a Grip's stats onto HST's TParam columns by rank (gag_stats.py; needs HST's TParam.csv)
+    tp = gagmap.find_tparam(ROOT)
+    gag_params = gagmap.overrides(gag_stats, tp) if tp and gag_stats else {}
+    hst_type = gagmap.hst_types(tp) if tp else {}
     made = 0
     for game in GAME_NAME:
         for cdir in sorted(glob.glob(os.path.join(ROOT, f"out/rerig/{game}/*/"))):
@@ -117,7 +124,18 @@ def main():
                 manifest["voice"] = "voice/"
                 manifest["voice_counts"] = gag_voices(n, mod)
                 manifest["source_stats"] = gag_stats.get(n, {})
-                manifest["todo"] += ["map source_stats onto TParam (params.override)", "check voice programs 1/2 by ear (st_ji/st_nb)"]
+                if n in gag_params:
+                    o, w = gag_params[n]
+                    manifest["params"]["override"] = o
+                    manifest["params_why"] = dict(w, _rule="rank among Get a Grip's 15 -> same rank in HST's 14 rows of that column (tools/rerig/gag_stats.py); other columns: the donor's row")
+                    # the computer plays it with an HST AI row of the same play style (body and motions stay the donor's)
+                    if "タイプ" in o:
+                        chars = [dict(c, type=hst_type[c["index"]]) for c in hst]
+                        a = gagmap.ai_row(o["タイプ"], gag_sex[game][n][0], h, chars)
+                        if a:
+                            manifest["ai_row"] = a["index"]
+                            manifest["ai_row_why"] = f"play style {o['タイプ']} (Playstyle {gag_stats[n]['Playstyle']}): {'same sex, ' if a['sex'] == gag_sex[game][n][0] else ''}nearest Bip01 height among HST's {o['タイプ']} players ({a['name']} {a['bip01_height']} m)"
+                manifest["todo"] += ["check voice programs 1/2 by ear (st_ji/st_nb)"]
             else:
                 vd = os.path.join(ROOT, f"out/voices/{game}/pc{n:02d}")
                 if os.path.isdir(vd):
