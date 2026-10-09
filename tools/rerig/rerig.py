@@ -282,7 +282,7 @@ def rerig(src_path, out_path, donor=None, motions=None, height=None, head=1.0):
             i = parent[i]
     H = np.eye(4)
     if head != 1.0:
-        pn = SB[core_src["Bip01Neck"]][:3, 3]
+        pn = SB[core_src.get("Bip01Neck", core_src["Bip01Head"])][:3, 3]  # Fore's Ratchet has no neck: about the head joint
         H[:3, :3] *= head
         H[:3, 3] = pn - head * pn
         for j in SB:
