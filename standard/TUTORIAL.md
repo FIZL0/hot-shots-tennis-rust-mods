@@ -92,8 +92,9 @@ Known failure signs and fixes (the first three bit us already and are handled):
   extracted yet) onto TParam columns, one mapping per game (PLAN M8).
 - Voices: Get a Grip is mapped (smash→0, st_ji→1, st_nb→2 (guess), receive→3, swing→4, start/call/go/chance→6,
   point_get→7, point_lost→8, set_get→9, set_lost→10). Other games are in `voice/unsorted/`: listen, then copy
-  into `<program>_<key>.wav`. Upscaled textures: run `tools/chainner/upscale.chn` (in HST-Remastered) on the
-PNGs and put them in `textures/upscaled/`.
+  into `<program>_<key>.wav`. Upscaled textures, for every mod at once
+(in HST-Remastered): `python3 modding/tools/upscale_mods.py MODEL.pth [mods/]` (headless chaiNNer, skips what's
+already upscaled; rerun after adding or rebuilding mods).
 
 ## 5. Report
 
