@@ -246,3 +246,75 @@ inserted ForearmRoll change the local frames; drop or merge the Nub/Roll bones, 
 - Tick rate 4800/s is the 3ds Max default and gives plausible durations, but is not confirmed from the executable.
 - `ad_*`/`st_*` pelvis translation includes the in-game placement offset relative to the ball (e.g. x −0.58,
   z −0.65); strip root motion when using them as idles.
+
+## Mod data: stats, voices, reactions
+
+`tools/rerig/oob_data.py` (stats(), MAP, style(pc), heights(), voices(pc), reactions(pc); run it for a summary of all 17).
+
+**Stats.** The source is `ueno/common/main.xb0/data/ueno/ability/player.dat` ("ABI_PLAY", big-endian). It holds 17 records of 5 f32 + 7 i32, with the offsets at 0x30.
+- The floats are the character-select bars in order: power, control, impact, spin, side. The names come from charaselect `chrsel_prmset.dbo`. The E–S rank letters are computed in code, which is encrypted.
+- Control is a spread multiplier, so lower is better:
+  - club.dat and ball.dat ("ABI_CLUB", "ABI_BALL", same field order) pay for +power with +control.
+  - The help text calls 1.2 and 1.3 "poor" and "terrible" control.
+  - stats() therefore gives `control = 2 - control_spread`.
+- Ints 0–4 are curve (+1 draw, −1 fade), rough, bunker, rain and approach (−1 weak, +1 good). Int 5 is always 4. Int 6 is sex (0 = f).
+  - These meanings were read off `ookubo/menu/menu_common.xb0/data/text/menu_help.to` strings 500–516. Those strings are in select order: pc 0 1 2 3 13 4 7 6 8 5 9 10 11 12 14 15 16.
+  - The `__main__` check asserts that every weakness the text names matches the flag.
+- Heights come from profile2 `pcNN.dat` line 5 (ft'in"). They run from Bjorn 137 cm to L.J. 216 cm.
+- The play class comes from the help text: All-rounder → オール, Big Hitter → ビッグ. Control, Spin and Special describe shot quality and get no タイプ.
+
+| TParam | source | why |
+|---|---|---|
+| Serv/Strk/Voley POW | power | drive power multiplier |
+| Strk/Voley/Serv CON | control (inverted) | shot spread |
+| ショット ウサギ/カメ IMP | impact | impact-zone size (novices biggest) |
+| Top/Drop SPIN | spin | backspin multiplier |
+| Slice SPIN | spin + side | side = how much the character curves the ball |
+
+There is no golf data for speed, stamina, agility or reach.
+
+**Voice banks (SGXD).**
+- SEQD layout:
+  - The group count is at +0xc. Some banks give a larger count with zero table offsets, so skip those.
+  - Each group table is `[?, count, offsets…]`. Bit 31 of an offset is a flag.
+  - A note is `d0|d2, n, n BCD digits` = program·128 + key. The RGND region with that key gives the wave (`wave+1` = vgmstream's `NNN.wav`, checked against the WAVE sample counts).
+- The pitch shift is key + 12 − root − fine/128. Measured per chosen file:
+  - pc00 and pc07: 0.
+  - pc15 and pc16: +0.53 semitones.
+  - All other banks: +5.55 semitones (root key+6, fine 0x3a). These are probably 32 kHz recordings labelled 44.1 kHz, so the exported wavs play about 27% slow and low.
+  - pc00's multi-part cues also reuse one fragment at +6 and +8.
+  - This is the root-note pitch issue `tools/audio.py` is fixing; oob_data only reports it.
+- `ga_sg_pcNN` has the same 58 slots (group 0: 42; group 1: 16 second takes) for everyone. The cue names are each actor's script lines (pc01 04A–38E, Felipe 20A–61; pc00's are partly out of order), so **the slot is the event**.
+- The profile voice bank `me_pro_pcNN` uses one numbering for all 17 characters. Its groups match the profile "Play Animation" page:
+  - Victory Pose = sg (0,29) (0,30) (0,31) (0,33).
+  - Reaction = (0,10) (0,28) (0,40) (0,19).
+  - Taunts = `ga_ya` lines 140–150 (yaji).
+  - (0,29)–(0,34) and (1,9)–(1,14) are the six hole-result celebrations, two takes each. They are multi-part cues with delays timed to the `ga_*` clips. pc02 and pc10 name one of them Rare_Gattsu.
+- The rest is unlabelled: no event table exists outside the encrypted HSG5PS3.self. The other banks:
+  - `ga_ev` is a subset of sg.
+  - `ga_vs` holds lines 70–84 (versus).
+  - `ga_pz` holds lines 100–134 (results/prize).
+  - None of them is signed (won or lost).
+
+| HST program | OOB source | basis |
+|---|---|---|
+| 0 strong shot, 3 dive | sg (0,6) (1,3) (0,2) | shortest lines in every bank (~0.1 s): duration heuristic |
+| 1 good shot | profile "Reaction" set | unlabelled reactions, heuristic |
+| 4 whiff | sg (0,38) (0,13) | next shortest: duration heuristic |
+| 7 point won | profile "Victory Pose" set (4) | data |
+| 9 set won | second takes (1,9)–(1,13) + rare guts (0,32) | data (same family) |
+| 2, 6, 8, 10 | — | no mis-hit, partner call or losing line is identifiable |
+
+For each cue the longest note's wave is used, because celebrations play 2–17 fragments.
+
+**Reactions** (`out/anims/oob/<slug>.glb`, 60 Hz). The meanings come from the names and are checked against each clip's face-morph channel: smile/laugh vs anger/sorrow/sad.
+
+| HST | clip | frames |
+|---|---|---|
+| re_gu | `kuNN_ga` (guts pose) | 30–45 |
+| re_di | `kuNN_di` (disappointed) | 35–40 |
+| re_gu_set | `ga_pcNN_bi_r00` (birdie) | 85–90 |
+| re_di_set | `ga_pcNN_bo_r00` (bogey) | 90–95 |
+
+- The alternatives are `rslt_win` (120 frames) and `rslt_loss` (90). `re_*_p/wi` are shot reactions with mixed faces.
+- The pelvis carries root motion: 0.07–0.56 units of horizontal travel. package.py pins it.
