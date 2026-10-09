@@ -86,17 +86,49 @@ def getagrip():
     return out
 
 
+def source(game):
+    """slug -> (sex, height cm or None, source) from the game's own data (its data module), or None."""
+    if game == "getagrip":
+        return getagrip()
+    try:
+        if game == "fore":
+            import fore_data
+            return fore_data.heights()
+        if game == "oob":
+            import oob_data
+            return oob_data.heights()
+        if game in ("opentee", "opentee2"):
+            import opentee_data
+            return opentee_data.heights(game)
+    except (ImportError, OSError, IndexError) as e:
+        print(game, "no height data:", e)
+    return None
+
+
+def model_height(path):
+    g, b = glb.read(path)
+    return -binds(g, b)[0]["Bip01"][1, 3]
+
+
 def plan(game, models):
     """game, {pc number: [plain-rerigged model paths]} -> ({pc: (height m, why)}, {pc: (head factor, why)}, info)
-    or None."""
-    if game != "getagrip":
+    or None. A character whose game gives no height in cm keeps its own (plain rerig) Bip01 height; the game
+    factor (≤ 1, tallest at TOP) applies to the whole cast either way."""
+    src = source(game)
+    if not src:
         return None
     k, want = hst()
-    src = getagrip()
-    raw = {n: k[src[n][0]] * src[n][1] for n in models}
+    raw, how = {}, {}
+    for n in models:
+        sex, cm, why = src.get(n, (None, None, "not in the game's tables"))
+        if cm and sex in k:
+            raw[n] = k[sex] * cm
+            how[n] = f"{why}: {cm:g} cm {'woman' if sex == 'f' else 'man'} × HST {k[sex]:.6f} m/cm"
+        else:
+            raw[n] = min(model_height(p) for p in models[n])
+            how[n] = f"{why}; no height in cm in the data: the model's own Bip01 height {raw[n]:.4f} m"
     c = min(1.0, TOP / max(raw.values()))
-    sizes = {n: (raw[n] * c, f"{src[n][2]}: {src[n][1]} cm {'woman' if src[n][0] == 'f' else 'man'} × HST {k[src[n][0]]:.6f} m/cm × game factor {c:.4f}")
-             for n in models}
+    sizes = {n: (raw[n] * c, f"{how[n]} × game factor {c:.4f}") for n in models}
     heads = {}
     for n in models:
         r = min(head_ratio(p) for p in models[n])

@@ -9,6 +9,8 @@ local. The root (`Bip01`) follows the source pelvis's offset from its bind spot,
 source's own locators (`ROOTNODE`, `pc_locator`) are left out, since the game moves the player itself. `@FRAMES` is the
 HST clip's length at 60 Hz: the source plays at its own speed (60 Hz), the loop repeating to fill it, and only a
 source longer than that is squeezed. HST then spreads the keys over the donor clip's length (mods.rs `own_motions`).
+A trailing `!` (`re_gu=ga_pc00_bi_r00!@40`) pins the root's horizontal position at rest: golf celebrations that walk
+off the spot stay where the player stands (only the height follows the pelvis).
 """
 import sys
 import os
@@ -80,7 +82,8 @@ def length(g, b, anim):
 
 
 def make(costume, src, out, clips):
-    """clips: [(hst_name, [source anims: intro, then an optional loop], frames or None)]."""
+    """clips: [(hst_name, [source anims: intro, then an optional loop], frames or None[, pin])]; pin keeps the root's
+    horizontal position at rest."""
     cg, cb = glb.read(costume)
     sg, sb = glb.read(src)
     anims = {a["name"]: a for a in sg["animations"]}
@@ -102,7 +105,8 @@ def make(costume, src, out, clips):
         o.node(**{k: n[k] for k in ("name", "children", "translation", "rotation", "scale", "matrix") if k in n})
     o.g["scenes"] = [dict(cg["scenes"][cg.get("scene", 0)])]
 
-    for name, seq, frames in clips:
+    for name, seq, frames, *rest in clips:
+        pin = bool(rest and rest[0])
         lens = [length(sg, sb, anims[s]) for s in seq]
         n = frames if frames else int(round(sum(lens) * FPS))
         # frame f of the HST clip -> (source anim, time): the intro, then the loop over and over
@@ -144,7 +148,11 @@ def make(costume, src, out, clips):
                 L = np.linalg.inv(pw) @ wa(j)
                 rot[j].append(mat_quat(L[:3, :3] / np.linalg.norm(L[:3, :3], axis=0)))
                 if j == root:
-                    pos.append(L[:3, 3])
+                    t = L[:3, 3].copy()
+                    if pin:  # game space: y is height, x/z the floor
+                        r0 = node_mat(cg["nodes"][j])[:3, 3]
+                        t[0], t[2] = r0[0], r0[2]
+                    pos.append(t)
         times = np.arange(n + 1, dtype=np.float32) / FPS
         ti = o.accessor(times, glb.FLOAT, "SCALAR", minmax=True)
         ch, sm = [], []
@@ -169,7 +177,8 @@ def main():
     for s in specs:
         name, rest = s.split("=")
         rest, _, fr = rest.partition("@")
-        clips.append((name, rest.split("+"), int(fr) if fr else None))
+        pin = rest.endswith("!")
+        clips.append((name, rest.rstrip("!").split("+"), int(fr) if fr else None, pin))
     make(costume, src, out, clips)
 
 

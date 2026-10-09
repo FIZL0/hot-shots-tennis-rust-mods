@@ -66,20 +66,31 @@ def find_tparam(root):
     return None
 
 
-def overrides(stats, path):
-    """{pc: (override dict, why dict)} for Get a Grip's characters `stats` ({pc: character.csv row})."""
+def overrides(stats, path, mapping=None, styles=None):
+    """{pc: (override dict, why dict)} for a game's characters `stats` ({pc: {stat: value}}; Get a Grip: its
+    character.csv rows). `mapping`: a game's own MAP (default Get a Grip's); `styles`: {pc: (タイプ, why)} (default
+    Get a Grip's Playstyle column). Other games' modules (fore_data.py, oob_data.py, opentee_data.py) supply both."""
     head, rows = tparam(path)
     pcs = sorted(stats)
     out = {n: ({}, {}) for n in pcs}
-    for col, (src, why) in MAP.items():
+    for col, (src, why) in (mapping or MAP).items():
         c = head.index(squash(col))
         hst = sorted((r[c] for r in rows), key=key)
+        if any(s not in stats[n] or stats[n][s] in ("", None) for n in pcs for s in src):
+            continue
         vals = [sum(float(stats[n][s]) for s in src) / len(src) for n in pcs]
         for n, v, r in zip(pcs, vals, ranks(vals)):
             cell = hst[round(r / (len(pcs) - 1) * (len(hst) - 1))]
             o, w = out[n]
             o[col] = int(cell) if cell.isdigit() else cell
             w[col] = f"{why}: {'+'.join(src)} {v:g}, rank {r + 1:g} of {len(pcs)} -> {cell}"
+    if styles is not None:
+        for n in pcs:
+            t, why = styles.get(n, (None, None))
+            if t:
+                out[n][0]["タイプ"] = t
+                out[n][1]["タイプ"] = why
+        return out
     for n in pcs:
         o, w = out[n]
         p = stats[n].get("Playstyle")

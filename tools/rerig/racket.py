@@ -8,6 +8,10 @@ mesh on `Bip01RHand9racketNN_game`, rigid under `Bip01 R Hand`). MODEL: the reri
 relative to the hand at bind, scaled with the body), is then resized about the hand's point on the handle to HST's
 racket length (every HST character's racket is 0.944 m, butt to tip), and is written in the model's `Racket`-joint
 space: metres, vertices baked (the loader reads positions as they are, node transforms ignored).
+
+--target TARGET.glb: a source game with no rackets (the golf games) gets the same racket: placed on MODEL (a rerigged
+Get a Grip costume) as above, then carried rigidly from MODEL's right hand to TARGET's (every rerigged model has
+HST's bone axes, standard §3, so the grip in the hand frame is the same) and written in TARGET's `Racket` space.
 """
 import argparse
 import json
@@ -26,7 +30,16 @@ from rerig import G, binds, norm, read, worlds  # noqa: E402
 HST_LENGTH = 0.944  # butt to tip of every HST racket (PCnnC00 racket_nn.mdl, along its grip axis +Y)
 
 
-def make(part, model, out_path, node=None, length=HST_LENGTH):
+def rigid(m):
+    """The rotation (orthonormalised) and translation of a bind matrix."""
+    u, _, vt = np.linalg.svd(m[:3, :3])
+    r = np.eye(4)
+    r[:3, :3] = u @ vt
+    r[:3, 3] = m[:3, 3]
+    return r
+
+
+def make(part, model, out_path, node=None, length=HST_LENGTH, target=None):
     g, b = glb.read(part)
     W, _ = worlds(g)
     names = [norm(n.get("name", "")) for n in g["nodes"]]
@@ -55,6 +68,9 @@ def make(part, model, out_path, node=None, length=HST_LENGTH):
     c = T + ax * (np.clip((ph - T) @ ax, butt, tip) - T @ ax)  # the hand's point on the handle
     k = length / (tip - butt)
     Mr = np.linalg.inv(MB["Racket"])
+    if target:  # MODEL's hand -> TARGET's hand, rigid; then TARGET's Racket space
+        TB, _ = binds(*glb.read(target))
+        Mr = np.linalg.inv(TB["Racket"]) @ rigid(TB["Bip01RHand"]) @ np.linalg.inv(rigid(MB["Bip01RHand"]))
     o = glb.Builder()
     o.g["asset"]["generator"] = "HST-MODS racket"
     imgs = {}
@@ -95,6 +111,8 @@ def make(part, model, out_path, node=None, length=HST_LENGTH):
     mi = o.add("meshes", {"name": "racket", "primitives": out_prims})
     o.g["scenes"][0]["nodes"].append(o.node(name="racket", mesh=mi))
     o.g["extras"] = {"hst_racket": 1, "source": f"{os.path.basename(part)}:{node}", "length": length, "resize": float(k), "body_scale": s}
+    if target:
+        o.g["extras"]["grip_from"] = os.path.basename(model)
     o.write(out_path)
     return k
 
@@ -106,8 +124,9 @@ def main():
     ap.add_argument("out")
     ap.add_argument("--node")
     ap.add_argument("--length", type=float, default=HST_LENGTH)
+    ap.add_argument("--target")
     a = ap.parse_args()
-    print(a.out, "resize", make(a.part, a.model, a.out, a.node, a.length))
+    print(a.out, "resize", make(a.part, a.model, a.out, a.node, a.length, a.target))
 
 
 if __name__ == "__main__":
