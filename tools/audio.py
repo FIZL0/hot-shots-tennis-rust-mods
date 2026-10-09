@@ -130,6 +130,41 @@ def sgxd_names(path, out):
             f.write(f"{w + 1:03d}\t{n}\n" if w >= 0 else f"?\t{n}\n")
 
 
+def sgxd_rates(path, out):
+    """rates.txt + true sample rates. An SGXD wave plays (region key - root note) + fine/128 semitones from its WAVE
+    rate; RGND = programs, each a table of 0x38-byte regions (key lo +0, root +4, fine +5, wave +0x1c). Checked against
+    PPSSPP's sceSasSetPitch on Get a Grip (Emi 55-75+18/128 = -19.86 st = 14 kHz, umpire -12 = 22.05 kHz); the stored
+    audio is really 14/18/20/22.05/32 kHz labelled 44.1. vgmstream ignores this, so each NNN.wav header gets the rate."""
+    b = open(path, "rb").read()
+    if b[:4] != b"SGXD":
+        return
+    u = lambda o: struct.unpack_from("<I", b, o)[0]
+    ch, o = {}, 0x10
+    while o + 8 < len(b) and b[o:o + 4].isalpha() and b[o:o + 4].isupper():
+        ch[b[o:o + 4]] = o; o += 8 + u(o + 4)
+    if b"RGND" not in ch or b"WAVE" not in ch:
+        return
+    r, w = ch[b"RGND"], ch[b"WAVE"]
+    st = {}
+    for p in range(u(r + 0xc)):
+        for k in range(u(r + 0x10 + 8 * p)):
+            g = r + 8 + u(r + 0x14 + 8 * p) + 0x38 * k
+            st.setdefault(u(g + 0x1c), b[g] - b[g + 4] + b[g + 5] / 128)  # ponytail: first region per wave wins
+    lines = []
+    for wv, s_ in sorted(st.items()):
+        f = f"{out}/{wv + 1:03d}.wav"
+        if not os.path.exists(f) or wv >= u(w + 0xc):
+            continue
+        rate = u(w + 0x10 + 0x38 * wv + 0xc)
+        new = round(rate * 2 ** (s_ / 12))
+        with open(f, "r+b") as fh:
+            h = fh.read(36)
+            ch_, bits = struct.unpack_from("<H", h, 22)[0], struct.unpack_from("<H", h, 34)[0]
+            fh.seek(24); fh.write(struct.pack("<II", new, new * ch_ * bits // 8))
+        lines.append(f"{wv + 1:03d}\t{s_:+.3f}\t{rate}->{new}")
+    open(f"{out}/rates.txt", "w").write("\n".join(lines) + "\n")
+
+
 def work(a):
     rel, p, ext, byname = a
     out = f"{OUT}/{rel}"
@@ -137,6 +172,8 @@ def work(a):
         if ext in ("sgd", "sgh") and not os.path.exists(f"{out}/names.txt"):  # resume: just (re)write names
             try: sgxd_names(p, out)
             except Exception: pass
+        if ext in ("sgd", "sgh") and not os.path.exists(f"{out}/rates.txt"):  # resume: apply true rates once
+            sgxd_rates(p, out)
         return rel, None
     tmp = tempfile.mkdtemp()
     try:
@@ -157,10 +194,12 @@ def work(a):
             p = f"{tmp}/{st}.sgb"
             conv_vgm(p, out, tmp)
             sgxd_names(hdr, out)
+            sgxd_rates(hdr, out)
         else:
             conv_vgm(p, out, tmp)
             if ext == "sgd":
                 sgxd_names(p, out)
+                sgxd_rates(p, out)
         return rel, None
     except Exception as e:
         shutil.rmtree(out, ignore_errors=True)

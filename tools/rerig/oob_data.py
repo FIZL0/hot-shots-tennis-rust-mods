@@ -215,9 +215,7 @@ def voices(pc):
               "slot is an animation only, ku_di)",
            10: "no losing line identifiable"}
     prog = {p: f for p, f in prog.items() if f}
-    if shifted:
-        why["pitch"] = (f"{len(shifted)} chosen file(s) are played {sorted({s for _, s in shifted})} semitones off "
-                        "their stored pitch by the game (RGND root note; tools/audio.py exports them unshifted)")
+    # pitch: tools/audio.py writes each wave's true rate (RGND key/root/fine) into the wav header
     return prog, why
 
 
