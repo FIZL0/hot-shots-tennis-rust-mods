@@ -6,7 +6,8 @@ Files are hard links into out/ (game data: never commit). Filled in: costumes, d
 nearest Bip01 height), face mode (+ face.json for Get a Grip), voices (Get a Grip mapped onto HST programs; other
 games copied raw to voice/unsorted/ until their cues are identified), the source game's raw stats where known, and
 for Get a Grip params.override from its stats (gag_stats.py, ranked onto TParam; needs HST's TParam.csv: HST_TPARAM or
-../HST-Remastered/context/xb) with ai_row by play style.
+../HST-Remastered/context/xb) with ai_row by play style, and Get a Grip's own point/set reactions as motions.glb (motions.py; needs
+../HST-Remastered/context/xb/PCANI for the donor clip lengths).
 Left for a human or agent: other games' stat mappings (PLAN M8), handedness, voice cues outside Get a Grip.
 """
 import glob
@@ -25,10 +26,14 @@ from rerig import binds  # noqa: E402
 import racket  # noqa: E402
 import sizing  # noqa: E402
 import gag_stats as gagmap  # noqa: E402
+import motions  # noqa: E402
 
 GAME_NAME = {"fore": "Hot Shots Golf Fore! (PS2)", "oob": "Hot Shots Golf: Out of Bounds (PS3)",
              "getagrip": "Hot Shots Tennis: Get a Grip (PSP)", "opentee": "Hot Shots Golf: Open Tee (PSP)",
              "opentee2": "Hot Shots Golf: Open Tee 2 (PSP)"}
+# HST reaction motion <- Get a Grip's own reaction (intro, then its loop), per character (motions.py)
+GAG_REACT = {"re_gu": "gu01", "re_di": "di01", "re_gu_set": "gu_set01", "re_di_set": "di_set01"}
+HST_ANI = os.path.join(ROOT, "../HST-Remastered/context/xb/PCANI")
 # Get a Grip cue -> HST voice program (programs 7-10 follow reaction motions 0x2c-0x2f: re_gu, re_di, re_gu_set,
 # re_di_set). approx: 1 and 2 (st_ji/st_nb meaning unknown).
 GAG_VOICE = {0: ["smash"], 1: ["st_ji"], 2: ["st_nb"], 3: ["receive"], 4: ["swing"], 6: ["start", "call", "go", "chance"],
@@ -118,6 +123,17 @@ def main():
                     manifest["racket_why"] = ("Get a Grip's starting racket Racket_000 'Standard' (racket000.xb), the one every character owns from the "
                                               "start (Get a Grip has no per-character racket: Racket_param and the item tables have no character column), "
                                               "source grip on the hand, resized to HST's 0.944 m")
+                # its own point/set reactions, retargeted, timed to the donor's clips (visual only, standard §6 motions)
+                react = os.path.join(ROOT, f"out/anims/getagrip/pc{n:02d}_{name}_react.glb")
+                if os.path.exists(react):
+                    clips = []
+                    for hst_name, src in GAG_REACT.items():
+                        ani = os.path.join(HST_ANI, f"PC{donor['index']:02d}ANI.XB/data/taguchi/MtPc{donor['index']:02d}/{hst_name.replace('re_', f're_pc{donor['index']:02d}_')}.ANI2")
+                        clips.append((hst_name, [f"re_pc{n:02d}_{src}", f"re_pc{n:02d}_{src}_loop"], motions.ani_frames(ani) if os.path.exists(ani) else None))
+                    motions.make(costumes[0], react, os.path.join(mod, "motions.glb"), clips)
+                    manifest["motions"] = "motions.glb"
+                    manifest["motions_why"] = {k: f"Get a Grip re_pc{n:02d}_{v} then its _loop, played at 60 Hz to fill the donor's clip ({f} frames)"
+                                               for (k, v), (_, _, f) in zip(GAG_REACT.items(), clips)}
                 sz = os.path.join(ROOT, "out/rerig/getagrip/sizing.json")
                 if os.path.exists(sz):
                     sz = json.load(open(sz))

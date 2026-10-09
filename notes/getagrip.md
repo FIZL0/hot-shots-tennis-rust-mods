@@ -144,3 +144,25 @@ Not 1:1. Same 3ds Max Biped naming, so a **name-based** map covers every GaG bon
 - 23 of 256 common motions have no skeleton tracks (`*_dum`, `*_ball*` = ball/dummy paths) → skipped.
 - Lobby motions (`lobby/030_room/*_motion.xb`, l99), NPC faces, adhoc LODs,
   vertex morphs (2 prims), material render-state flags beyond alpha: not exported.
+
+## Motions → HST (mod `motions.glb`)
+
+`export_getagrip.py --only anims` also writes `out/anims/getagrip/pcNN_<name>_react.glb`: the character's own
+reactions from `face/face0NN_anim.xb/data/chara/motion/NN/` (`re_pcNN_{gu,di,gu_set,di_set}{01,02}` each with a
+`_loop`, plus `A_re_pcNN_co10`, an upper-body layer). `package.py` retargets four of them onto each mod's skeleton
+with `tools/rerig/motions.py` (60 Hz, intro then loop until the donor clip's frames; only an intro longer than that
+is squeezed), shipped as `motions.glb` (standard §6 `motions`, drawn only; the match runs on the donor's clips):
+
+| HST motion | Get a Grip |
+|---|---|
+| `re_gu` 0x2c (point won) | `re_pcNN_gu01` + `_loop` |
+| `re_di` 0x2d (point lost) | `re_pcNN_di01` + `_loop` |
+| `re_gu_set` 0x2e (game won) | `re_pcNN_gu_set01` + `_loop` |
+| `re_di_set` 0x2f (game lost) | `re_pcNN_di_set01` + `_loop` |
+
+Not mapped: the `02` variants (HST has one clip per slot), `A_re_pcNN_co10` (a doubles reaction; HST's team
+reactions 0x30–0x34 are one shared set from PCCG0, not per character), the prize motions (`win`, `lost`,
+`rslt_good/bad/wait`, `hand`: HST has no match-end or result-screen motion), and the gameplay motions in
+`common_motions.glb`. Those come in upper (`A_`) and lower (`B_`) body layers and have no one-to-one HST clip (no
+plain idle: `aw` = await; strokes split by depth/height `t_d`/`t_s`); a stroke or serve drawn from them would also
+leave the racket off the ball, since the contact IK and arm table are solved on the donor's swing.

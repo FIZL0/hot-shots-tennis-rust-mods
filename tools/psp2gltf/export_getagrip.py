@@ -165,6 +165,13 @@ def do_anims(pcs):
                         name=f"pc{c['index']:02d}_prize", skel_path=ref,
                         anims=[(_anim_name(p), i3m.load(p)) for p in ps])
             print("prize", c["name"], len(ps))
+        # the character's own point/set reactions (re_pcNN_gu01, di_set02_loop, …, A_re_pcNN_co10)
+        rs = sorted(glob.glob(os.path.join(PC, f"face/face{c['index']:03d}_anim.xb/data/chara/motion/{c['index']:02d}/*re_pc{c['index']:02d}_*.i3m")))
+        if rs:
+            build.build(None, [], os.path.join(OUT_A, f"pc{c['index']:02d}_{c['name']}_react.glb"),
+                        name=f"pc{c['index']:02d}_react", skel_path=ref,
+                        anims=[(_anim_name(p), i3m.load(p)) for p in rs])
+            print("reactions", c["name"], len(rs))
 
 
 def main():
