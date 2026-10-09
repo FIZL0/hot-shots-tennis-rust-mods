@@ -227,6 +227,9 @@ def main():
                         "donor": donor["index"], "donor_why": f"{why} ({h:.3f} m vs {donor['name']} {donor['bip01_height']} m)",
                         "hand": "right", "params": {"base": donor["index"], "override": {}},
                         "ai_row": donor["index"], "face": "morph", "voice": None, "todo": []}
+            if game == "fore":
+                # already high-res: HST-Remastered's upscale_mods.py leaves it alone
+                manifest["upscale"] = False
             if game in ("getagrip",):
                 f = gag_faces.get(slug) or next((v for k, v in gag_faces.items() if k.startswith(f"pc{n:02d}")), None)
                 if f:
