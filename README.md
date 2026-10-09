@@ -100,12 +100,12 @@ All the detail is in `standard/HST-CHARACTER-STANDARD.md`. For how to rerig a ch
   intact.
 - **Spot-checked by eye:** HST motions on one character from each game and on edge cases (a very small
   character, one with no neck bone).
+- **Every game's mods** now carry stats ranked onto `TParam` (`params.override`, with `params_why`), an
+  `ai_row` where the game names a play style, voices sorted into HST's programs (`voice_why` says which are
+  heuristic), each game's own point/set reactions as `motions.glb`, Get a Grip's standard racket, and HST-size
+  scaling with a head shrink. Per-game data modules: `tools/rerig/{gag_stats,fore_data,oob_data,opentee_data}.py`.
 - **Still open** (also listed per character in each `mod.json` `todo`):
-  - choosing donors by play style (the current pick is the nearest height, a placeholder);
-  - mapping each game's stats onto HST's stat sheet (`TParam`);
-  - sorting the voice lines for every game but Get a Grip;
-  - labelling Open Tee's face textures;
   - confirming handedness;
-  - the mod loader itself, in Hot Shots Tennis Rust.
+  - voice pitch for SGXD banks (Get a Grip, Open Tee, Out of Bounds): the region root note isn't applied yet.
 
 Known gaps for each game are in `notes/<game>.md`.

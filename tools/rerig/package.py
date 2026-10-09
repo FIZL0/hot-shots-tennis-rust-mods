@@ -2,13 +2,13 @@
 
 python3 tools/rerig/package.py [game…]     (after batch.py; default every game)  ->  out/mods/<game>_<slug>/
 
-Files are hard links into out/ (game data: never commit). Filled in: costumes, donor (the HST character with the
-nearest Bip01 height), face mode (+ face.json for Get a Grip), voices (Get a Grip mapped onto HST programs; other
-games copied raw to voice/unsorted/ until their cues are identified), the source game's raw stats where known, and
-for Get a Grip params.override from its stats (gag_stats.py, ranked onto TParam; needs HST's TParam.csv: HST_TPARAM or
-../HST-Remastered/context/xb) with ai_row by play style, and Get a Grip's own point/set reactions as motions.glb (motions.py; needs
-../HST-Remastered/context/xb/PCANI for the donor clip lengths).
-Left for a human or agent: other games' stat mappings (PLAN M8), handedness, voice cues outside Get a Grip.
+Files are hard links into out/ (game data: never commit). Every game gets: costumes; a same-sex donor with the
+nearest Bip01 height; the face (morph, or face.json for the PSP texture swaps); voices sorted into HST programs; the
+source stats ranked onto TParam as params.override (gag_stats.overrides; needs HST's TParam.csv: HST_TPARAM or
+../HST-Remastered/context/xb) with ai_row by play style where the game has one; the game's own point/set reactions
+as motions.glb (motions.py; needs ../HST-Remastered/context/xb/PCANI for the donor clip lengths; golf roots held,
+PIN); and Get a Grip's Racket_000 (racket.py, carried from GaG Emi's grip for the golf games). Get a Grip's data is
+in gag_stats.py, the golf games' in fore_data.py / oob_data.py / opentee_data.py. Left for a human: handedness.
 """
 import glob
 import json
