@@ -112,22 +112,27 @@ def model_height(path):
 
 def plan(game, models):
     """game, {pc number: [plain-rerigged model paths]} -> ({pc: (height m, why)}, {pc: (head factor, why)}, info)
-    or None. A character whose game gives no height in cm keeps its own (plain rerig) Bip01 height; the game
-    factor (≤ 1, tallest at TOP) applies to the whole cast either way."""
+    or None. A character whose game gives no height in cm keeps its own (plain rerig) Bip01 height (× the game's
+    body scale where it has one); one game factor puts the tallest at TOP (only ever shrinking when heights are cm)."""
     src = source(game)
     if not src:
         return None
     k, want = hst()
     raw, how = {}, {}
     for n in models:
-        sex, cm, why = src.get(n, (None, None, "not in the game's tables"))
+        sex, cm, why, *sc = src.get(n, (None, None, "not in the game's tables"))
         if cm and sex in k:
             raw[n] = k[sex] * cm
             how[n] = f"{why}: {cm:g} cm {'woman' if sex == 'f' else 'man'} × HST {k[sex]:.6f} m/cm"
         else:
             raw[n] = min(model_height(p) for p in models[n])
             how[n] = f"{why}; no height in cm in the data: the model's own Bip01 height {raw[n]:.4f} m"
-    c = min(1.0, TOP / max(raw.values()))
+            if sc:  # the game's own body scale of a shared skeleton (Open Tee face.csv `scale`)
+                raw[n] *= sc[0]
+                how[n] += f" × the game's scale {sc[0]:g}"
+    # cm heights: shrink only (≤ 1) so the tallest fits; no cm anywhere (a shared chibi body sized by the game's own
+    # scale, Open Tee): the cast is brought up or down so its tallest is HST's tallest, as Get a Grip's lands
+    c = min(1.0, TOP / max(raw.values())) if any(how[n].count(" cm ") and "no height" not in how[n] for n in how) else TOP / max(raw.values())
     sizes = {n: (raw[n] * c, f"{how[n]} × game factor {c:.4f}") for n in models}
     heads = {}
     for n in models:

@@ -1,6 +1,6 @@
 """Package every rerigged character as a mod folder (standard/HST-CHARACTER-STANDARD.md §1, §6).
 
-python3 tools/rerig/package.py      (after batch.py)  ->  out/mods/<game>_<slug>/
+python3 tools/rerig/package.py [game…]     (after batch.py; default every game)  ->  out/mods/<game>_<slug>/
 
 Files are hard links into out/ (game data: never commit). Filled in: costumes, donor (the HST character with the
 nearest Bip01 height), face mode (+ face.json for Get a Grip), voices (Get a Grip mapped onto HST programs; other
@@ -201,7 +201,7 @@ def main():
     gag_params = gagmap.overrides(gag_stats, tp) if tp and gag_stats else {}
     hst_type = gagmap.hst_types(tp) if tp else {}
     made = 0
-    for game in GAME_NAME:
+    for game in [g for g in GAME_NAME if g in (sys.argv[1:] or GAME_NAME)]:
         for cdir in sorted(glob.glob(os.path.join(ROOT, f"out/rerig/{game}/*/"))):
             costumes = sorted(glob.glob(cdir + "*.glb"))
             if not costumes:

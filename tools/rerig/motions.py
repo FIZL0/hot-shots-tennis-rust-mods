@@ -77,6 +77,10 @@ def source_worlds(g, b, anim, t):
     return W
 
 
+def unit(m):
+    return m / np.linalg.norm(m, axis=0)
+
+
 def length(g, b, anim):
     return max(float(read(g, b, s["input"]).max()) for s in anim["samplers"])
 
@@ -119,6 +123,7 @@ def make(costume, src, out, clips):
             else:
                 plan.append((seq[1], (t - lens[0]) % lens[1]))
         rot = {j: [] for j in joints}
+        mirrored = set()
         pos = []
         for a, t in plan:
             S = source_worlds(sg, sb, anims[a], t)
@@ -131,7 +136,7 @@ def make(costume, src, out, clips):
                 pw = wa(p) if p is not None and p in joints_set else W0[p] if p is not None else np.eye(4)
                 s = sidx.get(cnames[j])
                 if s is not None:
-                    d = S[s][:3, :3] @ S0[s][:3, :3].T
+                    d = unit(S[s][:3, :3]) @ unit(S0[s][:3, :3]).T  # rotation only (Open Tee's root scales by 0.01)
                     m = np.eye(4)
                     m[:3, :3] = d @ W0[j][:3, :3]
                     m[:3, 3] = (pw @ node_mat(cg["nodes"][j]))[:3, 3]
@@ -146,7 +151,11 @@ def make(costume, src, out, clips):
                 p = cpar.get(j)
                 pw = wa(p) if p in joints_set else W0[p] if p is not None else np.eye(4)
                 L = np.linalg.inv(pw) @ wa(j)
-                rot[j].append(mat_quat(L[:3, :3] / np.linalg.norm(L[:3, :3], axis=0)))
+                R = unit(L[:3, :3])
+                if np.linalg.det(R) < 0:  # a mirrored helper (OT1's negative-scale nubs/dummies): left at rest
+                    mirrored.add(j)
+                    R = np.eye(3)
+                rot[j].append(mat_quat(R))
                 if j == root:
                     t = L[:3, 3].copy()
                     if pin:  # game space: y is height, x/z the floor
@@ -157,7 +166,7 @@ def make(costume, src, out, clips):
         ti = o.accessor(times, glb.FLOAT, "SCALAR", minmax=True)
         ch, sm = [], []
         for j in joints:
-            if sidx.get(cnames[j]) is None and j != root:
+            if (sidx.get(cnames[j]) is None or j in mirrored) and j != root:
                 continue
             q = np.array(rot[j], np.float32)
             for k in range(1, len(q)):  # keep the quaternions on one hemisphere

@@ -63,7 +63,7 @@ _IMP = "Imp (impact window size; the beginner Mika has the biggest): a forgiving
 
 def _map(game):
     pw, bs = ("Pow", "Spn") if game == "opentee" else ("Pow", "BS")
-    m = {c: ([pw], _POW.format(pw)) for c in ("Serv POW", "Strk POW", "LOW POW", "Voley POW", "V LOW POW", "Lob POW")}
+    m = {c: ([pw], _POW.format(pw)) for c in ("Serv POW", "Strk POW", "LOW POW", "Voley POW", "V LOW POW", "Lob POW", "Lob POW2")}
     m.update({c: (["Ctr"], "Ctr (golf shot control): straighter, steadier strokes") for c in ("Strk CON", "Voley CON", "Serv CON")})
     m.update({c: (["Imp"], _IMP) for c in ("ショット ウサギIMP GI/NI/BI", "ショット カメIMP GI/NI/BI")})
     m.update({c: ([bs], f"{bs} (golf back spin): more under-spin on slices and drops") for c in ("Slice SPIN", "Drop SPIN")})
@@ -82,13 +82,14 @@ def style(game, pc):
 
 
 def heights(game):
-    """{pc: (sex, None, why)}: the game gives no cm heights, only a body scale % (OT2 also a head scale %)."""
+    """{pc: (sex, None, why, scale)}: the game gives no cm heights, only a body scale % (OT2 also a head scale %);
+    sizing.py multiplies the shared body's own Bip01 height by `scale`."""
     out = {}
     for pc, d in _table(game).items():
         sx = "m" if d["sex"] == "1" else "f"
         hs = f", head scale {d['頭scale']} %" if d.get("頭scale") else ""
         out[pc] = (sx, None, f"{'Open Tee 2' if game == 'opentee2' else 'Open Tee'} face.csv has no height in cm, "
-                             f"only a model scale of {d['scale']} %{hs}; no cm, so sizing.py uses the model's own Bip01 height")
+                             f"only a model scale of {d['scale']} %{hs}", float(d["scale"]) / 100)
     return out
 
 
