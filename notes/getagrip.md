@@ -23,12 +23,21 @@ Formats: `notes/psp-formats.md`.
 A character = face0NN + head item + body item (+ accessories). Costume sets: `Head_3NN/Body_3NN` and
 `Head_4NN/Body_4NN` have PC_ONLY_1 = NN (character-exclusive; 3NN renders as the familiar default look).
 Skin tone of body/head textures (`_f/_m/_b/_k00` variants) = suffix of the `head3NN_?00.gim` shipped in the
-face archive. Face group `Bip01Head9for_hat` (short hair under hats) is included only when the head item's
-`Site` column is 1 (hats: 312, 314, 412, 414) — inferred, renders right.
+face archive.
+Hats: a hat head item has two groups, `Bip01Head9for_org` (the hat alone) and `Bip01Head9for_hat` (hat + a
+generic hair/ears cap, for faces without their own); every PC face has a `Bip01Head9for_hat` group = the
+character's own hair/ears/back of head under a hat (textured with its `head3NN` skin). So with a hat
+(head 312/314/412/414) the set is face (all groups) + head `for_org`; with a hair item the face's `for_hat` is
+left out. (Head/Acce `Site` is not the hat flag: Head `Site` is 0 everywhere.)
+Costume accessories: `Acce_3NN`/`Acce_4NN` (PC_ONLY_1 = NN) → `etc/etc3NN`/`etc4NN`: Brad 304/404 wristband
+(RForearm), Rosetta 305/405 top hat, Paola 307/407 flower, Fan 308/408 glasses, Suzuki 312/412 sunglasses,
+Helghast 314/414 belt (Spine1). Other PCs have none. `Acce_6xx`/`Head_6xx`/`Body_6xx` are shop items (Price
+set), not costume sets. Every PC's default racket is `Racket_000` (racket000), not packaged (the mod uses the
+donor's racket; see Gaps).
 
 ## Exported (out/ is git-ignored)
-- `out/models/getagrip/pcNN_<name>/pcNN_<name>_set{3,4}.glb` — 30 assembled characters; `characters.json`
-  lists the parts/tone per file.
+- `out/models/getagrip/pcNN_<name>/pcNN_<name>_set{3,4}.glb` — 30 assembled characters (face + head + body +
+  costume accessory); `characters.json` lists the parts/tone/hat/acce per file.
 - `out/models/getagrip/parts/{body,head,face,etc,racket}/*.glb` — all 564 parts, each on the reference
   skeleton (bodies skinned; others rigid under their attach bone; etc50 is a skinned accessory).
 - `out/textures/getagrip/<kind>/*.png` — all 2599 GIMs of 400_pc (incl. expression faces, tone variants).
@@ -79,6 +88,8 @@ Not 1:1. Same 3ds Max Biped naming, so a **name-based** map covers every GaG bon
 ⇒ Retarget in model space (per-bone world rotation delta from bind, by name), not by copying locals.
 
 ## Gaps
+- No `racket.glb` in the mods: GaG's racket000 (`Bip01RHand9racket00`) would need placing in HST's `Racket`
+  joint frame (grip axis/orientation differ); the remaster draws the donor's racket meanwhile.
 - Position/scale tangent basis inferred (see formats); rotation exact. A/B layer pairing per shot is game code
   (EBOOT encrypted), so layers are exported as separate animations — combine A_* (upper) + B_* (lower) yourself.
 - `body_type` per character unknown: 41 = 8 height classes × 5 builds (+040); height class from the roster

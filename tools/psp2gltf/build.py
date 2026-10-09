@@ -155,9 +155,12 @@ def _gl_prims(b, parts, texcache, materials, joint_map):
 def build(body_path, attach_paths, out_path, tone=None, extra_tex_dirs=(), name="character", anims=(),
           skel_path=None, skip=None, keep=KEEP, sep="9"):
     """body_path: skinned I3D_BIN with the full skeleton (or None: skeleton only, from skel_path).
-    attach_paths: rigid I3D_BIN parts whose attach nodes are named '<Bone>9<name>'.
+    attach_paths: rigid I3D_BIN parts whose attach nodes are named '<Bone>9<name>'; an item may be
+    (path, skip) to give that part its own skip regex.
     anims: list of (name, i3m.Motion). skip: regex of attach node names to leave out.
     keep: regex of node names that are bones. sep: attachment separator ('9'; OT1 '&')."""
+    attach_skip = [ap if isinstance(ap, tuple) else (ap, skip) for ap in attach_paths]
+    attach_paths = [ap for ap, _ in attach_skip]
     b = glb.Builder()
     body = i3d.load(body_path) if body_path else None
     sk = (body or i3d.load(skel_path)).skeleton
@@ -222,8 +225,8 @@ def build(body_path, attach_paths, out_path, tone=None, extra_tex_dirs=(), name=
         b.g["scenes"][0]["nodes"].append(n)
     if body_path:
         attach(b, body_path, by_name, bind, tc, skip, sep)  # rigid attachments inside the body file
-    for ap in attach_paths:
-        attach(b, ap, by_name, bind, tc, skip, sep)
+    for ap, ask in attach_skip:
+        attach(b, ap, by_name, bind, tc, ask, sep)
 
     for aname, motion in anims:
         import anim

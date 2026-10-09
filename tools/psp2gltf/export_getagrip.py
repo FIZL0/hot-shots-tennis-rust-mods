@@ -96,8 +96,16 @@ def do_parts():
     print("parts:", n)
 
 
+def mesh_groups(path):
+    """Names of the '<Bone>9<x>' nodes that carry mesh groups in a rigid part."""
+    import i3d
+    m = i3d.load(path)
+    d = open(path, "rb").read()
+    return {m.skeleton.names[j] for j, _ in build._node_groups(d, i3d.parse_tree(d), m.skeleton)}
+
+
 def do_characters(pcs):
-    heads = parts_table("Head")
+    acces = parts_table("Acce")
     index = []
     for c in roster():
         if pcs and c["index"] not in pcs:
@@ -110,13 +118,23 @@ def do_characters(pcs):
         for set_ in (3, 4):
             num = set_ * 100 + i
             head, body = model_path("head", num), model_path("body", num)
-            hat = heads.get(f"Head_{num}", {}).get("Site") == "1"
+            # Hat head items carry two variants: `for_org` (the hat alone) and `for_hat` (the hat + a generic
+            # hair/ears cap for faces without their own). Every PC face has a `for_hat` group = the
+            # character's own hair under a hat (textured with its head3NN skin), so: hat -> face.for_hat +
+            # head.for_org; hair item -> face without for_hat (its hair is in the head item).
+            hat = any(n.endswith("9for_org") for n in mesh_groups(head))
+            parts = [(face, None if hat else r"9for_hat$"), (head, r"9for_hat$" if hat else None)]
+            # Costume-set accessory: Acce_<set><NN> (same 3NN/4NN numbering as Head_/Body_, PC_ONLY_1 = NN)
+            acce = acces.get(f"Acce_{num}")
+            etc = model_path("etc", num) if acce and acce["PC_ONLY_1"] == str(i) else None
+            if etc:
+                parts.append(etc)
             out = os.path.join(d, f"pc{i:02d}_{c['name']}_set{set_}.glb")
-            build.build(body, [face, head], out, tone=tone, name=f"pc{i:02d}_{c['name']}_set{set_}",
-                        skip=None if hat else r"9for_hat$")
+            build.build(body, parts, out, tone=tone, name=f"pc{i:02d}_{c['name']}_set{set_}")
             index.append(dict(pc=i, name=c["name"], kana=c["kana"], set=set_, file=os.path.relpath(out, ROOT),
                               face=os.path.relpath(face, PC), head=os.path.relpath(head, PC),
-                              body=os.path.relpath(body, PC), skin_tone=tone, hat=hat,
+                              body=os.path.relpath(body, PC),
+                              acce=os.path.relpath(etc, PC) if etc else None, skin_tone=tone, hat=hat,
                               height_class=c["height_class"]))
             print(out)
     json.dump(index, open(os.path.join(OUT_M, "characters.json"), "w"), indent=1, ensure_ascii=False)
