@@ -37,7 +37,10 @@ Racket_param: owned from the start, price 0, No 0, all stats 0), packaged as eac
 `tools/rerig/racket.py`: the source grip on the hand kept (scaled with the body), resized about the hand to HST's
 0.944 m racket, baked into the `Racket` joint's space. Checked on Emi: in the hand frame its handle axis is within
 3.7° and its string normal within 3.2° of HST pc00's; grip −0.01–0.31 m vs HST 0–0.32 m. (`Racket_500`, also owned
-with zero stats, No 1, is not a default.)
+with zero stats, No 1, is not a default.) There is no per-character or per-costume racket in the data: `Racket_param.csv` /
+`Racket_Racket_param.txt` have no character column (unlike `Parts_*`' `PC_ONLY_*`), `character.csv` none, and
+the only other mention of rackets is the lobby prize table (`Challenge_LobbyItem.txt`); the program is encrypted.
+Racket_000 is the item named "Standard" (`CommonText_Racket.to`).
 
 ## Size (tools/rerig/sizing.py, standard §3)
 All 15 PCs share one skeleton (Bip01 0.5786 m, chibi head ratio ~0.93 vs HST's 0.538). Height: the roster's

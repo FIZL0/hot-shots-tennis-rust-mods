@@ -115,7 +115,9 @@ def main():
                 part = os.path.join(ROOT, "out/models/getagrip/parts/racket/racket00.glb")
                 if os.path.exists(part):
                     racket.make(part, costumes[0], os.path.join(mod, "racket.glb"))
-                    manifest["racket_why"] = "Get a Grip default racket Racket_000 (racket000.xb), source grip on the hand, resized to HST's 0.944 m"
+                    manifest["racket_why"] = ("Get a Grip's starting racket Racket_000 'Standard' (racket000.xb), the one every character owns from the "
+                                              "start (Get a Grip has no per-character racket: Racket_param and the item tables have no character column), "
+                                              "source grip on the hand, resized to HST's 0.944 m")
                 sz = os.path.join(ROOT, "out/rerig/getagrip/sizing.json")
                 if os.path.exists(sz):
                     sz = json.load(open(sz))
