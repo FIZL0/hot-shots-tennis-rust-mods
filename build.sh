@@ -9,7 +9,6 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 JOBS=${JOBS:-$(nproc)}
-HST=../HST-Remastered/context/xb
 
 # disc ID -> game (the US releases; the exporters' paths are only known for these)
 game_of() {
@@ -19,6 +18,7 @@ game_of() {
     UCUS-98614) echo opentee ;;
     UCUS-98693) echo opentee2 ;;
     BCUS-98115) echo oob ;;
+    SCUS_976.10) echo hst ;;  # HST itself: only its stats table and reaction motions, for the mods' stats
   esac
 }
 
@@ -89,8 +89,15 @@ build() {
 for t in cargo python3 7z vgmstream-cli ffmpeg; do
   command -v $t >/dev/null || { echo "missing $t (see README, Requirements)"; exit 1; }
 done
-# HST's own data, for stat ranks (TParam.csv) and reaction timing (PCANI): required, or mods would silently keep the donor's stats
-[ -d "$HST" ] || { echo "missing $HST (HST's extracted disc data; see ../HST-Remastered/research/README.md): needed for the mods' stats and reaction timing"; exit 1; }
+# HST's own data, for stat ranks (TParam.csv) and reaction timing (PCANI): from the HST disc in iso/, else the
+# remaster's context/xb; without either the mods keep the donor's stats
+hst_data() {
+  [ -d out/files/hst ] || [ -d ../HST-Remastered/context/xb ] && return
+  if have hst; then
+    unpack hst
+    for d in PCDATA PCANI; do tools/unxb/target/release/unxb "extracted/hst/$d/" "out/files/hst/$d"; done
+  else echo "warning: no HST disc under iso/; mods keep their donor's stats and reaction timing"; fi
+}
 
 have() { [ -n "${SRC[$1]:-}" ] || [ -e "extracted/$1" ]; }
 
@@ -111,5 +118,6 @@ echo "building: $GAMES"
 
 cargo build -q --release --manifest-path tools/unxb/Cargo.toml
 [[ " $GAMES " == *" fore "* ]] && cargo build -q --release --manifest-path tools/fore2gltf/Cargo.toml
+hst_data
 for g in $GAMES; do build "$g"; done
 echo "done: $(ls out/mods | wc -l) mods in out/mods/"

@@ -53,13 +53,13 @@ decrypted PS3 folder (the one containing `PS3_DISC.SFB`). Then:
 
 This builds the same mods as listed under Status, with their stats, voices and reactions from
 `tools/rerig/*_data.py`, into `out/mods/<game>_pcNN_<name>/`. Discs are recognised by disc ID (US releases:
-SCUS-97401, UCUS-98701, UCUS-98614, UCUS-98693, BCUS-98115), so the filenames don't matter. Each game builds
+SCUS-97401, UCUS-98701, UCUS-98614, UCUS-98693, BCUS-98115, and HST's SCUS-97610), so the filenames don't matter. Each game builds
 on its own, except:
 
 - the golf games use Get a Grip's starting racket. If that disc is there it's built too; if not, golf mods have no `racket.glb`.
 - Open Tee's face emotions come from Open Tee 2's face animations. Without that disc, Open Tee faces have only the neutral face.
 - Open Tee 2's first ten characters take their winning voice lines from Open Tee's audio. Without that disc they have none.
-- HST's own data at `../HST-Remastered/context/xb` is required (stat overrides and reaction timing); the build stops without it.
+- stat overrides and reaction timing come from Hot Shots Tennis itself (SCUS-97610): put its `.iso` in `iso/` too (or have `../HST-Remastered/context/xb`). Without it the mods keep their donor character's stats.
 
 ## Pipeline
 

@@ -34,7 +34,7 @@ GAME_NAME = {"fore": "Hot Shots Golf Fore! (PS2)", "oob": "Hot Shots Golf: Out o
 # HST reaction motion <- Get a Grip's own reaction (intro, then its loop), per character (motions.py)
 PIN = {"fore": True, "oob": True, "opentee": True, "opentee2": True}  # golf celebrations walk off their spot (notes/fore.md, oob.md): hold the root
 GAG_REACT = {"re_gu": "gu01", "re_di": "di01", "re_gu_set": "gu_set01", "re_di_set": "di_set01"}
-HST_ANI = os.path.join(ROOT, "../HST-Remastered/context/xb/PCANI")
+HST_ANI = gagmap.hst_xb(ROOT) + "/PCANI"
 # Get a Grip cue -> HST voice program (programs 7-10 follow reaction motions 0x2c-0x2f: re_gu, re_di, re_gu_set,
 # re_di_set). approx: 1 and 2 (st_ji/st_nb meaning unknown).
 GAG_VOICE = {0: ["smash"], 1: ["st_ji"], 2: ["st_nb"], 3: ["receive"], 4: ["swing"], 6: ["start", "call", "go", "chance"],
@@ -199,8 +199,6 @@ def main():
                 gag_sex[g] = src
     # Get a Grip's stats onto HST's TParam columns by rank (gag_stats.py; needs HST's TParam.csv)
     tp = gagmap.find_tparam(ROOT)
-    if not tp:  # without it every mod would silently keep its donor's stats
-        sys.exit("no HST TParam.csv: set HST_TPARAM or extract HST to ../HST-Remastered/context/xb")
     gag_params = gagmap.overrides(gag_stats, tp) if tp and gag_stats else {}
     hst_type = gagmap.hst_types(tp) if tp else {}
     made = 0
