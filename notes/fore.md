@@ -97,3 +97,53 @@ primitives). Software renders checked (bind pose, HST idle/run, Fore win/swing/c
 - Material blend tags (`@add`/`@sub`) and GS alpha test not mapped.
 - Anim files duplicate the costume mesh (kept so they are viewable); every primitive carries all morph targets
   (zeros where unused) because glTF requires equal target counts.
+
+## Mod data: stats, voices, reactions
+
+`tools/rerig/fore_data.py` (`python3 tools/rerig/fore_data.py` prints the cast) reads all of this at run time.
+
+**Stats**: SYSTEM.BIN loads at 0x22cc80. Proof: 2571 of its own `jal` targets land on function starts there, and a
+list of 24 pointers at file 0x136430 points at the character records. Straight after that list, at file 0x136490,
+are 24 records of 0x20 bytes: 5 floats (1.0 = average) and then 12 signed bytes. The club table (0x1367f0) and the
+ball table (0x136af0) have the same five floats as additive modifiers. GAME.BIN adds character + club + ball for
+each stat.
+
+| float | stat | evidence |
+|---|---|---|
+| 0 | **Power** | Code: shot power = this + club + ball (a mode-7 branch shrinks its deviation from 1 to 40 %). Z/Jak 1.17, Emma/Regis 0.98 |
+| 1 | **Control, inverted** (lower is better) | Every club/ball that raises it also gives power or spin; every one that lowers it costs impact or float 4. So it is a penalty (dispersion). Exposed as `2 − f` |
+| 2 | **Impact** | The beginners are highest (Emma/Regis 1.25), the experts lowest (Z/Jak 0.75). Capped in code. Every upgraded club costs 0.07–0.15 of it |
+| 3 | **Spin** | The "spin" clubs/balls raise it (+0.05…0.2) |
+| 4 | unknown | 0.6–1.2, 1.0 for most |
+
+The bytes are not identified: three −1/0/+1 flags (maybe shot curve and trajectory) and one 8–15 value.
+
+MAP sends Power to the six POW columns, Control to Strk/Voley/Serv CON, Impact to both IMP columns and Spin to
+Top/Slice/Drop SPIN. There is no play style. Heights are not in the data either: the character record holds only
+body type, name, voice code and flags. Sex comes from body templates t00 (women) and t03 (men); for the one-off
+bodies it comes from the roster.
+
+**Voices**:
+- Each hole-result celebration archive `PCNN00SS.XB` pairs one `ga_` motion with one `g_<code>K` bank:
+  bogey 1, par 2, birdie 3 (r01: 4), eagle 5 (r01: 6). These banks feed:
+  - 7 ← birdie + par
+  - 9 ← eagle + birdie
+  - 8 and 10 ← bogey
+- `jy_<code>0-4` are packed in the swing archive in the same order as the reactions `re_ga, os, bw, lp, tp`. The
+  face morphs show ga/os/bw as upset and lp/tp as happy. So:
+  - 2/4 ← jy0-2 (groans)
+  - 0/1/3 ← jy3-4
+  - This is a heuristic: the pairing is by order, and golf has no effort shouts.
+- `jy5/6` are played at random after a timed wait.
+- GAME.BIN's sound-slot list names `ya`/`co` next to BOOING/GALLERY. `sc` is 24 lines, one per opponent; `vs`
+  is versus lines. None of these are used.
+- Nothing fills 6: golf has no partner calls.
+
+**Reactions**: all are from `pcNN_<name>_c00-03.glb`, with intro clips only (no loops).
+
+| HST reaction | Fore clip | Length | Root motion |
+|---|---|---|---|
+| re_gu | `re_pcNN_tp` (happy shot reaction) | 0.5–1.2 s | ≤0.4 m |
+| re_di | `re_pcNN_ga` (がっかり) | 1.1–1.5 s | ≤0.2 m |
+| re_gu_set | `win_NN` (results winner) | 4.0 s | none |
+| re_di_set | `lost_NN` (results loser) | 3.0 s | drifts ≤0.6 m; package.py pins it |
