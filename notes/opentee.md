@@ -86,7 +86,36 @@ groups (e.g. Helghast's thigh pouch was below the feet) to their correct place. 
   space by name as for Get a Grip. OT1's hierarchy/axes are the closest to HST of the three.
 
 ## Gaps
-- TAT face-expression swaps not decoded (another agent is working on TAT); expression textures are exported.
+- TAT face swaps are read for the mods' face.json (Mod data below), not baked into the exported animations.
 - Character `scale`/`頭scale`, OT2 body-build variant choice, pc21/pc22 identity, club/ball items, reaction
   props (`ko_*.psp.i3r`) and their motions, pet/accessory animations, vertex morphs: not applied/exported.
 - Position/scale tangent basis as in psp-formats.md (inferred).
+
+## Mod data: stats, voices, reactions, faces
+`tools/rerig/opentee_data.py` (both games, `game` = `opentee`/`opentee2`; `python3 tools/rerig/opentee_data.py` prints
+both casts) feeds package.py's golf() path, gag_stats.overrides and sizing.py.
+
+- **Stats** (`kuwa/param/param.xb/.../pc/face.csv`, cp932): OT1 one row per pc (Pow, Ctr, Imp, Spn = back spin,
+  曲げ = side spin); OT2 rows 000-020 (Imp, Pow block) then one 21-row block each for Ctr, BS, TS, SS (`PId`, `BL`
+  level, `LV00..LV10` values; Pow LV = driver yards). Taken: OT2 LV00. All are bigger-is-better (Mika, the beginner,
+  has the largest Imp = most forgiving impact window), so nothing is inverted.
+  MAP: Pow → Serv/Strk/LOW/Voley/V LOW/Lob POW; Ctr → Strk/Voley/Serv CON; Imp → ショット ウサギ/カメIMP GI/NI/BI;
+  back spin → Slice/Drop SPIN; OT2 TS → Top SPIN (OT1 has no top-spin stat: its third column "TS" is something else).
+  Side spin (曲げ/SS) informs no tennis column. No play style (golf タイプ is sex), no cm height (only `scale` %,
+  OT2 `頭scale` %); sex: OT1 second タイプ / OT2 タイプ, 1 m, 2 f.
+- **Voices**: no event labels anywhere (program or banks). All banks are SGXD (.sgd): the region pitch issue applies.
+  OT1 banks decode with every wave running on to the bank's end (wave k = its clip + all later ones, checked sample for
+  sample); the module cuts them into `out/voices/opentee/trim/` until tools/audio.py does. OT1 stores lines last-first:
+  st/vs/ya waves 7-10 are lines 05..02. OT2's `.xb1` copies hold the English takes (`Mika_..`, `_US`), `.xb` the
+  Japanese (`Yum_..`); a and b banks are identical. Heuristic fill: the short lines every per-mode bank (st/vs/ya)
+  shares = in-play shouts → 0 and 3 (three loudest by RMS), 1 (all, ≤5); OT1 `tnk/result/Voice/hy_NN` (表彰, awards)
+  → 7 and 9 (OT2 pc00-09 borrow them; OT2's own `cd_hy_NN`/`cd_ma_NN` are the caddies'). 2, 4, 6, 8, 10 empty.
+  The long `g` lines (1.5-4 s) are unlabelled and unused.
+- **Reactions** (`out/anims/<game>/pcNN_<slug>.glb`): re_gu = OT2 `kuNN_gl` (glad emote) / OT1 `ga_pcNN_bi_r00`
+  (birdie); re_di = OT2 `kuNN_di` + `waitNN` / OT1 `re_pcNN_os`; re_gu_set = `winNN`; re_di_set = `lostNN` + `waitNN`.
+  Celebrations walk off (root up to ~1 m): package.py PIN holds the root. Every TAT runs about twice its I3M clip
+  (win00 3.0 s vs 90 frames at the exporter's 60 Hz, keys 1/30 s apart), so the game likely plays motions at 30 Hz.
+- **Faces** (TAT face tracks; names with fullwidth `ｆ` read as `f`, whose texture file name is garbled): `face_material`
+  `faceNN` (checked in the model). `a` = blink (idle/address), joy = most-held letter over ku_cl/ha/gl (fallback win,
+  eagle, birdie; `b` for all but Lee pc18 = `e`), anger = ku_an (`c`), sorrow = ku_di (`d`), one whole-face texture per
+  expression (eye = mouth). OT1 textures are byte-identical to OT2's, so OT1 uses OT2's TATs. No nervous (doki) face.
