@@ -180,7 +180,8 @@ def golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type):
 
 def main():
     hst = json.load(open(os.path.join(ROOT, "standard/hst_skeleton.json")))["characters"]
-    gag_faces = json.load(open(os.path.join(ROOT, "out/models/getagrip/faces.json")))
+    fp = os.path.join(ROOT, "out/models/getagrip/faces.json")
+    gag_faces = json.load(open(fp)) if os.path.exists(fp) else {}
     gag_stats = {}
     csvp = glob.glob(os.path.join(ROOT, "out/files/getagrip/**/parameter/character.csv"), recursive=True)
     if csvp:
@@ -198,6 +199,8 @@ def main():
                 gag_sex[g] = src
     # Get a Grip's stats onto HST's TParam columns by rank (gag_stats.py; needs HST's TParam.csv)
     tp = gagmap.find_tparam(ROOT)
+    if not tp:  # without it every mod would silently keep its donor's stats
+        sys.exit("no HST TParam.csv: set HST_TPARAM or extract HST to ../HST-Remastered/context/xb")
     gag_params = gagmap.overrides(gag_stats, tp) if tp and gag_stats else {}
     hst_type = gagmap.hst_types(tp) if tp else {}
     made = 0
