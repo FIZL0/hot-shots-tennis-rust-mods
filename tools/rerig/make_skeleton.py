@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.join(ROOT, "tools/psp2gltf"))
 sys.path.insert(0, HERE)
 import glb  # noqa: E402
 from rerig import binds, mat_quat  # noqa: E402
-from sizing import head_ratio  # noqa: E402
+from sizing import head_ratio, heights  # noqa: E402
 
 NAMES = ["Ashley", "Cody", "Jun", "Kaito", "Momoko", "JJ", "Carol", "Big Chief", "Miranda", "Kent", "Lola", "Will",
          "Gloria", "Suzuki"]
@@ -53,7 +53,8 @@ def main():
         targets = sorted({t.split("\x01")[-1] for m in g["meshes"] for t in m.get("extras", {}).get("targetNames", [])})
         n = int(os.path.basename(p)[2:4])
         chars.append({"index": n, "name": NAMES[n], "bip01_height": round(-B["Bip01"][1, 3], 4),
-                      "head_height": round(-B["Bip01Head"][1, 3], 4), "face_targets": targets})
+                      "head_height": round(-B["Bip01Head"][1, 3], 4),
+                      "top_height": round(heights(p)[2], 4), "face_targets": targets})
         meta = tp.get(n) or {k: old.get(n, {}).get(k) for k in ("sex", "height_cm", "model_type")}
         chars[-1].update(meta, head_ratio=round(head_ratio(p), 4))
     core, B, parent = ref

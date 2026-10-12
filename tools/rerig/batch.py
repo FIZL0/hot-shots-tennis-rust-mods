@@ -22,7 +22,7 @@ import re  # noqa: E402
 import rerig  # noqa: E402
 import sizing  # noqa: E402
 
-GAMES = ["fore", "oob", "getagrip", "opentee", "opentee2"]
+GAMES = ["fore", "oob", "getagrip", "opentee2", "opentee"]  # opentee after opentee2: sized from its sizing.json
 
 
 def one(src, height=None, head=1.0):

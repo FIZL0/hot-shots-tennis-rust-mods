@@ -63,11 +63,15 @@ removed): `Bip01` (root) › `Bip01Pelvis` › `Bip01Spine` › `Spine1` › `Sp
 - **Size to HST's cast** (`tools/rerig/sizing.py`, applied at packaging by re-rigging, so no mod.json field):
   `Bip01` height = HST's metres per cm for the character's sex (median `bip01_height / height_cm` over HST's
   standard bodies, `model_type` 0/4/5 in the JSON: women 0.005184, men 0.005322) × the source's own height in cm,
-  then one factor per source game (≤ 1) so its tallest is 0.95 m; relative heights stay the source's. Chibi
-  sources also shrink each head about `Bip01Neck` by its own factor: half way from 1 to the factor that would bring
-  that character's head ratio ((top of head mesh − neck) / `Bip01` height, smallest over its costumes so a hat
-  doesn't count) to HST's standard-body median (0.538), never above 1; the full match looked small-headed. Get a
-  Grip's factors run 0.72–0.80, in `out/rerig/getagrip/sizing.json` and each mod's `size_why`. The donor is then the nearest
+  then one factor per source game that gives the game's Gloria HST's Gloria's `Bip01` height (0.8554 m; she is the
+  one character on HST's disc and in Get a Grip, Out of Bounds and Open Tee 2); relative heights stay the source's.
+  Open Tee (no Gloria) takes Open Tee 2's sizes for the same ten characters; Fore! (no one shared) keeps its own
+  model scale, the same engine units as HST. Chibi sources also shrink each head about `Bip01Neck` by its own
+  factor: the game's head share of the way from 1 to the factor that would bring that character's head ratio
+  ((top of head mesh − neck) / `Bip01` height, smallest over its costumes so a hat doesn't count) to HST's
+  standard-body median (0.538), never above 1; the share is the one that makes the game's Gloria as tall head to
+  foot as HST's (`top_height` 1.6547 m in the JSON), 0.909 for Get a Grip and Open Tee 2, else 0.5. Factors are in
+  `out/rerig/<game>/sizing.json` and each mod's `size_why`. The donor is then the nearest
   `Bip01` height among HST's same-sex standard bodies.
 - **Extra joints are allowed** (hair, skirts, earrings, accessories) anywhere below the core. HST motions don't
   drive them; they follow their parent, plus the sway of §3a or the spring of §3b.

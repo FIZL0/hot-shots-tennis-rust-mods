@@ -147,3 +147,8 @@ bodies it comes from the roster.
 | re_di | `re_pcNN_ga` (がっかり) | 1.1–1.5 s | ≤0.2 m |
 | re_gu_set | `win_NN` (results winner) | 4.0 s | none |
 | re_di_set | `lost_NN` (results loser) | 3.0 s | drifts ≤0.6 m; package.py pins it |
+
+## Size (tools/rerig/sizing.py, standard §2)
+No heights in the data and no character shared with HST's disc or the other games (Fore's Brad, pc05, is not Get a
+Grip's Brad; no Gloria, no Joel): each keeps its own model's Bip01 height, game factor 1 (M1l, 2026-10-12; was 0.9685),
+since Fore's MDLs are the same engine and units as HST's. Heads: half shares (no reference to calibrate on).

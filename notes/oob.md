@@ -365,3 +365,8 @@ For each cue the longest note's wave is used, because celebrations play 2–17 f
 
 - The alternatives are `rslt_win` (120 frames) and `rslt_loss` (90). `re_*_p/wi` are shot reactions with mixed faces.
 - The pelvis carries root motion: 0.07–0.56 units of horizontal travel. package.py pins it.
+
+## Size (tools/rerig/sizing.py, standard §2)
+profile2 height (ft/in → cm) × HST's metres per cm by sex, × game factor 1.0123 that gives pc16 Gloria (5'4") HST's
+Gloria's Bip01 0.8554 m (M1l, 2026-10-12; was 0.8264). Her head-to-foot is then 1.617 m vs HST Gloria's 1.655 m (her own
+proportions; heads are never grown). LJ (7'1") comes out at Bip01 1.164 m, above HST's 0.95 m: relative heights are kept.

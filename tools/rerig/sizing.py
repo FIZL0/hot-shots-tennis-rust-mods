@@ -2,11 +2,17 @@
 
 Height: HST's own metres per centimetre, by sex — the median over HST's standard-body characters (TParam モデル
 標準: model types 0, 4, 5) of Bip01 rest height / TParam 身長 — times each source character's height in cm from its
-game's data, then one factor for the whole game (≤ 1) so its tallest lands at HST's upper bound 0.95 m. One factor
-per game keeps the source's relative heights; per-sex metres-per-cm keeps HST's women/men proportions.
-Head: chibi games (Get a Grip) shrink each character's head about the neck by its own factor: HEAD_SHARE of the way
-from 1 to the factor that would bring that character's head ratio (neck joint to the top of the head mesh, over Bip01
-height; the smallest over its costumes, so a hat doesn't count) to the median of HST's standard bodies; never grown.
+game's data (or the model's own Bip01 height where the data has none), then one factor for the whole game, calibrated
+on Gloria, who is on HST's disc too: the factor that gives the game's Gloria HST's Gloria's Bip01 height. Open Tee
+has no Gloria but is Open Tee 2's first ten at the same sizes, so it takes their sizes; Fore! shares no one with HST
+or the other games (its Brad is not Get a Grip's) and keeps its own model scale (factor 1: the same engine and units
+as HST's MDLs). One factor per game keeps the source's relative heights; per-sex metres-per-cm keeps HST's women/men
+proportions.
+Head: chibi games (Get a Grip, Open Tee) shrink each character's head about the neck by its own factor: the game's
+head share of the way from 1 to the factor that would bring that character's head ratio (neck joint to the top of the
+head mesh, over Bip01 height; the smallest over its costumes, so a hat doesn't count) to the median of HST's standard
+bodies; never grown. The share is the one that makes the game's Gloria as tall head to foot as HST's Gloria, else
+HEAD_SHARE.
 """
 import csv
 import glob
@@ -24,10 +30,13 @@ import glb  # noqa: E402
 from rerig import G, binds, norm, read, worlds  # noqa: E402
 
 STANDARD_BODY = (0, 4, 5)  # TParam モデルタイプ of 標準 bodies (1 JJ chibi, 2 power, 3 reach, 6 Suzuki)
-TOP = 0.95  # standard §2: HST's Bip01 range 0.58–0.95 m
 # each head factor goes this far from 1 toward the full match of HST's median head ratio: the full match looked a
 # little small-headed on Get a Grip's bodies (user, 2026-10-08), so half of it
 HEAD_SHARE = 0.5
+# each game's Gloria (pc number), the one character on HST's disc too: her Bip01 sets the game's factor (user 2026-10-12)
+GLORIA = {"getagrip": 13, "oob": 16, "opentee2": 20}
+# games with no Gloria but another game's cast: Open Tee's ten are Open Tee 2's pc00–09 (same bodies and scales)
+SHARED = {"opentee": ("opentee2", range(10))}
 
 
 def head_ratio(path):
@@ -62,6 +71,23 @@ def head_ratio(path):
             if len(v):
                 top = max(top, float(-v[:, 1].min()))
     return (top + B["Bip01Neck"][1, 3]) / -B["Bip01"][1, 3]
+
+
+def heights(path):
+    """(Bip01, Bip01Neck, top of all meshes) rest heights in m of a game-space model (HST export or rerig output)."""
+    g, b = glb.read(path)
+    W, _ = worlds(g)
+    B, _ = binds(g, b)
+    top = -np.inf
+    for i, n in enumerate(g["nodes"]):
+        if "mesh" not in n:
+            continue
+        for p in g["meshes"][n["mesh"]]["primitives"]:
+            pos = read(g, b, p["attributes"]["POSITION"])
+            v = pos if "skin" in n else (G @ W[i] @ np.c_[pos, np.ones(len(pos))].T).T[:, :3]
+            top = max(top, float(-v[:, 1].min()))
+    neck = B.get("Bip01Neck", B["Bip01Head"])  # Fore's Ratchet has no neck
+    return -B["Bip01"][1, 3], -neck[1, 3], top
 
 
 def hst():
@@ -130,14 +156,35 @@ def plan(game, models):
             if sc:  # the game's own body scale of a shared skeleton (Open Tee face.csv `scale`)
                 raw[n] *= sc[0]
                 how[n] += f" × the game's scale {sc[0]:g}"
-    # cm heights: shrink only (≤ 1) so the tallest fits; no cm anywhere (a shared chibi body sized by the game's own
-    # scale, Open Tee): the cast is brought up or down so its tallest is HST's tallest, as Get a Grip's lands
-    c = min(1.0, TOP / max(raw.values())) if any(how[n].count(" cm ") and "no height" not in how[n] for n in how) else TOP / max(raw.values())
-    sizes = {n: (raw[n] * c, f"{how[n]} × game factor {c:.4f}") for n in models}
+    # one factor per game, calibrated on a character HST's disc also has (Gloria), else on the same cast in another game
+    share, why_c = HEAD_SHARE, "no character shared with HST's disc or another sized game: the game's own model scale"
+    c = 1.0
+    if game in GLORIA:
+        n = GLORIA[game]
+        disc = next(x for x in json.load(open(os.path.join(ROOT, "standard/hst_skeleton.json")))["characters"] if x["name"] == "Gloria")
+        c = disc["bip01_height"] / raw[n]
+        why_c = f"pc{n:02d} Gloria's Bip01 to HST's Gloria {disc['bip01_height']:g} m"
+        # chibi heads: the share that also brings her head-to-foot to HST's Gloria's
+        B, N, T = min((heights(p) for p in models[n]), key=lambda h: h[2] / h[0])
+        f = (disc["top_height"] * B / disc["bip01_height"] - N) / (T - N)
+        r = min(head_ratio(p) for p in models[n])
+        if f < 1 and r > want:
+            share = (1 - f) / (1 - want / r)
+            why_c += f", head share {share:.3f} so her top is HST's Gloria's {disc['top_height']:g} m"
+    elif game in SHARED:
+        other, pcs = SHARED[game]
+        sj = os.path.join(ROOT, f"out/rerig/{other}/sizing.json")
+        if not os.path.exists(sj):
+            sys.exit(f"{game} is sized from {other}'s cast: build {other} first ({sj} missing)")
+        o = json.load(open(sj))
+        c = float(np.median([o["characters"][f"pc{n:02d}"]["bip01_height"] / raw[n] for n in pcs if n in raw]))
+        share = o["head_share"]
+        why_c = f"the same cast (pc{min(pcs):02d}–pc{max(pcs):02d}) as sized in {other}, its head share {share:.3f}"
+    sizes = {n: (raw[n] * c, f"{how[n]} × game factor {c:.4f} ({why_c})") for n in models}
     heads = {}
     for n in models:
         r = min(head_ratio(p) for p in models[n])
-        f = min(1.0, 1 - HEAD_SHARE * (1 - want / r))
-        why = f"head ratio {r:.3f}, {HEAD_SHARE:g} of the way to HST's {want:.3f}"
+        f = min(1.0, 1 - share * (1 - want / r))
+        why = f"head ratio {r:.3f}, {share:.3f} of the way to HST's {want:.3f}"
         heads[n] = (f, why)
-    return sizes, heads, {"hst_m_per_cm": k, "game_factor": c, "head_ratio_hst": want, "head_share": HEAD_SHARE}
+    return sizes, heads, {"hst_m_per_cm": k, "game_factor": c, "game_factor_why": why_c, "head_ratio_hst": want, "head_share": share}

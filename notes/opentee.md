@@ -119,3 +119,9 @@ both casts) feeds package.py's golf() path, gag_stats.overrides and sizing.py.
   `faceNN` (checked in the model). `a` = blink (idle/address), joy = most-held letter over ku_cl/ha/gl (fallback win,
   eagle, birdie; `b` for all but Lee pc18 = `e`), anger = ku_an (`c`), sorrow = ku_di (`d`), one whole-face texture per
   expression (eye = mouth). OT1 textures are byte-identical to OT2's, so OT1 uses OT2's TATs. No nervous (doki) face.
+
+## Size (tools/rerig/sizing.py, standard §2)
+No heights in cm: the shared body's Bip01 (0.5786 m) × face.csv `scale`, × one factor. Open Tee 2: 1.5240, which gives
+pc20 Gloria (scale 97 %) HST's Gloria's Bip01 0.8554 m; head share 0.909 makes her 1.6547 m head to foot like HST's
+(M1l, 2026-10-12; was 1.4925 with half shares). Open Tee (no Gloria) takes Open Tee 2's sizes for its ten (same pc
+numbers, bodies and scales) and its head share.

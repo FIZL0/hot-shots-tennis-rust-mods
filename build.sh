@@ -113,7 +113,7 @@ if [[ "$WANT" =~ fore|opentee|oob ]] && [ ! -d out/rerig/getagrip/pc00_emi ] && 
   if have getagrip; then WANT+="getagrip "; else echo "note: no Get a Grip; golf mods get no racket.glb"; fi
 fi
 GAMES=""
-for g in getagrip fore opentee opentee2 oob; do [[ "$WANT" == *" $g "* ]] && GAMES+="$g "; done  # Get a Grip first
+for g in getagrip fore opentee2 opentee oob; do [[ "$WANT" == *" $g "* ]] && GAMES+="$g "; done  # Get a Grip first; Open Tee 2 before Open Tee (sizing.py SHARED)
 echo "building: $GAMES"
 
 cargo build -q --release --manifest-path tools/unxb/Cargo.toml
