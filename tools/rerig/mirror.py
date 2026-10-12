@@ -8,7 +8,7 @@ the racket hand (standard §6 `hand`). HST draws a left-hander mirrored (the who
 racket on `Bip01RHand`, so `"hand": "left"` alone would put the racket in the drawn left hand but the glove in the drawn
 right. A gloved golf mod therefore ships each costume mirrored across the character's middle (x = 0 in game space):
 positions, normals, tangents and morph offsets reflected, each left joint's weights moved to its right twin and back,
-triangle winding flipped. The game's mirror then brings the source's own look back (glove on the left, text reading
+triangle winding kept (the game culls a mirrored rig's front faces, so the double mirror shows the source's side). The game's mirror then brings the source's own look back (glove on the left, text reading
 the right way) with `Bip01RHand`, and the racket, in that gloved hand.
 
 Joints stay HST's (motions drive them by name). A vertex on joint j moves to j's twin m(j) and keeps its place
@@ -263,7 +263,6 @@ def mirror(src, dst):
                 for k in ("POSITION", "NORMAL"):
                     if k in t:
                         once(t[k], lambda x: x @ lin.T)
-            once(p["indices"], lambda x: x.reshape(-1, 3)[:, [0, 2, 1]].ravel())
 
     if new_ibm:  # the copies' inverse binds: a fresh accessor at the end of the buffer
         allm = np.concatenate([ibm, np.array(new_ibm)]).transpose(0, 2, 1).astype(np.float32)
