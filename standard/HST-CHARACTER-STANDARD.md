@@ -205,10 +205,16 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
   One file serves every costume: a key on a joint a costume lacks is skipped for that costume.
   `tools/rerig/motions.py` retargets a source game's motions (per-joint world rotation change from the shared bind pose; root
   from the pelvis, scaled by hip height; intro then loop played at 60 Hz: the whole intro, looped up to at least the donor's frames).
+- `costume_of` (optional, 0–13): the mod is a **costume pack for that disc character**, not a new character: the
+  character select lists its costumes after the character's own ten on L1/R1 (costume 11, 12, … in folder order of
+  the packs), and picked it plays exactly as that character with the pack's model, voice and motions. `donor`,
+  `params.base` and `ai_row` must all be that number and `params.override` empty (else the mod is rejected); `hand`
+  should be the character's own. A texture-only swap of a disc costume needs no mod: it is a PCSX2-style texture
+  replacement (`texture-replacements/`, the remaster's P18).
 - `face`: `morph` (§4a channels), `texture` (§4b, needs `face.json`) or `none` (no face animation).
 - `eyes` (optional): the glTF material names of the eyes, moved by the donor's `.UVA` eye track (§4c).
 - The HST loader (`crates/hst/src/mods.rs`) rejects a mod with `<path>: <reason>` when the manifest is off
-  (`standard` ≠ 1, a missing costume, `donor`/`base`/`ai_row` outside 0–13, `hand` not right/left, an `override`
+  (`standard` ≠ 1, a missing costume, a `costume_of` whose `donor`/`base`/`ai_row` differ from it or that overrides params, `donor`/`base`/`ai_row` outside 0–13, `hand` not right/left, an `override`
   key that is no TParam column, an `eyes` that is not a list of names, a `motions` file that is missing, names no motion the donor has or is shorter than the donor's clip) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
   must be embedded in the `.glb`; it skips glTF accessor validation (older rerig output lacks POSITION min/max).
 - Optional, informational: `donor_why`, `size_why` (how the height and head were set), `racket_why`, `source_stats` (the source game's raw stats), `params_why` (per overridden column: source stat, value, rank → HST value), `ai_row_why`, `motions_why`, `voice_counts`, and `todo`
