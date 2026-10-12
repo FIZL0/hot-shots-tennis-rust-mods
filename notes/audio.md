@@ -21,6 +21,11 @@ of the `.bd` (address = u16*8) and decodes PS-ADPCM via a temp VAGp + vgmstream 
 pitch table as HST's and packs root/note/fine/bend and scales by 441/480 the same way (HST-Remastered `snd::pitch`), and
 every voice sequence keys on the tone's own note. Voice tones sit at -6.625 (30.1 kHz), -12 (22.05), -7.25, -7.8125 ...
 semitones; most SE at -5.5 (32.1 kHz). Before 2026-10-11 everything was written at 44.1 kHz (voices 5-12 st too high).
+Checked 2026-10-12 against the running game (HST-Remastered `research/tools/fore_spu_rates.py`: SPU2 pitch registers of
+save states in Fore's attract demo, sample identified by SPU RAM bytes): Brad's shout `g_bra2` 29004 Hz in game vs 29011 here
+(-7.25 st), caddie Kaz -7.8125/-9.8125/-10.875 st likewise within the pitch table's rounding (<0.05%). SE banks such as
+`plse` also play at other pitches (sequenced), so an SE wav is only its keyed-at-own-note rate. Sam: -6.625 (139 tones),
+-13.25, -9.125, -7.625.
 One wav per distinct sample, `NNN` = order by BD address; `index.txt` in each bank dir gives
 `set= note= addr= bytes= semitones= rate=`. Mapping of game events (program/key -> sequence -> tone) is NOT applied.
 - Character voice banks: `data/sound/voice/pc_game/<code>/` (3-letter code), inside `PC/PCNN/PCNNxxxx.XB/` (the NN dir
@@ -54,6 +59,8 @@ Per PC `NN` (00-09, 10 chars): `hats/snd/pcNN.xb` (`gNN_0..4`, `st_NN` x10), `pc
 `tnk/result/Voice/hy_NN.xb` (4). Caddies `ccNN` (`gacaNa/b`), `cy_NN`. `pc99` = shared. No names in tables (`names.txt` has the
 original vag names in a few places).
 ## Open Tee 2 (PSP)
+`pc_g_NN[ab].sgd` (in-game shouts) are stereo ATRAC3 RIFFs with no RGND pitch table: really 44.1 kHz, hence no `rates.txt`
+(no rate-less SGXD bank of any game has an RGND chunk, checked 2026-10-12).
 Per PC `NN` (00-22): `hats/snd/pc_{g,st,vs,ya}_NN{a,b}.xb` (g: 7 waves with names `P1_pcNN_g_a_0_k[_US]`; st/vs/ya: 9-10).
 `tnk/charsel/charselvoice_*.xb/mepc_cs_99a|b.sgd` and `matu/lastchk/dataN.xb/mepcNNb.sgd` = char-select. `cd_hy_NN[abc]`, `cd_hyi`,
 `meca_*` are caddie (ca) voices. The char-select bank lists the caddie name stems Alo Cre Den Hel Lep Myu Sag Sin Suq Yum
