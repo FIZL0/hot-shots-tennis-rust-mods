@@ -73,3 +73,16 @@ caddie `*_caNN`. `data/sound/voice/menu/me_pc.sgd` (all characters, menu). Cue n
 ## Unresolved
 - Character names for all games. - Fore event -> sample mapping (and any EE-side pitch scale on a play call; voices assumed 1.0). - Cue -> wave mapping for GaG is inferred.
 - OOB / Open Tee cue name -> wave mapping not decoded.
+
+## Language (checked 2026-10-12, HST M1p)
+Some discs carry each voice archive twice, one per language. Use the English copy:
+| game | English copy | other copies |
+|---|---|---|
+| oob | `sound/pc/ga_pc_NN.xb0` (all 17) | `ga_pc_NN.xb` (pc00-14) is the **Japanese** cast for pc01-06 and 08-14; pc00 and pc07 hold English there too |
+| opentee2 | `hats/snd/pc_*_NN[ab].xb1` (wave names `_US`) | `.xb` = Japanese |
+| getagrip | the only `face_voice/*.xb` copy | `.xb0/.xb2/.xb3` exist for other archives only, never for voices |
+| fore, opentee | single copy, English | |
+Before this, `oob_data._bank` globbed `ga_pc_NN.xb*` and took whichever came first, which was the Japanese `.xb` for
+most of the cast. Every game has English takes for every packaged line: no mod is Japanese-only.
+Checked with `tools/voice_lang.py` (faster-whisper language ID over each mod's four longest voice wavs). Short grunts
+("えぇ?", "おいしょ") come out as ja/zh/ko at low confidence in every game; only lines with words count.

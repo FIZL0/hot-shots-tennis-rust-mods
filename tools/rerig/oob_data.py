@@ -158,7 +158,8 @@ def sgxd(path):
 
 
 def _bank(pc, kind):
-    f = glob.glob(_p(USR, f"sound/pc/ga_pc_{pc:02d}.xb*/data/sound/voice/game/pc/ga_{kind}_pc{pc:02d}.sgd"))[0]
+    # .xb0 = the English takes (all 17 pcs); the .xb copy (pc00-14) is the Japanese cast (checked by speech recognition)
+    f = glob.glob(_p(USR, f"sound/pc/ga_pc_{pc:02d}.xb0/data/sound/voice/game/pc/ga_{kind}_pc{pc:02d}.sgd"))[0]
     return f, _p(AUD, os.path.relpath(f, _p(USR)))
 
 

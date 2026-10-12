@@ -30,6 +30,7 @@ tools/
   oob2gltf/   Python: REM/MOT/MOR/DDS (Out of Bounds) to glTF
   audio.py    every sound bank to WAV (vgmstream; Fore!'s PS2 banks are decoded directly)
   voices.py   folders of each character's voice lines
+  voice_lang.py  language of each packaged mod's voice lines (speech recognition; catches a Japanese bank)
   rerig/      rerig onto the HST skeleton, conformance check, batch run, mod packaging
 ```
 
