@@ -21,6 +21,11 @@ mods/<id>/
                            named by the glTF image's `name` (else `image<index>`); drawn instead when the
                            "upscaled textures" setting is on, any size; missing files fall back to the embedded
                            one. `upscale_mods.py` makes them (with `sources.json`, the hashes it skips by; not for `"upscale": false`, §6)
+  previews/<costume glb stem>.png
+                           optional: the character select's picture of each costume (384×480 RGBA PNG, sRGB,
+                           straight alpha, transparent background), shown while the cursor moves before the live
+                           model loads. Without it the game draws one on first use and keeps it in its own cache;
+                           `tools/rerig/previews.py` copies those bakes into the mods for shipping
   motions.glb              optional: the mod's own motions, drawn in place of the donor's (§6 `motions`)
   voice/<program>_<key>.wav  §5
   face.json                only for texture faces (§4b)

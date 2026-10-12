@@ -91,6 +91,8 @@ python3 tools/voices.py
 python3 tools/rerig/make_skeleton.py   # standard/hst_skeleton.json, from the HST reference rigs
 python3 tools/rerig/batch.py           # every character; writes out/rerig/<game>/check.txt
 python3 tools/rerig/package.py         # out/mods/<game>_pcNN_<name>/
+# optional: HST_MENU=chars HST_BAKE=all hst <iso> with these mods installed, then
+# python3 tools/rerig/previews.py <iso dir>/cache/previews/<boot>-r<N>   # ships the select pictures
 ```
 
 One model, with HST's forehand to look at:
