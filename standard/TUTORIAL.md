@@ -1,9 +1,22 @@
-# Tutorial: rerigging a character to the HST standard (for agents)
+# Tutorial: making a character mod
 
-Read `HST-CHARACTER-STANDARD.md` first. Work in `/home/ryha/repos/HST-MODS`; never commit `out/`, `iso/`,
-`extracted/` (game data). Don't edit `HST-Remastered`.
+Anyone can make a mod with these steps: no AI needed, just the tools here, Python and your own discs. Read
+`HST-CHARACTER-STANDARD.md` first. Commands run from this repo's root; never commit `out/`, `iso/`, `extracted/`
+(game data).
 
-## 0. Inputs you already have
+## 0. Inputs
+
+**Your own character**: any skinned `.glb` (Blender, 3ds Max, …) whose joints use 3ds Max Biped names, with or
+without spaces (`Bip01 L UpperArm` or `Bip01LUpperArm`). Rerig it (§1), check it (§2), then write its `mod.json`
+by hand from the standard (§7) — copy one from `out/mods/` as a start — and put the folder in the game's `mods/`.
+The HST reference rigs come from your Hot Shots Tennis disc:
+
+```
+cargo run --release --manifest-path ../HST-Remastered/Cargo.toml -p hst-data --bin xbdump -- "Hot Shots Tennis (USA).iso" ../HST-Remastered/context/xb
+tools/fore2gltf/target/release/fore2gltf hst ../HST-Remastered/context/xb out/models/hst
+```
+
+**Characters from the other games**, after `./build.sh` (README):
 
 | game | exported models | notes |
 |---|---|---|
@@ -53,7 +66,7 @@ What it does (`tools/rerig/rerig.py`, ~400 lines):
 python3 tools/psp2gltf/render.py out/rerig/gag_pc00.glb out/rerig/gag_pc00.png --anim sh_pc00_f_t --times 0,0.4 --views front,side
 ```
 
-Open the PNG with the Read tool. Compare with the donor itself
+Open the PNG. Compare with the donor itself
 (`render.py out/models/hst/pc00_c00.glb … --anim sh_pc00_f_t`). Look for: limbs pointing the same way as the
 donor's, no stretched/torn vertices, feet on the ground, hands closing on the racket position. Also try
 `mo_pc00_run_f`, `sh_pc00_serve_t`, `re_pc00_gu` (win), `re_pc00_di` (loss).

@@ -3,7 +3,7 @@
 What a custom character for the Hot Shots Tennis remaster (`HST-Remastered`) must provide, so one loader can treat
 it exactly like a disc character. It mirrors `crates/hst/src/character.rs` (`CharacterData`): a custom character
 "only has to fill the same CharacterData". Machine-readable skeleton: `standard/hst_skeleton.json`
-(regenerate: `python3 tools/rerig/make_skeleton.py`). How-to for agents: `standard/TUTORIAL.md`.
+(regenerate: `python3 tools/rerig/make_skeleton.py`). How-to: `standard/TUTORIAL.md`.
 
 ## 1. Mod folder
 
