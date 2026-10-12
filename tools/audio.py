@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Convert every audio bank/stream of a game to WAV: out/audio/<game>/<relpath>/<NNN>.wav
 usage: tools/audio.py <fore|getagrip|opentee|opentee2|oob> [jobs]
-Fore .hd/.bd (PS2 SShd bank): one wav per sample, NNN = tone sample order by BD address (index.txt lists set/note/addr).
+Fore .hd/.bd (PS2 SShd bank): one wav per sample at its true rate, NNN = tone sample order by BD address (index.txt lists
+set/note/addr/semitones/rate).
 Others: vgmstream-cli, all subsongs (NNN = subsong). Identical files are converted once and hard-linked.
 Failures -> out/audio/<game>/FAILED.txt"""
 import hashlib, os, shutil, struct, subprocess, sys, tempfile
@@ -50,13 +51,15 @@ def vag(data, rate=44100):
     return b"VAGp" + struct.pack(">IIII", 0x20, 0, len(data) + 16, rate) + bytes(12) + bytes(16) + bytes(16) + data
 
 
-def conv_fore(hd, bd, out, tmp):
-    h, b = open(hd, "rb").read(), open(bd, "rb").read()
+def fore_tones(h):
+    """{bd address: (set, note, semitones)} of an SShd bank's tone sets. The sound driver (SNDN2DRV.IRX, the same pitch
+    rule and 192-steps-per-octave table as HST's, HST-Remastered `snd::pitch`) plays a tone (note - root) semitones +
+    fine/16 from 44.1 kHz, and every voice sequence keys on the tone's own note, so that is the sample's true rate."""
     if h[12:16] != b"SShd":
         raise RuntimeError("not SShd")
     u16 = lambda o: struct.unpack_from("<H", h, o)[0]
     sec = struct.unpack_from("<i", h, 0x24)[0]
-    tones = {}  # addr -> (set, note)
+    tones = {}
     if sec >= 0:
         for s in range(u16(sec) + 1):
             so = sec + u16(sec + 2 + 2 * s)
@@ -65,7 +68,18 @@ def conv_fore(hd, bd, out, tmp):
                 o = so + 8 + (n - lo) * 16
                 if o + 16 > len(h):
                     break
-                tones.setdefault(u16(o + 4) * 8, (s, n))
+                # ponytail: first tone per sample wins (voice samples have one tone each)
+                tones.setdefault(u16(o + 4) * 8, (s, n, n - h[o + 2] + struct.unpack_from("b", h, o + 3)[0] / 16))
+    return tones
+
+
+def fore_rate(semitones):
+    return round(44100 * 2 ** (semitones / 12))
+
+
+def conv_fore(hd, bd, out, tmp):
+    h, b = open(hd, "rb").read(), open(bd, "rb").read()
+    tones = fore_tones(h)
     if not tones:
         raise RuntimeError("no tones")
     addrs = sorted(a for a in tones if a < len(b))
@@ -82,12 +96,34 @@ def conv_fore(hd, bd, out, tmp):
         if len(data) < 32:
             continue
         vp = os.path.join(tmp, "s.vag")
-        open(vp, "wb").write(vag(data))
+        s, n, st = tones[a]
+        open(vp, "wb").write(vag(data, fore_rate(st)))
         r = subprocess.run(["vgmstream-cli", "-i", "-o", f"{out}/{i:03d}.wav", vp], capture_output=True)
         if r.returncode:
             raise RuntimeError(f"sample {i} decode failed")
-        idx.append(f"{i:03d} set={tones[a][0]} note={tones[a][1]} addr=0x{a:x} bytes={len(data)}")
+        idx.append(f"{i:03d} set={s} note={n} addr=0x{a:x} bytes={len(data)} semitones={st:+.4f} rate={fore_rate(st)}")
     open(f"{out}/index.txt", "w").write("\n".join(idx) + "\n")
+
+
+def fore_rates(hd, out):
+    """resume: give wavs converted before fore_tones knew the pitch their true rate (index.txt rewritten with it)"""
+    tones = fore_tones(open(hd, "rb").read())
+    idx = []
+    for line in open(f"{out}/index.txt").read().split("\n"):
+        if line:
+            i, a = int(line[:3]), int(line.split("addr=")[1].split()[0], 16)
+            s, n, st = tones[a]
+            set_rate(f"{out}/{i:03d}.wav", fore_rate(st))
+            idx.append(f"{line} semitones={st:+.4f} rate={fore_rate(st)}")
+    open(f"{out}/index.txt", "w").write("\n".join(idx) + "\n")
+
+
+def set_rate(f, new):
+    """rewrite a 16-bit PCM wav header's sample rate (and byte rate)"""
+    with open(f, "r+b") as fh:
+        h = fh.read(36)
+        ch_, bits = struct.unpack_from("<H", h, 22)[0], struct.unpack_from("<H", h, 34)[0]
+        fh.seek(24); fh.write(struct.pack("<II", new, new * ch_ * bits // 8))
 
 
 def conv_vgm(p, out, tmp):
@@ -157,10 +193,7 @@ def sgxd_rates(path, out):
             continue
         rate = u(w + 0x10 + 0x38 * wv + 0xc)
         new = round(rate * 2 ** (s_ / 12))
-        with open(f, "r+b") as fh:
-            h = fh.read(36)
-            ch_, bits = struct.unpack_from("<H", h, 22)[0], struct.unpack_from("<H", h, 34)[0]
-            fh.seek(24); fh.write(struct.pack("<II", new, new * ch_ * bits // 8))
+        set_rate(f, new)
         lines.append(f"{wv + 1:03d}\t{s_:+.3f}\t{rate}->{new}")
     open(f"{out}/rates.txt", "w").write("\n".join(lines) + "\n")
 
@@ -174,6 +207,8 @@ def work(a):
             except Exception: pass
         if ext in ("sgd", "sgh") and not os.path.exists(f"{out}/rates.txt"):  # resume: apply true rates once
             sgxd_rates(p, out)
+        if ext == "hd" and "rate=" not in open(f"{out}/index.txt").read():  # resume: Fore true rates once
+            fore_rates(p, out)
         return rel, None
     tmp = tempfile.mkdtemp()
     try:

@@ -16,9 +16,13 @@ Rel paths are relative to `out/files/<game>` or `extracted/<game>`. Streams: `.s
 
 ## Fore (PS2) - `.hd/.bd` are NOT readable by vgmstream (`SShd` header, no IECSsreV wrapper)
 `audio.py` parses the SShd tone-set table (layout in HST-Remastered `crates/hst-data/src/snd.rs`), cuts each tone's sample out
-of the `.bd` (address = u16*8) and decodes PS-ADPCM via a temp VAGp + vgmstream, **assumed 44100 Hz** (root-note rate; per-tone
-pitch/fine tune ignored). One wav per distinct sample, `NNN` = order by BD address; `index.txt` in each bank dir gives
-`set= note= addr=`. Mapping of game events (program/key -> sequence -> tone) is NOT applied.
+of the `.bd` (address = u16*8) and decodes PS-ADPCM via a temp VAGp + vgmstream at the sample's **true rate**:
+44100 * 2^((note - root + fine/16) / 12). Fore's sound driver `MODULES2/SNDN2DRV.IRX` holds the same 192-steps-per-octave
+pitch table as HST's and packs root/note/fine/bend and scales by 441/480 the same way (HST-Remastered `snd::pitch`), and
+every voice sequence keys on the tone's own note. Voice tones sit at -6.625 (30.1 kHz), -12 (22.05), -7.25, -7.8125 ...
+semitones; most SE at -5.5 (32.1 kHz). Before 2026-10-11 everything was written at 44.1 kHz (voices 5-12 st too high).
+One wav per distinct sample, `NNN` = order by BD address; `index.txt` in each bank dir gives
+`set= note= addr= bytes= semitones= rate=`. Mapping of game events (program/key -> sequence -> tone) is NOT applied.
 - Character voice banks: `data/sound/voice/pc_game/<code>/` (3-letter code), inside `PC/PCNN/PCNNxxxx.XB/` (the NN dir
   gives the code -> index mapping; each PCNN holds exactly one code) and `SND/PC_GAME/<CODE>/SC_<CODE>NN.XB/`.
   Also `MENU/M_VOICE/MEPCNN.XB/.../me_pc/mepc_NNa|b.hd` (NN = index; char-select), `SND/PC_HONOR/HY_<CODE>N.XB` (`pc_honor`).
@@ -60,5 +64,5 @@ caddie `*_caNN`. `data/sound/voice/menu/me_pc.sgd` (all characters, menu). Cue n
 `pc00_20A`), id -> wave mapping not decoded. Streams `data/sound/stream/*.sgb` (music/ambience).
 
 ## Unresolved
-- Character names for all games. - Fore sample rate/pitch (44.1 kHz assumed) and event -> sample mapping. - Cue -> wave mapping for GaG is inferred.
+- Character names for all games. - Fore event -> sample mapping (and any EE-side pitch scale on a play call; voices assumed 1.0). - Cue -> wave mapping for GaG is inferred.
 - OOB / Open Tee cue name -> wave mapping not decoded.
