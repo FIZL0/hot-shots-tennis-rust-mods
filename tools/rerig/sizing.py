@@ -37,6 +37,9 @@ HEAD_SHARE = 0.5
 GLORIA = {"getagrip": 13, "oob": 16, "opentee2": 20}
 # games with no Gloria but another game's cast: Open Tee's ten are Open Tee 2's pc00–09 (same bodies and scales)
 SHARED = {"opentee": ("opentee2", range(10))}
+# games whose whole cast shares one skeleton: everyone takes Gloria's head factor, since the per-character one
+# measures hair too (Taiga's spiky hair got him 0.50 against Brad's 0.62, the smallest head on screen; user 2026-10-12)
+ONE_HEAD = {"getagrip"}
 
 
 def head_ratio(path):
@@ -187,4 +190,7 @@ def plan(game, models):
         f = min(1.0, 1 - share * (1 - want / r))
         why = f"head ratio {r:.3f}, {share:.3f} of the way to HST's {want:.3f}"
         heads[n] = (f, why)
+    if game in ONE_HEAD:
+        n = GLORIA[game]
+        heads = {m: (heads[n][0], f"one skeleton for the cast: pc{n:02d} Gloria's factor ({heads[n][1]})") for m in models}
     return sizes, heads, {"hst_m_per_cm": k, "game_factor": c, "game_factor_why": why_c, "head_ratio_hst": want, "head_share": share}

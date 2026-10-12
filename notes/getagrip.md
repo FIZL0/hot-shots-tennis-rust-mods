@@ -46,9 +46,9 @@ Racket_000 is the item named "Standard" (`CommonText_Racket.to`).
 All 15 PCs share one skeleton (Bip01 0.5786 m, chibi head ratio ~0.93 vs HST's 0.538). Height: the roster's
 height class (cm) × HST's metres per cm for the PC's sex (Parts_Body `PC_SEX` of Body_3NN: Emi, Wendy, Rosetta,
 Paola, Rachel, Norma, Gloria women), × one game factor 0.9706 that gives Gloria (170) HST's Gloria's Bip01 0.8554 m
-(M1l, 2026-10-12; was 0.9394, the tallest at 0.95 m): Emi 0.805, Ban 0.827, Taiga 0.827, Wendy 0.855, Brad 0.930, Rosetta 0.755, Mitsuzane 0.878, Paola 0.704, Fan 0.878, Rachel 0.855, Schneider 0.982, Norma 0.855, Suzuki 0.827, Gloria 0.855, Helghast 0.930. Heads shrink about the neck by a per-character factor,
-0.909 of the way from its own head ratio to HST's median (the share that makes Gloria 1.6547 m head to foot, as HST's
-Gloria), 0.49–0.64; `out/rerig/getagrip/sizing.json` has each. Donor: nearest Bip01 among HST's same-sex standard bodies.
+(M1l, 2026-10-12; was 0.9394, the tallest at 0.95 m): Emi 0.805, Ban 0.827, Taiga 0.827, Wendy 0.855, Brad 0.930, Rosetta 0.755, Mitsuzane 0.878, Paola 0.704, Fan 0.878, Rachel 0.855, Schneider 0.982, Norma 0.855, Suzuki 0.827, Gloria 0.855, Helghast 0.930. Heads shrink about the neck by one factor for the
+whole cast, Gloria's 0.6277 (0.909 of the way from her head ratio to HST's median: the share that makes her 1.6547 m
+head to foot, as HST's Gloria); per-character factors measured hair too and gave Taiga/Ban/Wendy ~0.50 (2026-10-12); `out/rerig/getagrip/sizing.json` has each. Donor: nearest Bip01 among HST's same-sex standard bodies.
 
 ## Stats → HST TParam (`tools/rerig/gag_stats.py`, run by `package.py`)
 `character.csv` (`Pc_NN_00` rows, in each mod's `source_stats`) is mapped onto `params.override` **by rank**: a
