@@ -130,6 +130,21 @@ the loader shows the texture of the strongest channel above 0.5 (on a tie the fi
 channel stays neutral; other keys are ignored. The game's own per-motion swaps are in `out/anims/getagrip/face_tracks.json` if a mod
 wants them exactly.
 
+### 4c. Eyes (optional)
+
+HST moves its eyes by scrolling the eye texture: a motion's `.UVA` keys a (u, v) offset on the model's eye node
+(pc00 `s_me`, pc01 `eye`, …), added to the UVs of every part skinned to that node. A mod's eyes follow the donor's
+eye track in either of two ways:
+- keep the donor's eye node as a joint (same name) and skin the eye mesh to it (what a rerigged HST model does), or
+- list the eye materials in `mod.json`: `"eyes": ["<glTF material>", …]`; every primitive with one of them takes the
+  donor's eye offset, whatever its joints.
+
+The offsets are the donor's, in UV units (pc00's inspect pose holds (−0.02, 0.02)), so lay the eye texture out for
+them: the iris drawn where the shifted UVs land, with margin (wrap or clamp as the texture sampler says). Donors
+whose track names no node of their own model (pc07) or that have none (pc13) never move their eyes, nor do their
+mods'. Without either, the eyes stay still (the morph or texture face still plays). The eye track plays on the
+select's inspect pose and its R2/L2 reactions.
+
 ## 5. Voice
 
 HST plays per-character voice **programs** (each a set of keys = alternative takes) from
@@ -190,9 +205,10 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
   `tools/rerig/motions.py` retargets a source game's motions (per-joint world rotation change from the shared bind pose; root
   from the pelvis, scaled by hip height; intro then loop played at 60 Hz to fill the donor's frames).
 - `face`: `morph` (§4a channels), `texture` (§4b, needs `face.json`) or `none` (no face animation).
+- `eyes` (optional): the glTF material names of the eyes, moved by the donor's `.UVA` eye track (§4c).
 - The HST loader (`crates/hst/src/mods.rs`) rejects a mod with `<path>: <reason>` when the manifest is off
   (`standard` ≠ 1, a missing costume, `donor`/`base`/`ai_row` outside 0–13, `hand` not right/left, an `override`
-  key that is no TParam column, a `motions` file that is missing, names no motion the donor has or does not span the donor's frames) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
+  key that is no TParam column, an `eyes` that is not a list of names, a `motions` file that is missing, names no motion the donor has or does not span the donor's frames) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
   must be embedded in the `.glb`; it skips glTF accessor validation (older rerig output lacks POSITION min/max).
 - Optional, informational: `donor_why`, `size_why` (how the height and head were set), `racket_why`, `source_stats` (the source game's raw stats), `params_why` (per overridden column: source stat, value, rank → HST value), `ai_row_why`, `motions_why`, `voice_counts`, and `todo`
   (what a human or agent still has to decide). A loader ignores unknown keys.
