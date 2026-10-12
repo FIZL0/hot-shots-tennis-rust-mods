@@ -70,7 +70,7 @@ removed): `Bip01` (root) › `Bip01Pelvis` › `Bip01Spine` › `Spine1` › `Sp
   Grip's factors run 0.72–0.80, in `out/rerig/getagrip/sizing.json` and each mod's `size_why`. The donor is then the nearest
   `Bip01` height among HST's same-sex standard bodies.
 - **Extra joints are allowed** (hair, skirts, earrings, accessories) anywhere below the core. HST motions don't
-  drive them; they follow their parent, plus the sway of §3a.
+  drive them; they follow their parent, plus the sway of §3a or the spring of §3b.
 
 ### 3a. Sway (optional)
 
@@ -78,6 +78,21 @@ HST's hair, ribbons and skirts sway by `.NOI` deformers. `mesh.extras.noise = [{
 "amp": [x, y, z]}, …]` lists a mesh's deformers; the vertex attribute `_HST_NOISE` (VEC2 float) gives each
 vertex `[deformer index, share]` (share 0 = still). `hst-gltf` exports the disc's; `rerig.py` keeps them.
 - `Racket`: where the racket's grip sits; the racket mesh is rigid in that joint's space.
+
+### 3b. Spring bones (optional)
+
+For sources whose hair simulates as bone chains (Out of Bounds) rather than `.NOI` noise. A joint node with
+`extras.spring = {"limit", "stiffness", "gravity", "damping"}` is a point mass at that joint, hung on its parent; HST
+steps it at 60 Hz after the pose and turns the **parent** to point at it:
+
+- `limit` — degrees the mass may swing off the posed direction (0 = rigid);
+- `stiffness` — share of the gap to the posed position pulled back each step (0..1);
+- `gravity` — m/s², straight down in the world;
+- `damping` — share of the last step's motion kept (0..1).
+
+Missing keys default to 30, 0.5, 4.9, 0.83. A spring joint whose parent has none is its chain's **anchor**: pinned,
+so a chain never turns the core joint it hangs on. Other keys are ignored (`oob2gltf` keeps the source's raw 16
+words as `oob`). `rerig.py` keeps `extras.spring` on every joint it keeps. Visual only: the sim never sees it.
 
 ## 4. Face
 

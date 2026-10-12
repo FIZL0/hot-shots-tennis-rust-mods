@@ -35,6 +35,7 @@ class Rem:
                                        raw=i, slots=list(i[36:42]), nslots=i[35]))
         self.mesh_start = o
         self.nodes, self.node_start = self._find_nodes()
+        self.prims, self.springs = self._dynamics()
         self.meshes = self._find_meshes(self.mesh_start, self.node_start)
         self._find_morphs()
 
@@ -83,6 +84,33 @@ class Rem:
                 stack[-1][1] -= 1
             stack.append([i, n['nchild']])
         return nodes, k
+
+    def _dynamics(self):
+        """The records after the node tree, to EOF (notes/oob.md *Dynamics*): collision primitives and spring
+        chains, interleaved. A primitive (0x88 bytes): u32 shape (0 ellipsoid, 1/2 the other two), u32 node, f32
+        (1.0 on ellipsoids), 15 zero words, f32[16] row-vector matrix (scaled axes = radii, row 3 = centre). A chain:
+        u32 n, 15 zero words, then n x (f32[16] params, u32 len + bone name). A primitive's node word is never 0, a
+        chain header's words after n always are; that is what tells them apart."""
+        d = self.d
+        _, o = self._parse_nodes(self.node_start)
+        prims, springs = [], []
+        while o + 0x40 <= len(d):
+            w = struct.unpack('>16I', d[o:o + 0x40])
+            if any(w[1:]):
+                prims.append(dict(shape=w[0], node=w[1], scale=struct.unpack('>f', d[o + 8:o + 12])[0],
+                                  matrix=np.array(struct.unpack('>16f', d[o + 0x48:o + 0x88])).reshape(4, 4)))
+                o += 0x88
+                continue
+            o += 0x40
+            chain = []
+            for _ in range(w[0]):
+                params = struct.unpack('>16f', d[o:o + 64])
+                name, o = self.pstr(o + 64)
+                chain.append((name, params))
+            springs.append(chain)
+        if o != len(d):
+            raise ValueError(f'dynamics records end at {o:#x}, file at {len(d):#x}')
+        return prims, springs
 
     # ---- face morph targets ---------------------------------------------------------------------------------
     def _targets(self, m):

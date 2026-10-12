@@ -357,6 +357,8 @@ def rerig(src_path, out_path, donor=None, motions=None, height=None, head=1.0):
         k = out.node(name=name, translation=[float(x) for x in loc[:3, 3]], rotation=[float(x) for x in mat_quat(loc[:3, :3] / sc)],
                      scale=None if np.allclose(sc, 1, atol=1e-4) else [float(x) for x in sc], children=[])
         out.g["nodes"][root if pn is None else pn]["children"].append(k)
+        if "spring" in nodes[i].get("extras", {}):  # spring bones (standard §3b); limit/stiffness/damping are unitless
+            out.g["nodes"][k]["extras"] = {"spring": nodes[i]["extras"]["spring"]}
         src_new[i] = k
         M[k] = Mi
         return k

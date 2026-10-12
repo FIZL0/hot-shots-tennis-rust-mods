@@ -82,7 +82,7 @@ Tennis-useful: `chr_*_lp`, `st_*` (idle), `rslt_win/vict/loss/clap/wait`, `ga_*`
                    +35*4 i32 slot count, +36*4 i32[6] slots (texobj index or -1):
                    slot0 colour map, slot1 `_o` (8-bit alpha-only), slot2 `_s` (8-bit), slot4 `_n` normal map }
      ... mesh blocks, cloth/spring data, morph blocks (interleaved, see below) ...
-     node tree (starts at "\0\0\0\x08SMF2Root"), then dynamics (spring-bone) records to EOF
+     node tree (starts at "\0\0\0\x08SMF2Root"), then dynamics records to EOF (*Dynamics* below)
 ```
 
 Material names carry flags: `__ds` = double-sided, `__ShadowF` = (shadow-related). `_o` = 8-bit occlusion-ish mask,
@@ -111,6 +111,51 @@ i32 child count`. Matrices are row-vector (v' = v·M, translation in row 3); `wo
 right-handed, same as glTF, so no axis change. Rig = 3ds Max Biped (`Bip01*`, 67 bones incl. `Nub`s and
 `ForearmRoll`) under `SMF2Root → pcNN_Reference`, plus 3–53 per-character extra bones (hair `pony*`, earrings
 `*_ering*`, cloth helpers `*__ClothSphere`, `iki__Breath__ref`, props). Node counts: 72–122.
+
+### Dynamics (after the node tree) — confidence: layout high (all 102 `.rem` parse exactly to EOF), meanings guessed
+
+A stream of items, each starting with a 16-word (0x40-byte) header, collision primitives and spring chains
+interleaved (`rem.py: _dynamics`):
+
+- **Collision primitive** (0x88 bytes): `u32 shape` (0 = ellipsoid; 1, 2 the program's other two classes, box and
+  cylinder by its RTTI names `DSClothPrimBox`/`DSClothPrimCylinder`, which is which unchecked), `u32 node index`,
+  `f32` (1.0 on ellipsoids, 0 otherwise), 13 zero words, then `f32[16]` row-vector matrix (scaled axes = radii,
+  row 3 = centre) in the node's space. 110 ellipsoids, 2 of each other kind over the c00 models.
+- **Spring chain**: `u32 n`, 15 zero words, then `n × { f32[16] params; str bone }`. Told apart from a primitive
+  by words 1..15 all being zero. A chain's bones are a parent→child path; its last bone is often a leaf, so each
+  record is a point mass at its bone and the bone's parent turns toward it. The first record (stiffness 1, limit
+  0–5) is the anchor.
+
+Params over every c00 chain (meaning read from the values, not from the program's code):
+
+| word | values | taken as |
+|---|---|---|
+| 0 | 0 … 170, rising down a chain (scarf ends 150–170) | swing limit, degrees |
+| 1 | 1.0 at anchors, falling to 0.1 | stiffness (pull back to the pose) |
+| 2 | 9.8 always | gravity |
+| 3 | 0.4 … 3.0 (0.5 mostly, scarf 3.0) | gravity scale |
+| 4 | 0 … 30, rising down chains | ? (a second angle?) |
+| 5 | 500 always | ? |
+| 6 | 1 or 0.5 | ? |
+| 7 | 0.7 … 0.92 (0.83 mostly) | damping (motion kept per frame) |
+| 8 | 0 … 1.2 | ? |
+| 10 | 0.2 or 0.5 | ? |
+| 11 | 0.8 always | ? |
+| 9, 12–15 | 0 | unused |
+
+`export.py` writes standard §3b `extras.spring = {limit: w0, stiffness: w1, gravity: w2·w3, damping: w7, oob:
+all 16}` on each chain bone; HST's loader steps them as a plain mass-spring (`crates/hst/src/spring.rs`).
+
+Chains per character (c00; other costumes of a character match): pc00 Jasmine — earrings R (2) and L (4), three
+ponytail chains (6, 4, 7); pc02 Sophie — `L/R_kami` (11 each), four ribbons (4 each); pc04 Sasha — ears (3, 3);
+pc05 Fernando — one 8-joint chain; pc06 Sonia — braids (6, 6), fringe (6), ears (4, 4), ribbon (4, 4); pc10
+Kate — hair (2, 2); pc11 Dino — scarf `mafuL/R` (6, 6); pc12 Anya — fringe (7), earring (3); pc13 Suzuki — one
+2-joint chain; pc15 Alex — earrings (4, 4), hair (2); pc16 Gloria — eight short chains (2–4). pc01, 03, 07, 08,
+09, 14: none.
+
+The program (`HSG5PS3`'s decrypted ELF) runs these through a cloth library ("REClothSim", "REClothPrim",
+"REClothMesh" source names) and `DSBone`/`DSCloth`/`DSClothPrim*` classes; the solver is AltiVec-vectorised and
+was not ported.
 
 ### `.mot` skeletal motion — confidence: high
 
@@ -241,7 +286,9 @@ inserted ForearmRoll change the local frames; drop or merge the Nub/Roll bones, 
 
 - `.uva` eye UV offsets are exported as extras only (no KHR_texture_transform); which material/texobj they drive
   (`eye__ID`) has to be wired up by the consumer.
-- Cloth/spring-bone setup data (hair, skirts, earrings simulate in-game); exported as plain skinned bones in bind pose.
+- Spring chains are exported (§3b) but simulated by HST's own mass-spring, not the game's solver; words 4–6, 8,
+  10, 11 unused. Collision primitives are parsed, not exported (hair can pass through the body). The cloth meshes
+  between mesh blocks (`skirt`, `uwagi`, `hane1`, `h_mimi`) are not decoded: skirts and jackets stay rigid.
 - LOD/`_l` variants, clubs (`ueno/club`), caddies (`kikkawa/caddie`), avatars' bodies.
 - Tick rate 4800/s is the 3ds Max default and gives plausible durations, but is not confirmed from the executable.
 - `ad_*`/`st_*` pelvis translation includes the in-game placement offset relative to the ball (e.g. x −0.58,

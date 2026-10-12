@@ -52,6 +52,18 @@ def add_skeleton(b, nodes):
     return base
 
 
+def add_springs(b, root, r):
+    """The .rem's spring chains as `extras.spring` on their joints (standard §3b). Which of the 16 words is what is
+    read from the data, not the game's code (notes/oob.md *Dynamics*): word 0 the swing limit in degrees, 1 the pull
+    back to the animated pose, 2 x 3 gravity, 7 the velocity kept per frame. All 16 are kept as `oob`."""
+    names = [n['name'] for n in r.nodes]
+    for chain in r.springs:
+        for name, p in chain:
+            p = [round(x, 6) for x in p]
+            b.g['nodes'][root + names.index(name)]['extras'] = {'spring': {
+                'limit': p[0], 'stiffness': p[1], 'gravity': round(p[2] * p[3], 6), 'damping': p[7], 'oob': p}}
+
+
 def png_bytes(im):
     f = io.BytesIO()
     im.save(f, 'PNG', optimize=False)
@@ -75,6 +87,7 @@ def export_model(pc, costume, out_path):
     r = Rem(open(paths.rem_path(pc, costume), 'rb').read())
     b = glb.Builder()
     root = add_skeleton(b, r.nodes)
+    add_springs(b, root, r)
     ibm = np.stack([n['inv'] for n in r.nodes])
     ibm[:, :, 3] = [0, 0, 0, 1]  # exact affine (the files carry 1.0000001)
     ibm = ibm.astype(np.float32).reshape(-1, 16)  # a row-vector matrix flattened row-major == glTF column-major

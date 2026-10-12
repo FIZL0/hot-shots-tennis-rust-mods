@@ -86,5 +86,14 @@ only a `face` track; the engine evidently substitutes the wearer's own `<stem>_f
 ignored (Helghast tracks name `fourteen_face1..8`, which don't exist). `face/NN/faceNN.tat` (model dir) is a
 1/15 s cycle through all textures (preview/preload, unused for expressions).
 
+## No hair dynamics (Get a Grip, Open Tee 1/2) — H
+
+None of the three has spring bones or cloth. Character skeletons are Bip01 plus attachment nodes only
+(`Bip01Head9pony`, `Bip01 Head&ribbon01`): hair, ponytails, ribbons and skirts are rigid meshes on those. A scan of
+every `.i3m` track name (Get a Grip 7496 files, Open Tee 747, Open Tee 2 2007) for `pony`, `ribbon`, `hair`,
+`kami`, `ering`, `skirt` finds only court `chair` props; the non-Bip01 tracks are locators, cameras, court
+gimmicks, props (`Bone##` in Open Tee's face-cutscene props) and menu figures. So a rigid ponytail on a PSP mod is
+the source's. (The Get a Grip EBOOT is still encrypted, so the program itself was not read.)
+
 ## Other
 `.xb` containers as HST. `adhoc/` dirs hold lower-LOD copies (no fingers) for ad-hoc multiplayer.
