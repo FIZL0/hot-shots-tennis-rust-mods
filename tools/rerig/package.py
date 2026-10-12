@@ -149,7 +149,7 @@ def golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type):
             plan.append((hst_name, seq, motions.ani_frames(ani) if os.path.exists(ani) else None, PIN.get(game, False) or pin))
         motions.make(costumes[0], src, os.path.join(mod, "motions.glb"), plan)
         manifest["motions"] = "motions.glb"
-        manifest["motions_why"] = {k: f"{whys.get(k, '')}; {' then '.join(seq)}{', root held on its spot' if pin else ''}, played at 60 Hz to fill the donor's clip ({fr} frames)"
+        manifest["motions_why"] = {k: f"{whys.get(k, '')}; {' then '.join(seq)}{', root held on its spot' if pin else ''}, played at 60 Hz, its own length and at least the donor's clip ({fr} frames)"
                                    for k, seq, fr, pin in plan}
     sz = os.path.join(ROOT, f"out/rerig/{game}/sizing.json")
     if os.path.exists(sz):
@@ -256,7 +256,7 @@ def main():
                         clips.append((hst_name, [f"re_pc{n:02d}_{src}", f"re_pc{n:02d}_{src}_loop"], motions.ani_frames(ani) if os.path.exists(ani) else None))
                     motions.make(costumes[0], react, os.path.join(mod, "motions.glb"), clips)
                     manifest["motions"] = "motions.glb"
-                    manifest["motions_why"] = {k: f"Get a Grip re_pc{n:02d}_{v} then its _loop, played at 60 Hz to fill the donor's clip ({f} frames)"
+                    manifest["motions_why"] = {k: f"Get a Grip re_pc{n:02d}_{v} then its _loop, played at 60 Hz, its own length and at least the donor's clip ({f} frames)"
                                                for (k, v), (_, _, f) in zip(GAG_REACT.items(), clips)}
                 sz = os.path.join(ROOT, "out/rerig/getagrip/sizing.json")
                 if os.path.exists(sz):

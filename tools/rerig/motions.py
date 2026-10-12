@@ -7,8 +7,8 @@ Per joint the source's world rotation change from its bind pose is applied to th
 rotation under the mod's parent joint. Joints with no source (Spine2, the finger segments, the racket) keep their rest
 local. The root (`Bip01`) follows the source pelvis's offset from its bind spot, scaled by the hips' height ratio; the
 source's own locators (`ROOTNODE`, `pc_locator`) are left out, since the game moves the player itself. `@FRAMES` is the
-HST clip's length at 60 Hz: the source plays at its own speed (60 Hz), the loop repeating to fill it, and only a
-source longer than that is squeezed. HST then spreads the keys over the donor clip's length (mods.rs `own_motions`).
+donor clip's length at 60 Hz: the source plays at its own speed (60 Hz), the loop repeating to fill it; a longer
+intro plays whole, past the donor's end (HST draws it on its own clock: mods.rs `own_motions`).
 A trailing `!` (`re_gu=ga_pc00_bi_r00!@40`) pins the root's horizontal position at rest: golf celebrations that walk
 off the spot stay where the player stands (only the height follows the pelvis).
 """
@@ -112,12 +112,13 @@ def make(costume, src, out, clips):
     for name, seq, frames, *rest in clips:
         pin = bool(rest and rest[0])
         lens = [length(sg, sb, anims[s]) for s in seq]
-        n = frames if frames else int(round(sum(lens) * FPS))
+        # at least the donor's frames, and the whole intro at its own speed (never squeezed: M1q, golf reactions ran
+        # up to 3x fast squeezed into HST's shorter clips)
+        n = max(frames, int(round(lens[0] * FPS))) if frames else int(round(sum(lens) * FPS))
         # frame f of the HST clip -> (source anim, time): the intro, then the loop over and over
-        squeeze = lens[0] * FPS / n if lens[0] * FPS > n else 1.0
         plan = []
         for f in range(n + 1):
-            t = f * squeeze / FPS
+            t = f / FPS
             if t <= lens[0] or len(seq) == 1:
                 plan.append((seq[0], min(t, lens[0])))
             else:
