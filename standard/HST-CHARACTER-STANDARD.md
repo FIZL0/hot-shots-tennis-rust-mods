@@ -166,13 +166,13 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
   spreads its keys linearly over the donor clip's length, so time it to that length; gameplay (clip lengths, the
   arm table, serve toss, body hits, root paths, cut-away cameras) keeps reading the donor's clip, and a match
   plays out exactly as without it. Unkeyed joints hold their rest; the left-hand mirror applies as to the donor's.
+  One file serves every costume: a key on a joint a costume lacks is skipped for that costume.
   `tools/rerig/motions.py` retargets a source game's motions (per-joint world rotation change from the shared bind pose; root
   from the pelvis, scaled by hip height; intro then loop played at 60 Hz to fill the donor's frames).
 - `face`: `morph` (§4a channels), `texture` (§4b, needs `face.json`) or `none` (no face animation).
 - The HST loader (`crates/hst/src/mods.rs`) rejects a mod with `<path>: <reason>` when the manifest is off
   (`standard` ≠ 1, a missing costume, `donor`/`base`/`ai_row` outside 0–13, `hand` not right/left, an `override`
-  key that is no TParam column, a `motions` file that is missing, names no motion the donor has, keys a
-  non-joint or does not span the donor's frames) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
+  key that is no TParam column, a `motions` file that is missing, names no motion the donor has or does not span the donor's frames) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
   must be embedded in the `.glb`; it skips glTF accessor validation (older rerig output lacks POSITION min/max).
 - Optional, informational: `donor_why`, `size_why` (how the height and head were set), `racket_why`, `source_stats` (the source game's raw stats), `params_why` (per overridden column: source stat, value, rank → HST value), `ai_row_why`, `motions_why`, `voice_counts`, and `todo`
   (what a human or agent still has to decide). A loader ignores unknown keys.
