@@ -192,6 +192,11 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
 - `ai_row`: the AIParam.csv row (and second-toss pick) the computer plays this character with; may differ from
   `donor` (e.g. the HST character of the same タイプ while the body donor is the nearest height).
 - `hand`: `right`/`left` (the game mirrors left-handers, like Carol and Will).
+  The racket goes in the hand that wears a glove: golfers wear theirs on the left, so a gloved golf character is
+  `left`. The game draws a left-hander mirrored (whole model, x scale −1), which would move the glove to the other
+  hand, so such a mod ships its costumes pre-mirrored (`tools/rerig/mirror.py`; `package.py` does it when it finds the
+  glove): the game's mirror then shows the source's own look, glove and racket in the left hand. Say why in
+  `hand_why`.
 - `upscale` (optional, default `true`): `false` for mods whose textures are already high-res (e.g. Hot Shots
   Golf Fore! players): `upscale_mods.py` skips the mod (the game still draws any `textures/upscaled/` it has).
 - `motions` (optional): a `.glb` in the folder whose animations replace the donor's clips **on screen only**.

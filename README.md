@@ -131,6 +131,6 @@ All the detail is in `standard/HST-CHARACTER-STANDARD.md`. For how to rerig a ch
   heuristic), each game's own point/set reactions as `motions.glb`, Get a Grip's standard racket, and HST-size
   scaling with a head shrink. Per-game data modules: `tools/rerig/{gag_stats,fore_data,oob_data,opentee_data}.py`.
 - **Still open** (also listed per character in each `mod.json` `todo`):
-  - confirming handedness;
+  - confirming handedness (golf mods with a left glove are already left-handed and pre-mirrored, `tools/rerig/mirror.py`);
 
 Known gaps for each game are in `notes/<game>.md`.

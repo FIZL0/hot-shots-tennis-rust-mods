@@ -8,7 +8,9 @@ source stats ranked onto TParam as params.override (gag_stats.overrides; needs H
 ../HST-Remastered/context/xb) with ai_row by play style where the game has one; the game's own point/set reactions
 as motions.glb (motions.py; needs ../HST-Remastered/context/xb/PCANI for the donor clip lengths; golf roots held,
 PIN); and Get a Grip's Racket_000 (racket.py, carried from GaG Emi's grip for the golf games). Get a Grip's data is
-in gag_stats.py, the golf games' in fore_data.py / oob_data.py / opentee_data.py. Left for a human: handedness.
+in gag_stats.py, the golf games' in fore_data.py / oob_data.py / opentee_data.py. Handedness: a golf mod whose
+costumes wear a glove on the left hand is left-handed (glove hand = racket hand, standard §6 `hand`) and ships its
+costumes pre-mirrored (mirror.py) instead of linked; the rest stay right-handed, left for a human to confirm.
 """
 import glob
 import json
@@ -27,6 +29,7 @@ import racket  # noqa: E402
 import sizing  # noqa: E402
 import gag_stats as gagmap  # noqa: E402
 import motions  # noqa: E402
+import mirror  # noqa: E402
 
 GAME_NAME = {"fore": "Hot Shots Golf Fore! (PS2)", "oob": "Hot Shots Golf: Out of Bounds (PS3)",
              "getagrip": "Hot Shots Tennis: Get a Grip (PSP)", "opentee": "Hot Shots Golf: Open Tee (PSP)",
@@ -212,8 +215,14 @@ def main():
             n = int(m.group(1))
             name = m.group(2) or os.path.basename(costumes[0]).split("_")[1]
             mod = os.path.join(ROOT, f"out/mods/{game}_pc{n:02d}_{name}")
+            lefty, hand_why = False, None
+            if game in PIN:  # golf: the glove hand holds the racket
+                lefty, hand_why, _ = mirror.gloved(f"{game}_pc{n:02d}_{name}", costumes)
             for c in costumes:
-                link(c, os.path.join(mod, "model", os.path.basename(c)))
+                if lefty:
+                    mirror.mirror(c, os.path.join(mod, "model", os.path.basename(c)))
+                else:
+                    link(c, os.path.join(mod, "model", os.path.basename(c)))
             g, b = glb.read(costumes[0])
             h = -binds(g, b)[0]["Bip01"][1, 3]
             pool, why = hst, "nearest Bip01 height"
@@ -225,8 +234,10 @@ def main():
                         "source": f"{GAME_NAME[game]} pc{n:02d}",
                         "costumes": [f"model/{os.path.basename(c)}" for c in costumes],
                         "donor": donor["index"], "donor_why": f"{why} ({h:.3f} m vs {donor['name']} {donor['bip01_height']} m)",
-                        "hand": "right", "params": {"base": donor["index"], "override": {}},
+                        "hand": "left" if lefty else "right", "params": {"base": donor["index"], "override": {}},
                         "ai_row": donor["index"], "face": "morph", "voice": None, "todo": []}
+            if hand_why:
+                manifest["hand_why"] = hand_why
             if game == "fore":
                 # already high-res: HST-Remastered's upscale_mods.py leaves it alone
                 manifest["upscale"] = False
@@ -280,7 +291,8 @@ def main():
                 manifest["todo"] += ["check voice programs 1/2 by ear (st_ji/st_nb)"]
             else:
                 golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type)
-            manifest["todo"].append("confirm handedness")
+            if not lefty:
+                manifest["todo"].append("confirm handedness")
             json.dump(manifest, open(os.path.join(mod, "mod.json"), "w"), indent=1, ensure_ascii=False)
             made += 1
     print(made, "mods in out/mods/")
