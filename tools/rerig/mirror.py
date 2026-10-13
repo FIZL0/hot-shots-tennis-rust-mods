@@ -184,8 +184,11 @@ def mirror(src, dst):
             copy(p)
         Bk = S4 @ B[k] @ S4
         local = np.linalg.inv(B[twin[p]]) @ Bk
+        sc = np.linalg.norm(local[:3, :3], axis=0)  # a scaled joint (oob pc01's head tape) keeps its scale
         node = {"name": nodes[joints[k]]["name"] + "_mirror", "translation": [float(x) for x in local[:3, 3]],
-                "rotation": [float(x) for x in mat_quat(local[:3, :3])]}
+                "rotation": [float(x) for x in mat_quat(local[:3, :3] / sc)]}
+        if not np.allclose(sc, 1, atol=1e-6):
+            node["scale"] = [float(x) for x in sc]
         if "extras" in nodes[joints[k]]:
             node["extras"] = json.loads(json.dumps(nodes[joints[k]]["extras"]))
             # its vertices all move to the copy: the original would swing with nothing on it
