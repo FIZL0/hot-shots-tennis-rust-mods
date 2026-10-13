@@ -152,7 +152,9 @@ def mirror(src, dst):
     stats = {"paired": 0, "copied": 0, "midline": 0}
     for k, n in enumerate(names):  # core and name-swapped pairs
         t = _twin_name(n)
-        if abs(P[k, 0]) < 0.005 and (t is None or t not in idx):
+        # midline only with every ancestor on it too: fore pc09's lace joints sit at the origin under the calves, so
+        # alone at x = 0 they twinned themselves and each boot's laces went to the other leg (HST-Remastered B241)
+        if all(abs(P[a, 0]) < 0.005 for a in _chain(k, jpar)) and (t is None or t not in idx):
             twin[k] = k
             stats["midline"] += 1
         elif t in idx and np.linalg.norm(S3 @ P[k] - P[idx[t]]) < (0.05 if n.startswith("Bip01") else tol):
