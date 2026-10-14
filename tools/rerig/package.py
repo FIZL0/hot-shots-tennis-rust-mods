@@ -293,6 +293,8 @@ def main():
                 golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type)
             if not lefty:
                 manifest["todo"].append("confirm handedness")
+            if tp:
+                gagmap.expert(manifest, tp, hst)
             json.dump(manifest, open(os.path.join(mod, "mod.json"), "w"), indent=1, ensure_ascii=False)
             made += 1
     print(made, "mods in out/mods/")

@@ -30,6 +30,7 @@ import glb  # noqa: E402
 import rerig  # noqa: E402
 from check import check  # noqa: E402
 from package import link  # noqa: E402
+import gag_stats  # noqa: E402
 
 # n -> (slug, name as the game's umpire select names it, sex, donor, why). Sex from the model's look.
 UMPIRES = {
@@ -254,6 +255,8 @@ def main():
                     "ai_row": donor["index"], "ai_row_why": "no play style: the donor's AIParam row",
                     "face": "none", "voice": "voice/", "voice_counts": counts, "voice_why": VOICE_WHY,
                     "todo": ["motions are the donor's; the umpire's own chair clips (_h/_r/_l) are seated and not used"]}
+        if gag_stats.find_tparam(ROOT):
+            gag_stats.expert(manifest, gag_stats.find_tparam(ROOT), chars)
         json.dump(manifest, open(os.path.join(mod, "mod.json"), "w"), indent=1, ensure_ascii=False)
         print(f"{mod}: Bip01 {h:.3f} m, donor {donor['name']}")
 
