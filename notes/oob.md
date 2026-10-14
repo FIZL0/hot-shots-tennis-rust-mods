@@ -336,21 +336,24 @@ There is no golf data for speed, stamina, agility or reach.
   - Victory Pose = sg (0,29) (0,30) (0,31) (0,33).
   - Reaction = (0,10) (0,28) (0,40) (0,19).
   - Taunts = `ga_ya` lines 140–150 (yaji).
-  - (0,29)–(0,34) and (1,9)–(1,14) are the six hole-result celebrations, two takes each. They are multi-part cues with delays timed to the `ga_*` clips. pc02 and pc10 name one of them Rare_Gattsu.
+  - (0,29)–(0,34) and (1,9)–(1,14) are the six hole-result reactions, two takes each (not all happy: (0,29)/(1,9) is the disaster, see "Voice lines"). They are multi-part cues with delays timed to the `ga_*` clips. pc02 and pc10 name one of them Rare_Gattsu.
 - The rest is unlabelled: no event table exists outside the encrypted HSG5PS3.self. The other banks:
   - `ga_ev` is a subset of sg.
   - `ga_vs` holds lines 70–84 (versus).
   - `ga_pz` holds lines 100–134 (results/prize).
   - None of them is signed (won or lost).
 
-| HST program | OOB source | basis |
+| HST program | OOB source (sg slots) | what the lines say |
 |---|---|---|
-| 0 strong shot, 3 dive | sg (0,6) (1,3) (0,2) | shortest lines in every bank (~0.1 s): duration heuristic |
-| 1 good shot | profile "Reaction" set | unlabelled reactions, heuristic |
-| 4 whiff | sg (0,38) (0,13) | next shortest: duration heuristic |
-| 7 point won | profile "Victory Pose" set (4) | data |
-| 9 set won | second takes (1,9)–(1,13) + rare guts (0,32) | data (same family) |
-| 2, 6, 8, 10 | — | no mis-hit, partner call or losing line is identifiable |
+| 0 strong shot, 3 dive | (0,6) (1,3) | effort grunts: "Hah!", "Hup!" |
+| 1 good stroke | (0,8) (0,7) (0,9) (0,10) | shot shouts: "Hya!", "Go!", "Fly!", "That's it!" |
+| 2 mis-hit | (0,12) (0,14) (1,15) | "Oops!", "Whoops!", "No!" |
+| 4 whiff | (0,38) (0,13) | "Huh?", "What?" |
+| 7 point won | (0,28) (0,37) (1,8) (0,27) | holed putt: "Yes!", "It's in!", "I did it!" |
+| 8 point lost | (0,29) (0,40) (0,22) (0,18) (0,23) (0,16) | the disaster hole result + missed shot: "No! That was awful!", "Aw, shoot!", "Oh no!" |
+| 9 set won | (0,31) (0,33) (1,11) (1,13) (0,30) (1,10) | big-win and par hole results: "I'm the best!", "Yes! I did it!" |
+| 10 set lost | (1,9) (0,29) (0,25) (0,24) | the disaster's second take + resigned: "Oh no! It's not there!", "Next time!" |
+| 6 | — | no partner call in golf |
 
 For each cue the longest note's wave is used, because celebrations play 2–17 fragments.
 
@@ -370,3 +373,38 @@ For each cue the longest note's wave is used, because celebrations play 2–17 f
 profile2 height (ft/in → cm) × HST's metres per cm by sex, × game factor 1.0123 that gives pc16 Gloria (5'4") HST's
 Gloria's Bip01 0.8554 m (M1l, 2026-10-12; was 0.8264). Her head-to-foot is then 1.617 m vs HST Gloria's 1.655 m (her own
 proportions; heads are never grown). LJ (7'1") comes out at Bip01 1.164 m, above HST's 0.95 m: relative heights are kept.
+
+## Voice lines (HST-Remastered B209, 2026-10-13)
+Every sg cue of all 17 was transcribed with faster-whisper small (English, the longest note's wave and, for multi-part
+cues, all parts joined); the per-slot table above comes from reading those transcripts side by side: each slot says
+the same thing in every actor's words. The transcripts are game data (never committed); rerun with
+`faster_whisper` over `voices(pc)`'s `_bank(pc, "sg")` cues to regenerate them.
+
+What moved, for everyone:
+- The old "Victory Pose" set was not all celebrations: (0,29) is the *disaster* hole result (Anya: "Hmm, useless
+  rubbish.", Jasmine: "No! That was awful!"), and its second take (1,9) was in program 9 (set won). Both now play on
+  lost points (8, 10); 7 got the holed-putt lines, 9 only the winning results.
+- The profile's "Reaction" set (old program 1) mixed signs: (0,40) "Aw, shoot!" and (0,19) "I messed up." were
+  played on good strokes; they are now in 8 or dropped; program 1 is the shot shouts.
+- (0,2) ("Okay.", "Let's go!": a pre-shot line, not a grunt) left programs 0/3.
+- New: 2 mis-hit, 8 point lost and 10 set lost were empty (the donor's disc takes played) and now have the
+  character's own lines.
+
+Per character, takes skipped because that actor's line says something else (`SKIP` in oob_data.py):
+
+| pc | skipped | line |
+|---|---|---|
+| 00 Jasmine | (0,7) (0,37) (0,40) | "Huh?", "Huh?", "Caddie!" |
+| 01 Nick | (0,40) | "Go!" |
+| 02 Sophie | (0,29) | "Oh... ahahah!" (laughs it off) |
+| 08 Bloom | (0,12) | "Not bad!" |
+| 10 Kate | (0,30) (1,10) | "It's not good enough!", "Ah. Hmm." |
+| 11 Dino | (0,12) (0,30) | 0.1 s noise, "I must do better." |
+| 12 Anya | (0,16) (0,37) | a 2.6 s mumble, "Don't get excited." |
+| 14 S. Maruyama | (0,23) (0,27) (1,10) | "Not too bad.", "Okay.", "Could be worse." |
+| 15 Alex | (0,40) | "Too short?" |
+| 16 Gloria | (0,7) | "One, two!" |
+
+Not checked by ear: the transcripts give the words, not the tone; grunts and one-word lines ("Oh!", "Huh?") were
+taken by slot. Some banks reuse one wave in two slots (Anya's "Fly!"); `voices()` keeps it once.
+

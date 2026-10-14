@@ -171,12 +171,27 @@ def _bank(pc, kind):
 #   Reaction     = 30 48 60A 39    = sg slots (0,10) (0,28) (0,40) (0,19)
 #   Taunts       = 140-150         = ga_ya (yaji: heckling the other player's shot)
 # (0,29)-(0,34) and their second takes (1,9)-(1,14) are one family (pc01 calls them all line 16A-16L; two are
-# named Rare_Gattsu = rare guts pose): 6 hole-result celebrations, multi-part cues timed to the ga_* clips.
-# No table ties any other slot to a golf event (the program, HSG5PS3.self, is encrypted), so the rest is chosen by
-# duration only: (0,6)/(1,3) is the A/B pair that is the shortest line in every bank (~0.1 s): an effort shout.
-SHOUT, SHOUT2 = [(0, 6), (1, 3), (0, 2)], [(0, 38), (0, 13)]
-REACTION = [(0, 10), (0, 28), (0, 40), (0, 19)]
-VICTORY, VICTORY2 = [(0, 29), (0, 30), (0, 31), (0, 33)], [(1, 9), (1, 10), (1, 11), (1, 13), (0, 32)]
+# named Rare_Gattsu = rare guts pose): 6 hole-result reactions, multi-part cues timed to the ga_* clips.
+# No table ties any other slot to a golf event (the program, HSG5PS3.self, is encrypted), so the events below were
+# read off the lines themselves: every sg cue of all 17 transcribed with faster-whisper (HST-Remastered B209); the
+# same slot says the same thing in each actor's words. The family is NOT all celebrations: (0,29)/(1,9) is the
+# disaster ("No! That was awful!", "Oh no! It's not there!"), (0,30)/(1,10) par (some sound let down), (0,31)/(1,11)
+# and (0,33)/(1,13) the big wins, (0,32)/(1,12) a win that ends in a stumble ("Yeah! Ugh! Oops!"), (0,34)/(1,14)
+# the caddie ("Don't touch me!"). Short lines: (0,6)/(1,3) effort grunts; (0,7)/(0,8) shot shouts ("Haya!",
+# "Go!"); (0,9)/(0,10) "Fly!", "That's it!"; (0,12)/(0,14)/(1,15) "Oops!", "Whoops!", "No!"; (0,13)/(0,38) "Huh?",
+# "What?"; (0,27)/(0,28)/(0,37)/(1,8) "It's in!", "Yes!", "I did it!"; (0,16)/(0,18)/(0,22)/(0,23)/(0,40)
+# "Oh no!", "Aw man!", "What a shame!"; (0,24)/(0,25) "Oh, what a pity", "Next time!".
+SHOUT = [(0, 6), (1, 3)]
+STROKE = [(0, 8), (0, 7), (0, 9), (0, 10)]
+MISHIT = [(0, 12), (0, 14), (1, 15)]
+WHIFF = [(0, 38), (0, 13)]
+WON = [(0, 28), (0, 37), (1, 8), (0, 27)]
+LOST = [(0, 29), (0, 40), (0, 22), (0, 18), (0, 23), (0, 16)]
+SET_WON = [(0, 31), (0, 33), (1, 11), (1, 13), (0, 30), (1, 10)]
+SET_LOST = [(1, 9), (0, 29), (0, 25), (0, 24)]
+# takes that say something else in that actor's script (transcripts in notes/oob.md "Voice lines")
+SKIP = {0: {(0, 7), (0, 37), (0, 40)}, 1: {(0, 40)}, 2: {(0, 29)}, 8: {(0, 12)}, 10: {(0, 30), (1, 10)},
+        11: {(0, 12), (0, 30)}, 12: {(0, 16), (0, 37)}, 14: {(0, 23), (0, 27), (1, 10)}, 15: {(0, 40)}, 16: {(0, 7)}}
 
 
 def voices(pc):
@@ -189,32 +204,34 @@ def voices(pc):
     def files(slots):
         out = []
         for sl in slots:
+            if sl in SKIP.get(pc, ()):
+                continue
             name, notes = cues.get(sl, ("", []))
             if not notes or "dummy" in name:
                 continue
             w, sh = max(notes, key=lambda n: samples[n[0]])
             f = os.path.join(wd, f"{w + 1:03d}.wav")
-            if os.path.exists(f):
+            if os.path.exists(f) and f not in out:  # some banks reuse one wave for two slots
                 out.append(f)
                 if abs(sh) > 0.01:
                     shifted.append((os.path.basename(f), round(sh, 2)))
         return out
 
-    prog = {0: files(SHOUT), 1: files(REACTION), 3: files(SHOUT), 4: files(SHOUT2),
-            7: files(VICTORY), 9: files(VICTORY2)}
-    why = {0: "sg slots (0,6)/(1,3)/(0,2): the shortest lines in every bank (~0.1-0.3 s), i.e. effort shouts "
-              "(heuristic: duration only, no event table)",
-           1: "sg slots the profile's 'Reaction' set plays (lines 30/48/60A/39): shot reactions, sign unknown "
-              "(heuristic: unlabelled)",
-           3: "same effort shouts as program 0 (no dive in golf)",
-           4: "sg slots (0,38)/(0,13): the next-shortest lines (heuristic: duration only)",
-           7: "sg slots the profile's 'Victory Pose' set plays (lines 49A/49B/50A/51A, the hole-result celebrations)",
-           9: "the same celebrations' second takes (1,9)-(1,13) and the rare guts pose (0,32)",
-           2: "no mis-hit line identifiable (no event table; the program is encrypted)",
-           6: "no partner call in golf; the taunts (ga_ya, lines 140-150) heckle the opponent, not a partner",
-           8: "no losing line identifiable: nothing marks any line as disappointment (the profile's Disappointed "
-              "slot is an animation only, ku_di)",
-           10: "no losing line identifiable"}
+    prog = {0: files(SHOUT), 1: files(STROKE), 2: files(MISHIT), 3: files(SHOUT), 4: files(WHIFF),
+            7: files(WON), 8: files(LOST), 9: files(SET_WON), 10: files(SET_LOST)}
+    why = {0: "sg (0,6)/(1,3): the effort grunts ('Hah!', 'Hup!'; the shortest line in every bank)",
+           1: "sg (0,8)/(0,7)/(0,9)/(0,10): the shot shouts ('Hya!', 'Go!', 'Fly!', 'That's it!')",
+           2: "sg (0,12)/(0,14)/(1,15): 'Oops!', 'Whoops!', 'No!'",
+           3: "the effort grunts of program 0 (no dive in golf)",
+           4: "sg (0,38)/(0,13): 'Huh?', 'What?'",
+           7: "sg (0,28)/(0,37)/(1,8)/(0,27): the holed-putt lines ('Yes!', 'It's in!', 'I did it!')",
+           8: "sg (0,29) the disaster hole result (e.g. 'No! That was awful!') and (0,40)/(0,22)/(0,18)/(0,23)/(0,16) "
+              "the missed-shot lines ('Aw, shoot!', 'Oh no!', 'What a shame!')",
+           9: "the big-win hole results (0,31)/(0,33)/(1,11)/(1,13) and par (0,30)/(1,10) ('I'm the best!')",
+           10: "the disaster hole result's takes (1,9)/(0,29) and the resigned (0,25)/(0,24) ('Next time!', "
+               "'Oh, what a pity')",
+           6: "no partner call in golf; the taunts (ga_ya, lines 140-150) heckle the opponent, not a partner"}
+    why = {p: w + " (sorted by what the lines say: notes/oob.md 'Voice lines')" if p != 6 else w for p, w in why.items()}
     prog = {p: f for p, f in prog.items() if f}
     # pitch: tools/audio.py writes each wave's true rate (RGND key/root/fine) into the wav header
     return prog, why
