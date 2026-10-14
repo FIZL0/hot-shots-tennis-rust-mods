@@ -108,9 +108,9 @@ else
   for g in getagrip fore opentee opentee2 oob; do have "$g" && WANT+="$g "; done
   [ "$WANT" != " " ] || { echo "no supported discs under iso/ (see README)"; exit 1; }
 fi
-# golf mods borrow Get a Grip's starting racket and Emi's grip (package.py GAG_RACKET, GAG_GRIP)
+# golf mods borrow Get a Grip's rackets and Emi's grip (package.py pick_racket, GAG_GRIP)
 if [[ "$WANT" =~ fore|opentee|oob ]] && [ ! -d out/rerig/getagrip/pc00_emi ] && [[ "$WANT" != *" getagrip "* ]]; then
-  if have getagrip; then WANT+="getagrip "; else echo "note: no Get a Grip; golf mods get no racket.glb"; fi
+  if have getagrip; then WANT+="getagrip "; else echo "note: no Get a Grip; golf mods hold HST disc rackets only"; fi
 fi
 GAMES=""
 for g in getagrip fore opentee2 opentee oob; do [[ "$WANT" == *" $g "* ]] && GAMES+="$g "; done  # Get a Grip first; Open Tee 2 before Open Tee (sizing.py SHARED)

@@ -33,7 +33,11 @@ Costume accessories: `Acce_3NN`/`Acce_4NN` (PC_ONLY_1 = NN) → `etc/etc3NN`/`et
 (RForearm), Rosetta 305/405 top hat, Paola 307/407 flower, Fan 308/408 glasses, Suzuki 312/412 sunglasses,
 Helghast 314/414 belt (Spine1). Other PCs have none. `Acce_6xx`/`Head_6xx`/`Body_6xx` are shop items (Price
 set), not costume sets. Every PC's default racket is `Racket_000` (racket000.xb → `parts/racket/racket00.glb`;
-Racket_param: owned from the start, price 0, No 0, all stats 0), packaged as each mod's `racket.glb` by
+Racket_param: owned from the start, price 0, No 0, all stats 0). The rackets: 10 models, `racket00`–`08` (items
+`Racket_0N0`–`0N2`, three colours of one model with no separate textures in the part) and `racket50` (`Racket_500`).
+Since M1r (HST-Remastered, 2026-10-13) each mod of a game gets a different racket (`package.py pick_racket`: Emi
+keeps `Racket_000`, the others the next model in pc order, the rest and the golf games HST disc rackets via
+`mod.json` `disc_racket`; Gloria and Suzuki get HST's own Gloria's/Suzuki's), a Get a Grip one packaged as `racket.glb` by
 `tools/rerig/racket.py`: the source grip on the hand kept (scaled with the body), resized about the hand to HST's
 0.944 m racket, baked into the `Racket` joint's space. Checked on Emi: in the hand frame its handle axis is within
 3.7° and its string normal within 3.2° of HST pc00's; grip −0.01–0.31 m vs HST 0–0.32 m. (`Racket_500`, also owned

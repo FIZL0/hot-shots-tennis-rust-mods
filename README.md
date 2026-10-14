@@ -57,7 +57,7 @@ This builds the same mods as listed under Status, with their stats, voices and r
 SCUS-97401, UCUS-98701, UCUS-98614, UCUS-98693, BCUS-98115, and HST's SCUS-97610), so the filenames don't matter. Each game builds
 on its own, except:
 
-- the golf games use Get a Grip's starting racket. If that disc is there it's built too; if not, golf mods have no `racket.glb`.
+- the golf games use Get a Grip's rackets. If that disc is there it's built too; if not, golf mods hold HST rackets from your disc only (`disc_racket`).
 - Open Tee's face emotions come from Open Tee 2's face animations. Without that disc, Open Tee faces have only the neutral face.
 - Open Tee 2's first ten characters take their winning voice lines from Open Tee's audio. Without that disc they have none.
 - stat overrides and reaction timing come from Hot Shots Tennis itself (SCUS-97610): put its `.iso` in `iso/` too (or have `../HST-Remastered/context/xb`). Without it the mods keep their donor character's stats.
@@ -128,7 +128,7 @@ All the detail is in `standard/HST-CHARACTER-STANDARD.md`. For how to rerig a ch
   character, one with no neck bone).
 - **Every game's mods** now carry stats ranked onto `TParam` (`params.override`, with `params_why`), an
   `ai_row` where the game names a play style, voices sorted into HST's programs (`voice_why` says which are
-  heuristic), each game's own point/set reactions as `motions.glb`, Get a Grip's standard racket, and HST-size
+  heuristic), each game's own point/set reactions as `motions.glb`, a racket per mod (no two of a game alike: Get a Grip's, else one of HST's by `disc_racket`), and HST-size
   scaling with a head shrink. Per-game data modules: `tools/rerig/{gag_stats,fore_data,oob_data,opentee_data}.py`.
 - **Expert band** (HST-Remastered B182): every mod but Anya and Wendy then has its power, spin, control, speed,
   stamina and reach moved to the same place within HST's expert rows (Miranda, Kent, Lola, Will) and an expert `ai_row`

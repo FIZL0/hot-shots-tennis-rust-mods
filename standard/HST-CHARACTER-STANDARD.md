@@ -11,7 +11,7 @@ it exactly like a disc character. It mirrors `crates/hst/src/character.rs` (`Cha
 mods/<id>/
   mod.json                 manifest (§6)
   model/<costume>.glb      one per costume, §2–§4 (c00 required)
-  racket.glb               optional rigid racket in Racket-joint space (else the donor's)
+  racket.glb               optional rigid racket in Racket-joint space (else §6 `disc_racket`'s, else the donor's)
                            (metres; vertices baked in that space: the loader reads POSITION/NORMAL/UV/
                            COLOR as stored and ignores node transforms. HST's rackets are 0.944 m butt to
                            tip along +Y, strings facing ±Z, grip 0–0.32 m; `racket.py` makes one from a
@@ -197,6 +197,10 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
   hand, so such a mod ships its costumes pre-mirrored (`tools/rerig/mirror.py`; `package.py` does it when it finds the
   glove): the game's mirror then shows the source's own look, glove and racket in the left hand. Say why in
   `hand_why`.
+- `disc_racket` (optional, 0–13): with no `racket.glb`, the mod holds this HST character's racket (`PC/PCnnC00.XB`
+  `racket_nn`, read from the player's disc, never shipped) instead of the donor's. Looks only. `package.py` gives
+  every mod of a game a different racket (Get a Grip's models as `racket.glb`, else an HST one here) and says why in
+  `racket_why`.
 - `upscale` (optional, default `true`): `false` for mods whose textures are already high-res (e.g. Hot Shots
   Golf Fore! players): `upscale_mods.py` skips the mod (the game still draws any `textures/upscaled/` it has).
 - `motions` (optional): a `.glb` in the folder whose animations replace the donor's clips **on screen only**.

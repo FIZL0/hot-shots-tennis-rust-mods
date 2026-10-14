@@ -7,7 +7,7 @@ nearest Bip01 height; the face (morph, or face.json for the PSP texture swaps); 
 source stats ranked onto TParam as params.override (gag_stats.overrides; needs HST's TParam.csv: HST_TPARAM or
 ../HST-Remastered/context/xb) with ai_row by play style where the game has one; the game's own point/set reactions
 as motions.glb (motions.py; needs ../HST-Remastered/context/xb/PCANI for the donor clip lengths; golf roots held,
-PIN); and Get a Grip's Racket_000 (racket.py, carried from GaG Emi's grip for the golf games). Get a Grip's data is
+PIN); and a racket of its own (pick_racket: no two mods of a game share one). Get a Grip's data is
 in gag_stats.py, the golf games' in fore_data.py / oob_data.py / opentee_data.py. Handedness: a golf mod whose
 costumes wear a glove on the left hand is left-handed (glove hand = racket hand, standard §6 `hand`) and ships its
 costumes pre-mirrored (mirror.py) instead of linked; the rest stay right-handed, left for a human to confirm.
@@ -69,9 +69,61 @@ def gag_voices(n, dst):
 
 # HST voice program -> keys it plays (standard §5); reactions 7-10 take any number, capped like Get a Grip's at 5
 KEYS = {0: 3, 1: 5, 2: 3, 3: 3, 4: 2, 6: 5, 7: 5, 8: 5, 9: 5, 10: 5}
-# the racket for games with none: Get a Grip's Racket_000 "Standard", gripped as on Emi, moved hand to hand
-GAG_RACKET = os.path.join(ROOT, "out/models/getagrip/parts/racket/racket00.glb")
+# Rackets (M1r). No source game has a per-character racket (Get a Grip's Racket_param has no character column,
+# notes/getagrip.md; the golf games have none), so each mod of a game gets a different one of the 24 there are:
+# Get a Grip's 10 models (parts/racket: racket000-008 = items Racket_0N0-0N2, which share a model each, and
+# racket050 = Racket_500) as racket.glb, or one of HST's 14 disc rackets (PC/PCnnC00.XB racket_nn, read from the
+# user's disc: mod.json `disc_racket`). A golf mod holds a Get a Grip racket with Emi's grip, moved hand to hand.
+GAG_RACKETS = ["00", "01", "02", "03", "04", "05", "06", "07", "08", "50"]
+GAG_RACKET = os.path.join(ROOT, "out/models/getagrip/parts/racket/racket{}.glb")
 GAG_GRIP = os.path.join(ROOT, "out/rerig/getagrip/pc00_emi/pc00_emi_set3.glb")
+HST_NAMES = ["Ashley", "Cody", "Jun", "Kaito", "Momoko", "JJ", "Carol", "Big Chief", "Miranda", "Kent", "Lola", "Will",
+             "Gloria", "Suzuki"]
+HST_SAME = {"gloria": 12, "suzuki": 13}  # the same character in HST: her/his own racket there
+_used = {}
+
+
+def pick_racket(game, n, name, donor, mod, manifest, costumes, cast):
+    """Racket for mod `n` of `game` (`cast`: every pc number -> name of the game, for the reserved HST picks).
+
+    In pc order, the first free of: the same character's HST racket; for Get a Grip its own models in pc order
+    (Emi keeps Racket_000 "Standard", the default everyone owns); for a golf mod its donor's HST racket (the
+    character whose motions it plays); then Get a Grip's models in order; then HST's rackets in order."""
+    used = _used.setdefault(game, set())
+    reserved = {("disc", HST_SAME[c]) for c in cast.values() if c in HST_SAME}
+    gag = [("gag", r) for r in GAG_RACKETS if os.path.exists(GAG_RACKET.format(r)) and (game == "getagrip" or os.path.exists(GAG_GRIP))]
+    disc = [("disc", k) for k in range(14)]
+    if name in HST_SAME:
+        order = [("disc", HST_SAME[name])]
+    elif game == "getagrip":
+        order = gag + [("disc", donor["index"])] + disc
+    else:
+        order = [("disc", donor["index"])] + gag + disc
+    pick = next(r for r in order if r not in used and (r not in reserved or name in HST_SAME))
+    used.add(pick)
+    out = os.path.join(mod, "racket.glb")
+    manifest.pop("disc_racket", None)
+    if pick[0] == "disc":
+        if os.path.exists(out):
+            os.remove(out)
+        manifest["disc_racket"] = pick[1]
+        why = (f"the same character's racket in HST ({HST_NAMES[pick[1]]})" if name in HST_SAME else
+               f"its donor {HST_NAMES[pick[1]]}'s racket" if pick[1] == donor["index"] else
+               f"HST {HST_NAMES[pick[1]]}'s racket, the first one no other {GAME_NAME[game]} mod holds")
+        manifest["racket_why"] = f"{why}: PC/PC{pick[1]:02d}C00.XB racket_{pick[1]:02d}, read from your disc"
+    else:
+        part = GAG_RACKET.format(pick[1])
+        item = "Racket_500" if pick[1] == "50" else f"Racket_0{int(pick[1])}0"
+        if game == "getagrip":
+            racket.make(part, costumes[0], out)
+            grip = "its source grip on the hand"
+        else:
+            racket.make(part, GAG_GRIP, out, target=costumes[0])
+            grip = "Get a Grip Emi's grip carried rigidly from her right hand to this one's (rerigged hands share HST's bone axes)"
+        why = ("Get a Grip's starting racket Racket_000 'Standard', the one every character owns from the start" if pick[1] == "00" and game == "getagrip" else
+               f"Get a Grip's racket{pick[1]}.xb (item {item}{', its other colours share the model' if pick[1] != '50' else ''}), "
+               f"the first one no other {GAME_NAME[game]} mod holds")
+        manifest["racket_why"] = f"{why} (Get a Grip has no per-character racket); {grip}, resized to HST's 0.944 m"
 _cast = {}
 
 
@@ -125,11 +177,6 @@ def golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type):
     if D is None:
         manifest["todo"].append("no data module for this game (tools/rerig/<game>_data.py)")
         return
-    if os.path.exists(GAG_RACKET) and os.path.exists(GAG_GRIP):
-        racket.make(GAG_RACKET, GAG_GRIP, os.path.join(mod, "racket.glb"), target=costumes[0])
-        manifest["racket_why"] = (f"{D['name']} has no tennis racket: Get a Grip's starting racket Racket_000 'Standard' "
-                                  "(racket000.xb, as every Get a Grip mod), with Get a Grip Emi's grip carried rigidly from her right hand "
-                                  "to this one's (rerigged hands share HST's bone axes), resized to HST's 0.944 m")
     f = D["faces"](n)
     if f:
         def local(p):
@@ -206,6 +253,8 @@ def main():
     hst_type = gagmap.hst_types(tp) if tp else {}
     made = 0
     for game in [g for g in GAME_NAME if g in (sys.argv[1:] or GAME_NAME)]:
+        cast_names = {int(m.group(1)): m.group(2) for d in glob.glob(os.path.join(ROOT, f"out/rerig/{game}/*/"))
+                      if (m := re.match(r"pc(\d+)_?(.*)", os.path.basename(d.rstrip("/"))))}
         for cdir in sorted(glob.glob(os.path.join(ROOT, f"out/rerig/{game}/*/"))):
             costumes = sorted(glob.glob(cdir + "*.glb"))
             if not costumes:
@@ -251,13 +300,6 @@ def main():
                     f = dict(f, materials=[f["face_material"]], neutral=local(f["neutral"]), channels={k: v and local(v) for k, v in f["channels"].items()})
                     json.dump(f, open(os.path.join(mod, "face.json"), "w"), indent=1)
                     manifest["face"] = "texture"
-                # the default racket (Racket_param Racket_000: owned from the start, price 0, all stats 0) as racket.glb
-                part = os.path.join(ROOT, "out/models/getagrip/parts/racket/racket00.glb")
-                if os.path.exists(part):
-                    racket.make(part, costumes[0], os.path.join(mod, "racket.glb"))
-                    manifest["racket_why"] = ("Get a Grip's starting racket Racket_000 'Standard' (racket000.xb), the one every character owns from the "
-                                              "start (Get a Grip has no per-character racket: Racket_param and the item tables have no character column), "
-                                              "source grip on the hand, resized to HST's 0.944 m")
                 # its own point/set reactions, retargeted, timed to the donor's clips (visual only, standard §6 motions)
                 react = os.path.join(ROOT, f"out/anims/getagrip/pc{n:02d}_{name}_react.glb")
                 if os.path.exists(react):
@@ -291,6 +333,7 @@ def main():
                 manifest["todo"] += ["check voice programs 1/2 by ear (st_ji/st_nb)"]
             else:
                 golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type)
+            pick_racket(game, n, name, donor, mod, manifest, costumes, cast_names)
             if not lefty:
                 manifest["todo"].append("confirm handedness")
             if tp:
