@@ -56,7 +56,8 @@ holds the note gives the wave. Checked by whisper transcript on all 16 umpire ba
 `dgv_NPC_m06a` (`start_0` "Shall we?", `match` "Last one!", `go` "Now!", `hello` "Ready when you are!"). Before, the
 mapping was inferred as cue c -> region c, which matches the decode for the playable `sgv/dgv_PC00-13` banks but was one
 off from cue 5 on in 44 of the 46 `dgv_NPC_*` banks (their cue order isn't their region order) and gave no names at all for
-`sgv/dgv_PC14` (Helghast; cue count != region count): rerun `voices.py` and package pc14 for its voices.
+`sgv/dgv_PC14` (Helghast; cue count != region count). Since rerun (`voices.py`, `rerig/package.py getagrip`, HST-Remastered
+M92) `getagrip_pc14_helghast` ships `voice/` like the other 14 (27 wavs, same program counts).
 Subsong order is the raw index (`NNN.wav`).
 Umpires: `sound/game/010_umpire_NN_0V.xb` -> `gag_vcNN{a,b}` (+`_rev`), NN = model `200_court/umpire.xb` u_NN = loading
 card `menu/loadmes/judge/loadmes_jNN.xb0`: 00 Natasha, 01 Nate, 02 Kanani, 03 Xavier, 04 Helghast, 05 Robo T., 06 Suzuki,
