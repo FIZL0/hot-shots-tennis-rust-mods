@@ -126,9 +126,13 @@ def main():
                     "donor": donor, "donor_why": why, "voice": "voice/",
                     "calls": [f"{p}_{k}" for p, k in CALLS], "language": "en",
                     "calls_why": {f"{p}_{k}": cue for (p, k), cue in CALLS.items()},
-                    "todo": ["umpire.glb: model and motions (HST-Remastered M8f4)"]}
+                    "todo": []}
+        if not os.path.exists(os.path.join(mod, "umpire.glb")):  # tools/psp2gltf/export_getagrip_umpires.py
+            manifest["todo"].append("umpire.glb: model and motions (tools/psp2gltf/export_getagrip_umpires.py)")
         if long:
             manifest["todo"].append(f"clips more than 0.1 s longer than the donor's, cut when the next word starts: {', '.join(long)}")
+        if not manifest["todo"]:
+            del manifest["todo"]
         json.dump(manifest, open(os.path.join(mod, "mod.json"), "w"), indent=1, ensure_ascii=False)
         print(f"{mod}: donor {HST[donor][0]} ({over[donor]:.2f} s over; " + ", ".join(f"{HST[u][0]} {v:.2f}" for u, v in over.items()) + ")")
 

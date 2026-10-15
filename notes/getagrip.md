@@ -169,3 +169,17 @@ reactions 0x30–0x34 are one shared set from PCCG0, not per character), the pri
 `common_motions.glb`. Those come in upper (`A_`) and lower (`B_`) body layers and have no one-to-one HST clip (no
 plain idle: `aw` = await; strokes split by depth/height `t_d`/`t_s`); a stroke or serve drawn from them would also
 leave the racket off the ball, since the contact IK and arm table are solved on the donor's swing.
+
+## Chair umpires (`python3 tools/psp2gltf/export_getagrip_umpires.py`, after `tools/rerig/gag_umpires.py`)
+
+`game/200_court/umpire.xb`: u_00..u_07 (`model/umpire/u_NN/u_NN.psp.i3r`, seated, one skeleton without leg bones:
+the legs ride the pelvis) and `motion/umpire/u_NN/`. Only u_00 and u_04 have the full set (`_h _r _l _w _s _r_w
+_l_w`, u_04's the same as u_00's); the rest only `_s`, so they take u_00's. Into each umpire mod's `umpire.glb`
+(standard HST-COURT-UMPIRE-STANDARD.md §3b): `_h` → `idle` (hands together), `_r`/`_l` → `turn_r`/`turn_l` (the
+right/left arm out toward that side, as HST's own `uNN_r/_l` end: checked hand positions against the disc's),
+`_w` → `wait` (seated breathing, looped during play). `_s`, `_r_w`, `_l_w` and the `.tat` texture animations
+(blinks) are not used. Size: Gloria's calibration (`F` = 0.8554 m / 57.9 cm), head ×0.6277 about Bip01Head.
+The motions key Bip01Pelvis 45.7 cm lower than the bind pose (in motion the model's origin is the seat), so the
+seat lift comes from `idle`'s first pelvis key; ROOTNODE and the locators are put in the skin so a player that
+drops non-joint nodes keeps the lift. The PSP code is encrypted: which motion it plays when is a guess by name.
+Helghast (u_04) has a canister (`Bip01RThigh9…`) that, with no thigh bone, rides the pelvis beside the chair.

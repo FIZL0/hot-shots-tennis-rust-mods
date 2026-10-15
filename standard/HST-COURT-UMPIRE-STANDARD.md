@@ -151,5 +151,15 @@ line, or leave the key to the donor. Check each clip says the call of its row (a
 - One skinned model in game space, seated: the chair's seat at the origin, facing +Z (toward the court centre; the
   match places and turns it at the layout court's chair, mirrored on the courts whose chair is on the other side).
   Bring the chair in the model, or leave it out and the disc chair stays.
-- Animations: `idle` (looped), `turn_r` and `turn_l` (turned toward the right / left end after a point, held), at
-  60 Hz key times. The head joint named `head` (or `Bip01 Head`) follows the ball during the rally on top of them.
+- Animations, 60 Hz key times, each in the slot of one of the disc umpire's three motions (`uNN_h/_r/_l.ani`):
+  - `idle` (required; disc `_h`): its first frame is the pose during play; once the match is over it plays through
+    and loops from frame 16 (from its start if it is shorter).
+  - `turn_r` / `turn_l` (disc `_r` / `_l`): played once and held on the last frame when the umpire turns to the
+    winner's end after a point: `turn_r` the right arm out toward her right (+X), `turn_l` the left toward −X, as
+    the disc's do (their hands end ~0.5 m out at shoulder height).
+  - `wait` (optional, no disc counterpart): looped during play in place of `idle`'s still first frame.
+  A missing `turn_r`/`turn_l` holds `idle`'s first frame. Nothing about them touches the match: the same ticks, the
+  same calls, with or without a mod.
+- The head joint named `head`, `Bip01 Head` or `Bip01Head` follows the ball during the rally on top of them (its
+  local +Z the face, +Y down, as the model's).
+- Get a Grip's eight umpires: `tools/psp2gltf/export_getagrip_umpires.py` (after `tools/rerig/gag_umpires.py`).
