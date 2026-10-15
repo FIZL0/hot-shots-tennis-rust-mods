@@ -91,6 +91,14 @@ REST = ("Stay", "stay", "Stay2", "wait", "pool", "Swim", "Fly", "WingBeat", "kyo
 # the two 車 rows (ids 11 and 31) are c05's two cars
 CAR = {11: "gi10_Car", 31: "gi11_Car"}
 
+# HST's match camera (HST-Remastered hst_sim::camera::base): 41 m from the court centre at 17 degrees, behind
+# either baseline (it turns round when its human is on the far half), 20-degree lens on the PS2's 0.7 aspect ->
+# 7 degrees above and below the view's centre; sideways up to a 21:9 window. Get a Grip's PSP camera sits closer,
+# so set pieces it leaves behind its back (c17's NORMA, 17 m cables 9-12 m in front of HST's eye) stand in HST's
+# view: their islands within EYE_CLEAR of either resting eye are left out of gimmick.glb (`clear_view`).
+EYE_PITCH, EYE_DIST, EYE_HALF_V, EYE_WIDE = math.radians(17.0), 41.0, math.radians(7.0 + 1.5), 21 / 9
+EYE_CLEAR = 20.0
+
 
 def sjis_csv(path):
     rows = list(csv.reader(io.StringIO(open(path, "rb").read().decode("shift_jis"))))
@@ -162,8 +170,9 @@ class Model:
 class Scene:
     """One .glb: game_space -> gag_cm -> instances."""
 
-    def __init__(self, tex_dirs, unlit=False):
+    def __init__(self, tex_dirs, unlit=False, clear_view=False):
         self.b = glb.Builder()
+        self.clear_view, self.cleared = clear_view, []
         self.tc = build.TextureCache(self.b, tex_dirs, None)
         self.unlit = unlit
         self.meshes, self.mats, self.ibm = {}, {}, {}
@@ -207,7 +216,74 @@ class Scene:
             self.mats[key] = i
         return self.mats[key]
 
-    def prims(self, parts, materials, joint_map):
+    def world(self, n):
+        """glTF node n's rest world matrix (metres, glTF axes: Y up)."""
+        parent = {c: i for i, nd in enumerate(self.b.g["nodes"]) for c in nd.get("children", [])}
+        M = np.eye(4)
+        while True:
+            nd = self.b.g["nodes"][n]
+            L = np.eye(4)
+            if "matrix" in nd:
+                L = np.array(nd["matrix"]).reshape(4, 4).T
+            else:
+                x, y, z, w = nd.get("rotation", (0, 0, 0, 1))
+                R = np.array([[1 - 2 * (y * y + z * z), 2 * (x * y - z * w), 2 * (x * z + y * w)],
+                              [2 * (x * y + z * w), 1 - 2 * (x * x + z * z), 2 * (y * z - x * w)],
+                              [2 * (x * z - y * w), 2 * (y * z + x * w), 1 - 2 * (x * x + y * y)]])
+                L[:3, :3] = R * np.array(nd.get("scale", (1, 1, 1)))
+                L[:3, 3] = nd.get("translation", (0, 0, 0))
+            M = L @ M
+            if n not in parent:
+                return M
+            n = parent[n]
+
+    @staticmethod
+    def in_view(Q):
+        """Points of Q (glTF world, metres) inside HST's resting match view, within EYE_CLEAR of the eye, from
+        either end."""
+        lift = math.atan(0.02 * math.tan(math.radians(10.0)) * 0.7)
+        hit = np.zeros(len(Q), bool)
+        for s in (1, -1):
+            o = EYE_PITCH - lift
+            eye = np.array([0, EYE_DIST * math.sin(o), -s * EYE_DIST * math.cos(o)])
+            fw = np.array([0, -math.sin(EYE_PITCH), s * math.cos(EYE_PITCH)])
+            up = np.array([0, math.cos(EYE_PITCH), s * math.sin(EYE_PITCH)])
+            D = Q - eye
+            d = D @ fw
+            tv = math.tan(EYE_HALF_V) * d
+            hit |= (d > 0.3) & (d < EYE_CLEAR) & (np.abs(D @ up) < tv) & (np.abs(D @ np.cross(fw, up)) < tv * EYE_WIDE)
+        return hit
+
+    def clear(self, A, W, label):
+        """Drop from A's triangles the islands (triangles joined by shared or coincident corners) that have a
+        corner in HST's view near its eye (`in_view`), W the mesh node's world matrix."""
+        Q = (np.c_[A["P"], np.ones(len(A["P"]))] @ W.T)[:, :3]
+        _, weld = np.unique(np.round(Q, 2), axis=0, return_inverse=True)
+        weld = weld.reshape(-1)
+        T = weld[A["I"].reshape(-1, 3)]
+        root = np.arange(weld.max() + 1)
+
+        def find(a):
+            while root[a] != a:
+                root[a] = root[root[a]]
+                a = root[a]
+            return a
+        for a, b, c in T:
+            ra = find(a)
+            for x in (b, c):
+                rx = find(x)
+                if rx != ra:
+                    root[rx] = ra
+        isl = np.array([find(a) for a in T[:, 0]])
+        bad = np.unique(isl[self.in_view(Q)[A["I"].reshape(-1, 3)].any(1)])
+        drop = np.isin(isl, bad)
+        if drop.any():
+            self.cleared.append(f"{label}: {int(drop.sum())} of {len(T)} triangles")
+            A["I"] = A["I"].reshape(-1, 3)[~drop].reshape(-1)
+        return bool(drop.any())
+
+    def prims(self, parts, materials, joint_map, world=None, label=""):
+        """world: the mesh node's world matrix, to `clear` the view (rigid meshes of a clear_view scene)."""
         by_mat = {}
         for p in parts:
             by_mat.setdefault(p.material, []).append(p)
@@ -217,6 +293,9 @@ class Scene:
             off = np.cumsum([0] + [len(a["P"]) for a in arrs])
             A = {k: np.concatenate([a[k] for a in arrs]) for k in arrs[0] if k != "I"}
             A["I"] = np.concatenate([a["I"] + o for a, o in zip(arrs, off)])
+            name = materials[mi].texture if mi < len(materials) else ""
+            if world is not None:
+                self.clear(A, world, f"{label} {name}")
             if not len(A["I"]):
                 continue
             A["N"][np.linalg.norm(A["N"], axis=1) < 0.5] = (0, 1, 0)  # c17 has zero normals
@@ -229,7 +308,6 @@ class Scene:
             if joint_map is not None:
                 attrs["JOINTS_0"] = b.accessor(A["J"], glb.USHORT, "VEC4", 34962)
                 attrs["WEIGHTS_0"] = b.accessor(A["W"], glb.FLOAT, "VEC4", 34962)
-            name = materials[mi].texture if mi < len(materials) else ""
             raw = materials[mi].raw if mi < len(materials) else b""
             add = len(raw) > 0x24 and raw[0x24] & 1 == 1
             out.append({"attributes": attrs, "indices": b.accessor(A["I"], glb.UINT, "SCALAR", 34963),
@@ -257,6 +335,12 @@ class Scene:
             gl[j] = self.child(gl[p] if p in gl else parent, name=sk.names[j], **trs)
             if j in M.rigid and j in drawn:
                 key = (path, j)
+                if self.clear_view:  # each placement looks different from the eye
+                    key = (path, j, gl[j])
+                    label = self.b.g["nodes"][parent]["name"] + "/" + sk.names[j]
+                    self.meshes[key] = self.b.add("meshes", {"name": f"{os.path.basename(path)}:{sk.names[j]}",
+                                                             "primitives": self.prims(M.rigid[j], M.m.materials, None,
+                                                                                      self.world(gl[j]), label)})
                 if key not in self.meshes:
                     self.meshes[key] = self.b.add("meshes", {"name": f"{os.path.basename(path)}:{sk.names[j]}",
                                                              "primitives": self.prims(M.rigid[j], M.m.materials, None)})
@@ -520,7 +604,7 @@ def export(n, label):
 
     # court.glb: the ground (less its sky) and every placed object; the sky dome and clouds go to sky.glb, placed
     # models that come with motions (flags, a merry-go-round) to gimmick.glb, looping
-    sc, ss, gs = Scene(tex), Scene(tex, unlit=True), Scene(tex)
+    sc, ss, gs = Scene(tex), Scene(tex, unlit=True), Scene(tex, clear_view=True)
     gpath = find(dirs, "ground", f"c{n:02d}_{stem}.psp.i3r")[0]
     G = Model(gpath)
     # the dome: `bg01_sky`, or `meshSky01`/`02` (c04, c06): untextured, vertex-coloured, 200-500 m across
@@ -568,6 +652,9 @@ def export(n, label):
     elif os.path.exists(os.path.join(mod, "sky.glb")):
         os.remove(os.path.join(mod, "sky.glb"))
     placed += gimmicks(dirs, n, gs, todo, folders)
+    if gs.cleared:
+        todo.append("left out of gimmick.glb, standing in HST's match view within %g m of its eye (Get a Grip's "
+                    "closer camera has them behind it): %s" % (EYE_CLEAR, "; ".join(gs.cleared)))
     if placed:
         gs.write(os.path.join(mod, "gimmick.glb"))
         todo.append("gimmicks only rest where the csvs put them; their reactions to the ball (pigeons fly off "

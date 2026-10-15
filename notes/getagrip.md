@@ -222,6 +222,14 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   The reactions (escape along the route at the csv speed, break into `_b01`) are code: not exported. Folders with no
   csv row (Swallow, Weeds, koishi, Bird, dolphin, Can, Banana, Snow, Wolf, pool, seito, watari, Squirrel, Dragon,
   WTigers, phantom, Jumbo …) are spawned by the program: listed in each `todo`, not placed.
+- **Behind Get a Grip's camera, in front of HST's**: HST's match camera rests 41 m from the centre (eye ~12 m up,
+  ~39 m behind the net), further back than the PSP's; set pieces Get a Grip keeps behind its camera then stand
+  between HST's eye and the court. c17's `ob13_NORMA` (placed 30 m behind one baseline, with a motion → gimmick.glb)
+  has 17 m opaque black cables (`code01`, an ordinary opaque material record, not additive) rising around its core
+  9–12 m in front of HST's eye: solid black bars over the match view. The script drops every gimmick.glb island
+  with a corner inside HST's resting view within 20 m of either end's eye (`clear_view`; listed in `todo`): only
+  those cables, on all 16 courts. Not caught at 20 m: c05's basket goals (4.8 m, centred 5–7.5 m behind each
+  baseline, ~21 m from the eye) also cover the view's middle.
 - **Settings** `1_courtsetting.xb`: `court.csv` (Shift-JIS; stem, GRASS/HARD/CLAY, indoor), `courtlight.csv` (row =
   court number; ambient, light 0/1 colour + direction toward the light, Y up → `sun`/`fill`), `fogsetting.csv` (near/
   far amount, near/far distance, colour; off when both amounts are 0 → `fog`). `playerlight.csv`/`balllight.csv` are
