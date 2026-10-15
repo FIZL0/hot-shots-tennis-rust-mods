@@ -234,6 +234,14 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   basket goals (4.8 m, 7.2 m behind each baseline, ~21 m from the eye, square over the view's middle) out of the
   match view. Gimmicks that come with only a break motion (`_b01_`: the goals) stand still; they used to loop it,
   falling over every 2.8 s.
+  court.glb has the same problem with buildings: HST's eye stands inside c05's street block behind the +z baseline
+  (the whole turned view was its facade), outside c02's hall and c16's studio (their end walls and c02's roof over
+  the court) and just above c09's house roof. The script splits every court.glb island that a line from a resting
+  eye (either end) to the playing area passes through (HST's own 9×9×2 lines) into its own `<node>_<k>__clear`
+  child (listed in `todo`); an island reaching into the playing area (a shell round the court) splits into its flat
+  faces first. The net, ground decals (< 0.5 m) and pieces over the court between its ends (c01's pine bough) stay.
+  c02 10 pieces, c05 7 (the building, the +z wall with its graffiti and ivy, the −z fence), c09 2, c16 6, c17 2
+  (the additive glass partitions), the other 11 none.
 - **Settings** `1_courtsetting.xb`: `court.csv` (Shift-JIS; stem, GRASS/HARD/CLAY, indoor), `courtlight.csv` (row =
   court number; ambient, light 0/1 colour + direction toward the light, Y up → `sun`/`fill`), `fogsetting.csv` (near/
   far amount, near/far distance, colour; off when both amounts are 0 → `fog`). `playerlight.csv`/`balllight.csv` are

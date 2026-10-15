@@ -102,6 +102,15 @@ EYE_CLEAR = 20.0
 # behind each baseline, ~21 m from the eye) is named `...__clear`: HST hides it while it stands between the eye and
 # the court (standard §2), so it's still seen from the far end, in cut-aways and in replays.
 BASELINE = 11.885
+# court.glb: the eye (either end) can stand inside a building or a hall (c05's street block behind the +z baseline,
+# c02's hall, c16's studio, c09's house roof): each of its islands (a whole set piece) standing between a resting eye
+# and the playing area (`blocks`, HST's own test: lines to the doubles court and 2 m behind each baseline, on the
+# ground and 2 m up) goes to its own `<node>_<k>__clear` child, which HST hides while it blocks. An island reaching
+# into the playing area (a shell round the whole court, the net) splits into its flat faces first, so only the near
+# end's walls and roof go; faces in the playing area (the net), pieces over the court between its ends and ground
+# decals (< LOW m) stay.
+PLAY = np.array([[-5.485, 0.0, -BASELINE - 2.0], [5.485, 2.0, BASELINE + 2.0]])
+LOW = 0.5
 
 
 def sjis_csv(path):
@@ -174,9 +183,10 @@ class Model:
 class Scene:
     """One .glb: game_space -> gag_cm -> instances."""
 
-    def __init__(self, tex_dirs, unlit=False, clear_view=False):
+    def __init__(self, tex_dirs, unlit=False, clear_view=False, clear_blockers=False):
         self.b = glb.Builder()
         self.clear_view, self.cleared, self.marked = clear_view, [], []
+        self.clear_blockers, self.split = clear_blockers, []
         self.tc = build.TextureCache(self.b, tex_dirs, None)
         self.unlit = unlit
         self.meshes, self.mats, self.ibm = {}, {}, {}
@@ -275,6 +285,87 @@ class Scene:
                     & (np.abs(D @ np.cross(fw, up)) < tv * EYE_WIDE))
         return hit
 
+    @staticmethod
+    def eyes():
+        """HST's resting match eyes (glTF world, metres): behind the -z baseline, and turned round behind +z."""
+        o = EYE_PITCH - math.atan(0.02 * math.tan(math.radians(10.0)) * 0.7)
+        return [np.array([0, EYE_DIST * math.sin(o), -s * EYE_DIST * math.cos(o)]) for s in (1, -1)]
+
+    @staticmethod
+    def blocks(T):
+        """Triangles T (n, 3, 3; glTF world, metres) that a line from a resting eye to a point of the playing area
+        passes through (the 9 x 9 x 2 points of HST's `court_mod::blocks`)."""
+        hit = np.zeros(len(T), bool)
+        e1, e2 = T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]
+        for eye in Scene.eyes():
+            s = eye - T[:, 0]
+            q = np.cross(s, e1)
+            for x in np.linspace(PLAY[0, 0], PLAY[1, 0], 9):
+                for z in np.linspace(PLAY[0, 2], PLAY[1, 2], 9):
+                    for y in (0.0, 2.0):
+                        d = np.array([x, y, z]) - eye
+                        h = np.cross(d, e2)
+                        a = np.einsum("ij,ij->i", e1, h)
+                        ok = np.abs(a) > 1e-9
+                        f = np.where(ok, 1 / np.where(ok, a, 1), 0)
+                        u, v, t = f * np.einsum("ij,ij->i", s, h), f * (q @ d), f * np.einsum("ij,ij->i", e2, q)
+                        hit |= ok & (u >= 0) & (v >= 0) & (u + v <= 1) & (t > 1e-4) & (t < 0.999)
+        return hit
+
+    @staticmethod
+    def components(T, join):
+        """Connected sets of triangles T (shared or coincident corners) -> a label per triangle; `join(a, b)`
+        whether two touching triangles go together."""
+        _, weld = np.unique(np.round(T.reshape(-1, 3), 2), axis=0, return_inverse=True)
+        weld = weld.reshape(-1, 3)
+        root = np.arange(len(T))
+
+        def find(a):
+            while root[a] != a:
+                root[a] = root[root[a]]
+                a = root[a]
+            return a
+        first = {}
+        for i, tri in enumerate(weld):
+            for w in tri:
+                for k in first.setdefault(w, []):
+                    if join(i, k):
+                        root[find(i)] = find(k)
+                first[w].append(i)
+        return np.array([find(i) for i in range(len(T))])
+
+    def blockers(self, T):
+        """Groups of triangles T (glTF world) to name `__clear`: whole islands between a resting eye and the playing
+        area, or, for an island reaching into the playing area, its blocking flat faces outside it -> [mask]."""
+        hit = self.blocks(T)
+        if not hit.any():
+            return []
+        def inside(P):
+            return bool((P.min(0) <= PLAY[1]).all() and (P.max(0) >= PLAY[0]).all())
+        isl = self.components(T, lambda a, b: True)
+        out = []
+        for k in np.unique(isl[hit]):
+            m = isl == k
+            if not inside(T[m].reshape(-1, 3)):
+                out.append(m)
+                continue
+            # its flat faces (same plane: normals within ~8 degrees, 5 cm apart) that block
+            idx = np.flatnonzero(m)
+            S = T[idx]
+            N = np.cross(S[:, 1] - S[:, 0], S[:, 2] - S[:, 0])
+            N /= np.maximum(np.linalg.norm(N, axis=1), 1e-12)[:, None]
+            dist = np.einsum("ij,ij->i", N, S[:, 0])
+            face = self.components(S, lambda a, b: abs(N[a] @ N[b]) > 0.99
+                                   and abs(abs(dist[a]) - abs(dist[b])) < 0.05)
+            for f in np.unique(face[hit[idx]]):
+                if not inside(S[face == f].reshape(-1, 3)):
+                    sub = np.zeros(len(T), bool)
+                    sub[idx[face == f]] = True
+                    out.append(sub)
+        # not ground decals, nor pieces over the court between the playing area's ends (c01's pine bough)
+        return [m for m in out if T[m][:, :, 1].max() >= LOW
+                and (T[m][:, :, 2].max() > PLAY[1, 2] or T[m][:, :, 2].min() < PLAY[0, 2])]
+
     def mark_clear(self, node, path, by):
         """Name the placed instance `node` (model `path`, its nodes `by` from `add`) `...__clear` if any of its
         vertices stands between HST's resting eye and the near baseline (`near_end`), at rest."""
@@ -322,14 +413,22 @@ class Scene:
             A["I"] = A["I"].reshape(-1, 3)[~drop].reshape(-1)
         return bool(drop.any())
 
-    def prims(self, parts, materials, joint_map, world=None, label=""):
-        """world: the mesh node's world matrix, to `clear` the view (rigid meshes of a clear_view scene)."""
+    def prims(self, parts, materials, joint_map, world=None, label="", tris=None):
+        """world: the mesh node's world matrix, to `clear` the view (rigid meshes of a clear_view scene). tris: per
+        part, the triangles to keep (`split_blockers`)."""
         by_mat = {}
-        for p in parts:
-            by_mat.setdefault(p.material, []).append(p)
+        for i, p in enumerate(parts):
+            by_mat.setdefault(p.material, []).append(i)
         out = []
-        for mi, ps in sorted(by_mat.items()):
-            arrs = [build._prim_arrays(p, joint_map) for p in ps]
+        for mi, ii in sorted(by_mat.items()):
+            arrs = [build._prim_arrays(parts[i], joint_map) for i in ii]
+            if tris is not None:
+                for a, i in zip(arrs, ii):
+                    a["I"] = a["I"].reshape(-1, 3)[tris[i]].reshape(-1)
+                    used, a["I"] = np.unique(a["I"], return_inverse=True)  # only its own corners (HST boxes them)
+                    a["I"] = a["I"].reshape(-1).astype(np.uint32)
+                    for key in [k for k in a if k != "I" and len(a[k]) and len(a[k]) == len(a["P"])]:
+                        a[key] = a[key][used]
             off = np.cumsum([0] + [len(a["P"]) for a in arrs])
             A = {k: np.concatenate([a[k] for a in arrs]) for k in arrs[0] if k != "I"}
             A["I"] = np.concatenate([a["I"] + o for a, o in zip(arrs, off)])
@@ -375,6 +474,8 @@ class Scene:
             gl[j] = self.child(gl[p] if p in gl else parent, name=sk.names[j], **trs)
             if j in M.rigid and j in drawn:
                 key = (path, j)
+                if self.clear_blockers and self.split_blockers(M, j, gl[j], path, parent):
+                    continue
                 if self.clear_view:  # each placement looks different from the eye
                     key = (path, j, gl[j])
                     label = self.b.g["nodes"][parent]["name"] + "/" + sk.names[j]
@@ -400,6 +501,35 @@ class Scene:
             n = self.b.node(name=os.path.basename(path).split(".")[0] + ":skinned", mesh=self.meshes[path], skin=skin)
             self.b.g["scenes"][0]["nodes"].append(n)
         return {sk.names[j]: n for j, n in gl.items()}
+
+    def split_blockers(self, M, j, n, path, parent):
+        """A rigid mesh of court.glb on node n: if some of its islands stand between a resting eye and the playing
+        area (`blockers`), its mesh without them on n and each in a `<node>_<k>__clear` child; -> whether it did."""
+        parts = M.rigid[j]
+        W = self.world(n)
+        arrs = [build._prim_arrays(p, None) for p in parts]
+        T = np.concatenate([(a["P"] @ W[:3, :3].T + W[:3, 3])[a["I"].reshape(-1, 3)] for a in arrs])
+        groups = self.blockers(T)
+        if not groups:
+            return False
+        off = np.cumsum([0] + [len(a["I"]) // 3 for a in arrs])
+        name = M.sk.names[j]
+        rest = ~np.any(groups, axis=0)
+        for k, sel in enumerate([rest] + groups):
+            keep = [np.flatnonzero(sel[off[i]:off[i + 1]]) for i in range(len(parts))]
+            prims = self.prims(parts, M.m.materials, None, tris=keep)
+            if not prims:
+                continue
+            mesh = self.b.add("meshes", {"name": f"{os.path.basename(path)}:{name}" + (f"_{k}" if k else ""),
+                                         "primitives": prims})
+            if k == 0:
+                self.b.g["nodes"][n]["mesh"] = mesh
+            else:
+                self.child(n, name=f"{name}_{k}__clear", mesh=mesh)
+                P = T[sel].reshape(-1, 3)
+                self.split.append(f"{self.b.g['nodes'][parent]['name']}/{name}_{k} ({int(sel.sum())} triangles, "
+                                  f"{np.round(P.min(0), 1).tolist()}..{np.round(P.max(0), 1).tolist()} m)")
+        return True
 
     def animate(self, name, motion, by_name):
         """A looping motion on one instance's nodes (track `ns:Bone` also finds `Bone`); ROOTNODE keeps its
@@ -645,7 +775,7 @@ def export(n, label):
 
     # court.glb: the ground (less its sky) and every placed object; the sky dome and clouds go to sky.glb, placed
     # models that come with motions (flags, a merry-go-round) to gimmick.glb, looping
-    sc, ss, gs = Scene(tex), Scene(tex, unlit=True), Scene(tex, clear_view=True)
+    sc, ss, gs = Scene(tex, clear_blockers=True), Scene(tex, unlit=True), Scene(tex, clear_view=True)
     gpath = find(dirs, "ground", f"c{n:02d}_{stem}.psp.i3r")[0]
     G = Model(gpath)
     # the dome: `bg01_sky`, or `meshSky01`/`02` (c04, c06): untextured, vertex-coloured, 200-500 m across
@@ -700,6 +830,9 @@ def export(n, label):
     if gs.cleared:
         todo.append("left out of gimmick.glb, standing in HST's match view within %g m of its eye (Get a Grip's "
                     "closer camera has them behind it): %s" % (EYE_CLEAR, "; ".join(gs.cleared)))
+    if sc.split:
+        todo.append("hidden by HST while they stand between its resting eye and the court (`__clear` children of "
+                    "court.glb nodes, Get a Grip's closer camera stands in front of them): " + "; ".join(sc.split))
     if gs.marked:
         todo.append("hidden by HST while they stand between the eye and the court (`__clear`, Get a Grip's closer "
                     "camera has them behind it): " + ", ".join(gs.marked))
