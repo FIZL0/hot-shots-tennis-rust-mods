@@ -1,4 +1,4 @@
-"""Where a golf hole could hold a tennis court (HST-Remastered M8f10).
+"""Where a golf hole could hold a tennis court (open-tennis M8f10).
 
 A spot hosts a court when a FOOT_L x FOOT_W metre rectangle (the doubles court plus the smallest run-off of HST's
 own disc courts, Wafu's 8.2 m behind the baselines and Alps' 4.6 m beside the sidelines, rounded up) lies on the

@@ -1,6 +1,6 @@
 # HST character mod standard (v1, draft)
 
-What a custom character for the Hot Shots Tennis remaster (`HST-Remastered`) must provide, so one loader can treat
+What a custom character for the Hot Shots Tennis remaster (`open-tennis`) must provide, so one loader can treat
 it exactly like a disc character. It mirrors `crates/hst/src/character.rs` (`CharacterData`): a custom character
 "only has to fill the same CharacterData". Machine-readable skeleton: `standard/hst_skeleton.json`
 (regenerate: `python3 tools/rerig/make_skeleton.py`). How-to: `standard/TUTORIAL.md`.
@@ -160,7 +160,7 @@ HST plays per-character voice **programs** (each a set of keys = alternative tak
 | 6 | partner / first-serve calls | 0–4 |
 | 7–10 | post-point reactions (by reaction motion 0x2c–0x2f) | any |
 
-(From `HST-Remastered/research/journal/2026-10-07-n3-audio/9-SHOUTS-FINAL.md`, `10-WHIFF-CALLS-FINAL.md`.)
+(From `open-tennis/research/journal/2026-10-07-n3-audio/9-SHOUTS-FINAL.md`, `10-WHIFF-CALLS-FINAL.md`.)
 A program you ship no wav for plays the donor's own disc takes (none at all: the donor's whole bank).
 Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, point_get/point_lost→7–10, start→6.
 

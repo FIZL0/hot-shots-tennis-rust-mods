@@ -61,7 +61,7 @@ def ranks(values):
 def hst_xb(root):
     """HST's unpacked disc: build.sh's out/files/hst (from the HST disc in iso/), else the remaster's context/xb."""
     p = os.path.join(root, "out/files/hst")
-    return p if os.path.isdir(p) else os.path.join(root, "../HST-Remastered/context/xb")
+    return p if os.path.isdir(p) else os.path.join(root, "../open-tennis/context/xb")
 
 
 def find_tparam(root):
@@ -118,7 +118,7 @@ def hst_types(path):
     return {int(r[0]): r[head.index("タイプ")] for r in rows}
 
 
-# HST-Remastered B182: every mod plays at the level of HST's expert row (the select grid's bottom row)
+# open-tennis B182: every mod plays at the level of HST's expert row (the select grid's bottom row)
 EXPERTS = (8, 9, 10, 11)  # Miranda, Kent, Lola, Will
 # the band: power, spin, control (aim + timing windows), speed, stamina, reach; the dives follow reach (2× / 4×)
 BAND = ["Serv POW", "Strk POW", "LOW POW", "Voley POW", "V LOW POW", "Lob POW", "Lob POW2", "Top SPIN", "Slice SPIN",
@@ -170,7 +170,7 @@ def expert(manifest, path, hst):
     a = min(pool, key=lambda c: abs(c["bip01_height"] - d["bip01_height"]))
     ch["ai_row"] = (str(manifest["ai_row"]), str(a["index"]))
     manifest["ai_row"] = a["index"]
-    manifest["ai_row_why"] = (f"expert band (HST-Remastered B182): HST's expert of play style {style} if one has it, else any, "
+    manifest["ai_row_why"] = (f"expert band (open-tennis B182): HST's expert of play style {style} if one has it, else any, "
                               f"{'same sex, ' if a['sex'] == d['sex'] else ''}nearest the donor's height ({a['name']})")
     manifest["params_band"] = "expert"
     manifest["params_band_why"] = {k: f"{v[0]} -> {v[1]}" for k, v in ch.items()} | {

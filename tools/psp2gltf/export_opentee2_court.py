@@ -1,5 +1,5 @@
 """Open Tee 2's Nakagawa Public G.C. hole 7 tennis courts -> a court mod (standard/HST-COURT-UMPIRE-STANDARD.md §2;
-HST-Remastered task M8f10a1, notes/venues.md "Real tennis courts").
+open-tennis task M8f10a1, notes/venues.md "Real tennis courts").
 
     python3 tools/psp2gltf/export_opentee2_court.py [--court +|-] [--end +|-]
 

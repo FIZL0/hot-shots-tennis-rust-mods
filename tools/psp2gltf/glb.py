@@ -12,7 +12,7 @@ _DT = {FLOAT: np.float32, USHORT: np.uint16, UBYTE: np.uint8, UINT: np.uint32}
 class Builder:
     def __init__(self):
         self.bin = bytearray()
-        self.g = {"asset": {"version": "2.0", "generator": "HST-MODS psp2gltf"}, "scene": 0,
+        self.g = {"asset": {"version": "2.0", "generator": "open-tennis-mods psp2gltf"}, "scene": 0,
                   "scenes": [{"nodes": []}], "nodes": [], "buffers": [], "bufferViews": [], "accessors": []}
 
     def _list(self, key):

@@ -1,6 +1,6 @@
 //! unxb <in_dir> <out_dir> — unpack every `xe\0\x01` archive (.xb, .xb0..3) under in_dir into out_dir,
 //! mirroring the tree (archive `a/b.xb` → `out/a/b.xb/<entry>`). Endianness is detected per archive (PS2/PSP LE,
-//! PS3 BE); decoders are HST-Remastered's `hst-data/src/xb.rs` with the word reads made endian-aware.
+//! PS3 BE); decoders are open-tennis's `hst-data/src/xb.rs` with the word reads made endian-aware.
 use std::path::{Path, PathBuf};
 
 type R<T> = Result<T, String>;

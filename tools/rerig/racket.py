@@ -72,7 +72,7 @@ def make(part, model, out_path, node=None, length=HST_LENGTH, target=None):
         TB, _ = binds(*glb.read(target))
         Mr = np.linalg.inv(TB["Racket"]) @ rigid(TB["Bip01RHand"]) @ np.linalg.inv(rigid(MB["Bip01RHand"]))
     o = glb.Builder()
-    o.g["asset"]["generator"] = "HST-MODS racket"
+    o.g["asset"]["generator"] = "open-tennis-mods racket"
     imgs = {}
     for key in ("samplers",):
         if key in g:

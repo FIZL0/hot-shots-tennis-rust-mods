@@ -1,11 +1,11 @@
 # Hot Shots Golf Fore! (PS2, SCUS-97401) — characters
 
-Exporter: `tools/fore2gltf` (Rust; depends on HST-Remastered's `hst-data` + `hst-sim` by path).
+Exporter: `tools/fore2gltf` (Rust; depends on open-tennis's `hst-data` + `hst-sim` by path).
 
 ```
 cargo build --release --manifest-path tools/fore2gltf/Cargo.toml
 B=tools/fore2gltf/target/release/fore2gltf
-$B hst  /home/ryha/repos/HST-Remastered/context/xb out/models/hst   # HST reference rig (pc00 costume 0)
+$B hst  /home/ryha/repos/open-tennis/context/xb out/models/hst   # HST reference rig (pc00 costume 0)
 $B fore out/files/fore out                                           # all Fore characters (≈25 s)
 $B info <file.mdl>                                                   # print the node tree
 $B retarget <mdl> <mtl> <out.glb> <ani2…>                            # Biped motions onto a model, names matched sans spaces

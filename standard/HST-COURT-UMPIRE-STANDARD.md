@@ -1,6 +1,6 @@
 # HST court and umpire mod standard (v1, draft)
 
-What a custom **court** or **umpire** for the Hot Shots Tennis remaster (`HST-Remastered`) provides. Characters are
+What a custom **court** or **umpire** for the Hot Shots Tennis remaster (`open-tennis`) provides. Characters are
 `HST-CHARACTER-STANDARD.md`; this file shares its folder layout (§1 there), glTF rules (§2 there: embedded `.glb`,
 game space = metres, **Y down**, root node `game_space` rotated `[0,0,1,0]`) and voice format (§5 there: one
 `voice/<program>_<key>.wav` per take, any rate, mono or stereo).
@@ -10,7 +10,7 @@ layout and an umpire mod times its calls as a disc umpire does, so a match (and 
 sync) runs exactly as on that disc court with that disc umpire, whether the mod is installed or not. A player
 online without the mod gets the disc court / disc umpire it names.
 
-Status: the manifest fields and the umpire voice table are fixed; the loader lands in steps (HST-Remastered
+Status: the manifest fields and the umpire voice table are fixed; the loader lands in steps (open-tennis
 `plan/M8f.md`): umpire voices M8f3, umpire model M8f4, court visuals and sound M8f6, court NPCs M8f7. Until a step
 lands its files are ignored, not rejected.
 
@@ -24,7 +24,7 @@ Every `mod.json` may carry `"kind"`:
 | `court` | a venue | §2 here |
 | `umpire` | a chair umpire | §3 here |
 
-Any other value is a kind this loader doesn't know yet (e.g. `textures`, HST-Remastered M5a): it is skipped
+Any other value is a kind this loader doesn't know yet (e.g. `textures`, open-tennis M5a): it is skipped
 quietly, not reported as broken. The character select only lists `character` mods; the court select lists `court`
 mods, the umpire select `umpire` mods. Store metadata (`meta.json`) carries the same `kind`.
 
@@ -40,7 +40,7 @@ mods/<id>/
   sound/ambience_<n>.wav  optional: looping background layers, all played at once
   sound/bgm.wav (or .ogg)  optional: the court's music, looped
   lensflare.png        optional: the sun's lens flare sprite (outdoor courts)
-  previews/court.png   optional: the court select's picture (640×360 RGBA PNG; HST-Remastered's tools/court_previews.sh shoots one)
+  previews/court.png   optional: the court select's picture (640×360 RGBA PNG; open-tennis's tools/court_previews.sh shoots one)
 ```
 
 ```json
@@ -112,7 +112,7 @@ Spectators, ball kids, line judges, mascots: drawn and animated only, never touc
 - `role`: `gallery` (cued like the disc gallery: cheer on a point won, groan on an error, clap on a game won),
   `ballkid` (`serve` before each serve, `change_ends`, else `idle`), `linejudge` (`point` on an out call; a node
   named `head` turns about the vertical toward the ball), `mascot` (like gallery). The cues follow the match the way
-  the disc gallery's do (HST-Remastered `play/npcs/court_people.rs`): they fire on the same ticks, read the match,
+  the disc gallery's do (open-tennis `play/npcs/court_people.rs`): they fire on the same ticks, read the match,
   never write it. Each person starts its reaction a few frames apart from its neighbours.
 - `sounds` (optional): `{"cheer": ["npcs/cheer_0.wav", …], …}` per cue (`cheer`, `clap`, `groan`, `win`, `lose`,
   `point`), one picked at random, played once from the middle of the people when the cue fires. They come on top
@@ -146,7 +146,7 @@ mods/<id>/
 
 ### 3a. Calls
 
-The umpire speaks from three programs (HST-Remastered `hst-sim/src/umpire.rs`). Ship one wav per key you have:
+The umpire speaks from three programs (open-tennis `hst-sim/src/umpire.rs`). Ship one wav per key you have:
 
 | program | key | call |
 |---|---|---|
@@ -169,7 +169,7 @@ The umpire speaks from three programs (HST-Remastered `hst-sim/src/umpire.rs`). 
 | 2 | 3 | "change" (change ends) |
 | 2 | 4 | "game, set and match" |
 
-24 calls (words as the disc umpires say them, by transcript, HST-Remastered M8f2). Tiebreak points are not called.
+24 calls (words as the disc umpires say them, by transcript, open-tennis M8f2). Tiebreak points are not called.
 A source game's umpire usually names the winner ("game, Emi") where HST says the side: map its generic
 line, or leave the key to the donor. Check each clip says the call of its row (a speech-recognition transcript, as
 `tools/voice_lang.py` does for language) before shipping it.

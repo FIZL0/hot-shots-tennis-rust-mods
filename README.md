@@ -1,7 +1,7 @@
 # Hot Shots Tennis Rust Mods
 
 Tools that pull the playable characters out of other Hot Shots games and turn them into character mods for the
-Hot Shots Tennis (PS2) remaster, [Hot Shots Tennis Rust](https://github.com/FIZL0/hot-shots-tennis-rust)
+Hot Shots Tennis (PS2) remaster, [Hot Shots Tennis Rust](https://github.com/FIZL0/open-tennis)
 (HST below). They extract models, textures, animations,
 faces and voices, then rerig each character onto HST's player skeleton.
 
@@ -36,8 +36,8 @@ tools/
 
 ## Requirements
 
-- Rust (cargo), and a checkout of [Hot Shots Tennis Rust](https://github.com/FIZL0/hot-shots-tennis-rust) next to this
-  one as `../HST-Remastered`, since `fore2gltf` depends on its `hst-data` crate.
+- Rust (cargo), and a checkout of [Hot Shots Tennis Rust](https://github.com/FIZL0/open-tennis) next to this
+  one as `../open-tennis`, since `fore2gltf` depends on its `hst-data` crate.
 - Python 3 with numpy, scipy and Pillow.
 - `vgmstream-cli`, `ffmpeg` and `7z`.
 - Optional: `npx` with the `gltf-validator` npm package, for checking output files.
@@ -60,7 +60,7 @@ on its own, except:
 - the golf games use Get a Grip's rackets. If that disc is there it's built too; if not, golf mods hold HST rackets from your disc only (`disc_racket`).
 - Open Tee's face emotions come from Open Tee 2's face animations. Without that disc, Open Tee faces have only the neutral face.
 - Open Tee 2's first ten characters take their winning voice lines from Open Tee's audio. Without that disc they have none.
-- stat overrides and reaction timing come from Hot Shots Tennis itself (SCUS-97610): put its `.iso` in `iso/` too (or have `../HST-Remastered/context/xb`). Without it the mods keep their donor character's stats.
+- stat overrides and reaction timing come from Hot Shots Tennis itself (SCUS-97610): put its `.iso` in `iso/` too (or have `../open-tennis/context/xb`). Without it the mods keep their donor character's stats.
 
 ## Pipeline
 
@@ -78,7 +78,7 @@ done
 # 2. Models, textures, animations, faces -> out/models, out/anims, out/textures
 cargo build --release --manifest-path tools/fore2gltf/Cargo.toml
 tools/fore2gltf/target/release/fore2gltf fore out/files/fore out
-tools/fore2gltf/target/release/fore2gltf hst ../HST-Remastered/context/xb out/models/hst   # HST reference rigs
+tools/fore2gltf/target/release/fore2gltf hst ../open-tennis/context/xb out/models/hst   # HST reference rigs
 python3 tools/psp2gltf/export_getagrip.py && python3 tools/psp2gltf/export_getagrip_faces.py
 python3 tools/psp2gltf/export_opentee.py
 python3 tools/psp2gltf/export_opentee2.py
@@ -92,7 +92,7 @@ python3 tools/voices.py
 python3 tools/rerig/make_skeleton.py   # standard/hst_skeleton.json, from the HST reference rigs
 python3 tools/rerig/batch.py           # every character; writes out/rerig/<game>/check.txt
 python3 tools/rerig/package.py         # out/mods/<game>_pcNN_<name>/
-python3 tools/rerig/hst_umpires.py     # HST's own five chair umpires, stood up -> out/mods/hst_umpire_NN_<name>/ (needs ../HST-Remastered: ISO, context/xb, hst-gltf + bankwav built)
+python3 tools/rerig/hst_umpires.py     # HST's own five chair umpires, stood up -> out/mods/hst_umpire_NN_<name>/ (needs ../open-tennis: ISO, context/xb, hst-gltf + bankwav built)
 python3 tools/rerig/gag_umpires.py && python3 tools/psp2gltf/export_getagrip_umpires.py && python3 tools/psp2gltf/export_getagrip_umpire_previews.py   # Get a Grip's eight chair umpires + their select pictures
 # optional: HST_MENU=chars HST_BAKE=all hst <iso> with these mods installed, then
 # python3 tools/rerig/previews.py <iso dir>/cache/previews/<boot>-r<N>   # ships the select pictures
@@ -131,7 +131,7 @@ All the detail is in `standard/HST-CHARACTER-STANDARD.md`. For how to rerig a ch
   `ai_row` where the game names a play style, voices sorted into HST's programs (`voice_why` says which are
   heuristic), each game's own point/set reactions as `motions.glb`, a racket per mod (no two of a game alike: Get a Grip's, else one of HST's by `disc_racket`), and HST-size
   scaling with a head shrink. Per-game data modules: `tools/rerig/{gag_stats,fore_data,oob_data,opentee_data}.py`.
-- **Expert band** (HST-Remastered B182): every mod but Anya and Wendy then has its power, spin, control, speed,
+- **Expert band** (open-tennis B182): every mod but Anya and Wendy then has its power, spin, control, speed,
   stamina and reach moved to the same place within HST's expert rows (Miranda, Kent, Lola, Will) and an expert `ai_row`
   (`params_band_why`; `python3 tools/rerig/gag_stats.py` applies it to packed mods in place, once).
 - **Still open** (also listed per character in each `mod.json` `todo`):

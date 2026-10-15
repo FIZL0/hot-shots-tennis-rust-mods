@@ -53,7 +53,7 @@ def vag(data, rate=44100):
 
 def fore_tones(h):
     """{bd address: (set, note, semitones)} of an SShd bank's tone sets. The sound driver (SNDN2DRV.IRX, the same pitch
-    rule and 192-steps-per-octave table as HST's, HST-Remastered `snd::pitch`) plays a tone (note - root) semitones +
+    rule and 192-steps-per-octave table as HST's, open-tennis `snd::pitch`) plays a tone (note - root) semitones +
     fine/16 from 44.1 kHz, and every voice sequence keys on the tone's own note, so that is the sample's true rate."""
     if h[12:16] != b"SShd":
         raise RuntimeError("not SShd")
@@ -138,7 +138,7 @@ def sgxd_cue_waves(b, u, ch):
     sequence keys on with `d0 01 NN`, NN the note in decimal digits (0x32 = note 32: in all 14k Get a Grip sequences
     the digit reading lands on a region and the raw byte often doesn't). The region whose key range holds the note
     (RGND program p: count +0x10+8p, offset +0x14+8p; region +0 key lo, +1 key hi, +0x1c wave) gives the wave.
-    Checked 2026-10-14 by transcript on all 16 umpire banks gag_vcNN[ab] (HST-Remastered M8f2): every cue says its name."""
+    Checked 2026-10-14 by transcript on all 16 umpire banks gag_vcNN[ab] (open-tennis M8f2): every cue says its name."""
     if b"SEQD" not in ch or b"RGND" not in ch:
         return {}
     r, s = ch[b"RGND"], ch[b"SEQD"]

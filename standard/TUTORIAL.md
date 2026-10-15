@@ -12,8 +12,8 @@ by hand from the standard (§7) — copy one from `out/mods/` as a start — and
 The HST reference rigs come from your Hot Shots Tennis disc:
 
 ```
-cargo run --release --manifest-path ../HST-Remastered/Cargo.toml -p hst-data --bin xbdump -- "Hot Shots Tennis (USA).iso" ../HST-Remastered/context/xb
-tools/fore2gltf/target/release/fore2gltf hst ../HST-Remastered/context/xb out/models/hst
+cargo run --release --manifest-path ../open-tennis/Cargo.toml -p hst-data --bin xbdump -- "Hot Shots Tennis (USA).iso" ../open-tennis/context/xb
+tools/fore2gltf/target/release/fore2gltf hst ../open-tennis/context/xb out/models/hst
 ```
 
 **Characters from the other games**, after `./build.sh` (README):
@@ -106,7 +106,7 @@ Known failure signs and fixes (the first three bit us already and are handled):
 - Voices: Get a Grip is mapped (smash→0, st_ji→1, st_nb→2 (guess), receive→3, swing→4, start/call/go/chance→6,
   point_get→7, point_lost→8, set_get→9, set_lost→10). Other games are in `voice/unsorted/`: listen, then copy
   into `<program>_<key>.wav`. Upscaled textures, for every mod at once
-(in HST-Remastered): `python3 tools/upscale_mods.py MODEL.pth [mods/]` (headless chaiNNer, skips what's
+(in open-tennis): `python3 tools/upscale_mods.py MODEL.pth [mods/]` (headless chaiNNer, skips what's
 already upscaled; rerun after adding or rebuilding mods).
 
 ## 5. Report

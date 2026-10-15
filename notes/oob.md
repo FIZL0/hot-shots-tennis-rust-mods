@@ -383,7 +383,7 @@ profile2 height (ft/in → cm) × HST's metres per cm by sex, × game factor 1.0
 Gloria's Bip01 0.8554 m (M1l, 2026-10-12; was 0.8264). Her head-to-foot is then 1.617 m vs HST Gloria's 1.655 m (her own
 proportions; heads are never grown). LJ (7'1") comes out at Bip01 1.164 m, above HST's 0.95 m: relative heights are kept.
 
-## Voice lines (HST-Remastered B209, 2026-10-13)
+## Voice lines (open-tennis B209, 2026-10-13)
 Every sg cue of all 17 was transcribed with faster-whisper small (English, the longest note's wave and, for multi-part
 cues, all parts joined); the per-slot table above comes from reading those transcripts side by side: each slot says
 the same thing in every actor's words. The transcripts are game data (never committed); rerun with

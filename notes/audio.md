@@ -15,13 +15,13 @@ Rel paths are relative to `out/files/<game>` or `extracted/<game>`. Streams: `.s
 | oob | 13371 | 17 | 14 raw `.sgb` with no `.sgh` anywhere (ga_j_13/14, me_s_01_loop1/short, me_s_03/09/10, on_j_01/02, on_s_08, pz_j_04/05/07, pz_s_03_short); 3 `.sgd` vgmstream cannot open (lobby01/03.sgd, MG5_Bus.sgd) |
 
 ## Fore (PS2) - `.hd/.bd` are NOT readable by vgmstream (`SShd` header, no IECSsreV wrapper)
-`audio.py` parses the SShd tone-set table (layout in HST-Remastered `crates/hst-data/src/snd.rs`), cuts each tone's sample out
+`audio.py` parses the SShd tone-set table (layout in open-tennis `crates/hst-data/src/snd.rs`), cuts each tone's sample out
 of the `.bd` (address = u16*8) and decodes PS-ADPCM via a temp VAGp + vgmstream at the sample's **true rate**:
 44100 * 2^((note - root + fine/16) / 12). Fore's sound driver `MODULES2/SNDN2DRV.IRX` holds the same 192-steps-per-octave
-pitch table as HST's and packs root/note/fine/bend and scales by 441/480 the same way (HST-Remastered `snd::pitch`), and
+pitch table as HST's and packs root/note/fine/bend and scales by 441/480 the same way (open-tennis `snd::pitch`), and
 every voice sequence keys on the tone's own note. Voice tones sit at -6.625 (30.1 kHz), -12 (22.05), -7.25, -7.8125 ...
 semitones; most SE at -5.5 (32.1 kHz). Before 2026-10-11 everything was written at 44.1 kHz (voices 5-12 st too high).
-Checked 2026-10-12 against the running game (HST-Remastered `research/tools/fore_spu_rates.py`: SPU2 pitch registers of
+Checked 2026-10-12 against the running game (open-tennis `research/tools/fore_spu_rates.py`: SPU2 pitch registers of
 save states in Fore's attract demo, sample identified by SPU RAM bytes): Brad's shout `g_bra2` 29004 Hz in game vs 29011 here
 (-7.25 st), caddie Kaz -7.8125/-9.8125/-10.875 st likewise within the pitch table's rounding (<0.05%). SE banks such as
 `plse` also play at other pitches (sequenced), so an SE wav is only its keyed-at-own-note rate. Sam: -6.625 (139 tones),
@@ -50,13 +50,13 @@ Cue names (from the SGXD NAME table; `names.txt` next to the wavs; `out/voices/g
 `pc_voice_` + `smash_0-2, swing_0/1, receive_0-2` (shot shouts), `st_ji_0-4, st_nb_0-2` (stroke shouts, ji/nb unknown),
 `start_0/1`, `match`, `point_get_0/1` (point won), `point_lost_0/1`, `rep_get / rep_lost` (rally?), `set_get_0/1` (set won),
 `set_lost_0/1`, `gut_0/1`, `chance`, `body`. Umpire `gag_vc*`: `vc_voice_point_*`, `tiebreak_*`, `miss_*`.
-Cue -> wave is **decoded** (2026-10-14, HST-Remastered M8f2; `audio.py sgxd_cue_waves`): cue c plays SEQD group 0
+Cue -> wave is **decoded** (2026-10-14, open-tennis M8f2; `audio.py sgxd_cue_waves`): cue c plays SEQD group 0
 sequence c, which keys on with `d0 01 NN`, NN the note in decimal digits (0x32 = note 32); the RGND region whose key range
 holds the note gives the wave. Checked by whisper transcript on all 16 umpire banks (every cue says its name) and on
 `dgv_NPC_m06a` (`start_0` "Shall we?", `match` "Last one!", `go` "Now!", `hello` "Ready when you are!"). Before, the
 mapping was inferred as cue c -> region c, which matches the decode for the playable `sgv/dgv_PC00-13` banks but was one
 off from cue 5 on in 44 of the 46 `dgv_NPC_*` banks (their cue order isn't their region order) and gave no names at all for
-`sgv/dgv_PC14` (Helghast; cue count != region count). Since rerun (`voices.py`, `rerig/package.py getagrip`, HST-Remastered
+`sgv/dgv_PC14` (Helghast; cue count != region count). Since rerun (`voices.py`, `rerig/package.py getagrip`, open-tennis
 M92) `getagrip_pc14_helghast` ships `voice/` like the other 14 (27 wavs, same program counts).
 Subsong order is the raw index (`NNN.wav`).
 Umpires: `sound/game/010_umpire_NN_0V.xb` -> `gag_vcNN{a,b}` (+`_rev`), NN = model `200_court/umpire.xb` u_NN = loading

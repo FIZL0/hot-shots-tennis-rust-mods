@@ -1,4 +1,4 @@
-"""Get a Grip's court galleries -> the court mods' people (standard/HST-COURT-UMPIRE-STANDARD.md §2b; HST-Remastered
+"""Get a Grip's court galleries -> the court mods' people (standard/HST-COURT-UMPIRE-STANDARD.md §2b; open-tennis
 task M8f7). Run after export_getagrip_courts.py (it adds to out/mods/gag_cNN_<stem>/):
 
     python3 tools/psp2gltf/export_getagrip_gallery.py [01 04 ...]

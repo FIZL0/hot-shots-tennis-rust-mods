@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-hst-data = { path = "/home/ryha/repos/HST-Remastered/crates/hst-data" }
+hst-data = { path = "/home/ryha/repos/open-tennis/crates/hst-data" }
 
 [workspace]
