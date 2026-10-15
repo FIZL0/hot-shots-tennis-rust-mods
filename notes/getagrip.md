@@ -184,6 +184,13 @@ seat lift comes from `idle`'s first pelvis key; ROOTNODE and the locators are pu
 drops non-joint nodes keeps the lift. The PSP code is encrypted: which motion it plays when is a guess by name.
 Helghast (u_04) has a canister (`Bip01RThigh9…`) that, with no thigh bone, rides the pelvis beside the chair.
 
+Select pictures (`python3 tools/psp2gltf/export_getagrip_umpire_previews.py`, after the mod folders): each mod's
+`previews/umpire.png` (standard §3) is cut out of the umpire's own art on their English loading panel
+(`menu/loadmes/judge/loadmes_jNN.xb0/.../JNN.gim`, 480×272: seated in the chair, Helghast as u_04; the plain `.xb`
+is Japanese with Yakkun, xb2/xb3 French/Spanish; the shop's 128×128 `r_judgechip.gim` cut-outs show Yakkun for 04
+in every variant). Rendering `umpire.glb` instead was tried and dropped: u_01–03 and u_05–07 show stray
+hands/feet (Kanani worst) in render.py, at rest too.
+
 ## Courts (`python3 tools/psp2gltf/export_getagrip_courts.py [NN ...]`)
 
 Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods (standard court §2): `court.glb`,
