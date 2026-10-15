@@ -127,9 +127,9 @@ The umpire speaks from three programs (HST-Remastered `hst-sim/src/umpire.rs`). 
 | 0 | 8 | "all" (second word of fifteen all, thirty all) |
 | 0 | 9 | "deuce" |
 | 0 | 10 | "advantage" (first word) |
-| 0 | 11 | the server's side (second word after advantage / game / set) |
-| 0 | 12 | the receiver's side (second word after advantage / game / set) |
-| 0 | 13 | "deuce" again (a second deuce in a game; not used on court 5) |
+| 0 | 11 | "server" (second word after advantage / game / set, when the serving side won it) |
+| 0 | 12 | "receiver" (the same, when the receiving side won it) |
+| 0 | 13 | "deuce again" (a second deuce in a game; not on court 5). No disc umpire has a take: silent on the disc |
 | 1 | 0 | "out" |
 | 1 | 1 | "fault" |
 | 1 | 2 | "double fault" |
@@ -138,10 +138,11 @@ The umpire speaks from three programs (HST-Remastered `hst-sim/src/umpire.rs`). 
 | 2 | 0 | "tiebreak" |
 | 2 | 1 | "game" (first word, then 0_11/0_12) |
 | 2 | 2 | "set" (first word, then 0_11/0_12) |
-| 2 | 3 | "change ends" |
+| 2 | 3 | "change" (change ends) |
 | 2 | 4 | "game, set and match" |
 
-24 calls. A source game's umpire usually names the winner ("game, Emi") where HST says the side: map its generic
+24 calls (words as the disc umpires say them, by transcript, HST-Remastered M8f2). Tiebreak points are not called.
+A source game's umpire usually names the winner ("game, Emi") where HST says the side: map its generic
 line, or leave the key to the donor. Check each clip says the call of its row (a speech-recognition transcript, as
 `tools/voice_lang.py` does for language) before shipping it.
 

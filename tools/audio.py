@@ -133,10 +133,35 @@ def conv_vgm(p, out, tmp):
         raise RuntimeError((r.stderr or r.stdout).strip().splitlines()[-1] if (r.stderr or r.stdout).strip() else "no output")
 
 
+def sgxd_cue_waves(b, u, ch):
+    """{cue: wave} from SEQD: group 0 lists one sequence per cue (+0x10 group offset; group +4 count, +8 offsets); a
+    sequence keys on with `d0 01 NN`, NN the note in decimal digits (0x32 = note 32: in all 14k Get a Grip sequences
+    the digit reading lands on a region and the raw byte often doesn't). The region whose key range holds the note
+    (RGND program p: count +0x10+8p, offset +0x14+8p; region +0 key lo, +1 key hi, +0x1c wave) gives the wave.
+    Checked 2026-10-14 by transcript on all 16 umpire banks gag_vcNN[ab] (HST-Remastered M8f2): every cue says its name."""
+    if b"SEQD" not in ch or b"RGND" not in ch:
+        return {}
+    r, s = ch[b"RGND"], ch[b"SEQD"]
+    regions = [(b[g], b[g + 1], u(g + 0x1c)) for p in range(u(r + 0xc)) for k in range(u(r + 0x10 + 8 * p))
+               for g in [r + 8 + u(r + 0x14 + 8 * p) + 0x38 * k]]
+    g = u(s + 0x10)
+    out = {}
+    for c in range(u(g + 4)):
+        q = u(g + 8 + 4 * c)
+        k = b.find(b"\xd0\x01", q, q + 0x40)
+        if k < 0 or (b[k + 2] & 15) > 9:
+            continue
+        note = (b[k + 2] >> 4) * 10 + (b[k + 2] & 15)
+        out[c] = next((w for lo, hi, w in regions if lo <= note <= hi), None)
+    return out
+
+
 def sgxd_names(path, out):
     """names.txt: 'NNN<TAB>name' per subsong where the SGXD NAME table can be tied to a wave.
-    id 0x3000wwww = wave name (Open Tee 2); id 0x2000cccc = cue name, cue c -> RGND region c -> wave (Get a Grip; inferred,
-    only used when region count == cue count). Anything else (PS3 pcNN banks) is dumped raw as '?<TAB>0xID<TAB>name'."""
+    id 0x3000wwww = wave name (Open Tee 2); id 0x2000cccc = cue name (Get a Grip): cue c plays SEQD sequence c, whose note
+    (sgxd_cue_waves) picks the RGND region and so the wave. A cue whose sequence has no note falls back to region c when
+    region count == cue count (the rule before 2026-10-14, inferred). Anything else (PS3 pcNN banks) is dumped raw as
+    '?<TAB>0xID<TAB>name'."""
     b = open(path, "rb").read()
     if b[:4] != b"SGXD":
         return
@@ -153,10 +178,13 @@ def sgxd_names(path, out):
         names.append((i_d, b[off:b.index(b"\0", off)].decode("ascii", "replace")))
     reg = [u(ch[b"RGND"] + 0x18 + k * 0x38 + 0x34) for k in range(u(ch[b"RGND"] + 0x10))] if b"RGND" in ch else []
     cues = [n for n in names if n[0] >> 28 == 2]
+    seq = sgxd_cue_waves(b, u, ch)
     lines = []
     for i_d, n in names:
         if i_d >> 28 == 3:
             lines.append((i_d & 0xffff, n))
+        elif i_d >> 28 == 2 and seq.get(i_d & 0xffff) is not None:
+            lines.append((seq[i_d & 0xffff], n))
         elif i_d >> 28 == 2 and len(reg) == len(cues) and i_d & 0xffff < len(reg):
             lines.append((reg[i_d & 0xffff], n))
         elif i_d:

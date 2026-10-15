@@ -50,8 +50,22 @@ Cue names (from the SGXD NAME table; `names.txt` next to the wavs; `out/voices/g
 `pc_voice_` + `smash_0-2, swing_0/1, receive_0-2` (shot shouts), `st_ji_0-4, st_nb_0-2` (stroke shouts, ji/nb unknown),
 `start_0/1`, `match`, `point_get_0/1` (point won), `point_lost_0/1`, `rep_get / rep_lost` (rally?), `set_get_0/1` (set won),
 `set_lost_0/1`, `gut_0/1`, `chance`, `body`. Umpire `gag_vc*`: `vc_voice_point_*`, `tiebreak_*`, `miss_*`.
-Cue -> wave mapping is **inferred** (cue id = RGND region index -> wave index, 33 cues over 32 waves, one wave shared); the
-SEQD chunk was not decoded, so spot-check by ear before relying on it. Subsong order is the raw index (`NNN.wav`).
+Cue -> wave is **decoded** (2026-10-14, HST-Remastered M8f2; `audio.py sgxd_cue_waves`): cue c plays SEQD group 0
+sequence c, which keys on with `d0 01 NN`, NN the note in decimal digits (0x32 = note 32); the RGND region whose key range
+holds the note gives the wave. Checked by whisper transcript on all 16 umpire banks (every cue says its name) and on
+`dgv_NPC_m06a` (`start_0` "Shall we?", `match` "Last one!", `go` "Now!", `hello` "Ready when you are!"). Before, the
+mapping was inferred as cue c -> region c, which matches the decode for the playable `sgv/dgv_PC00-13` banks but was one
+off from cue 5 on in 44 of the 46 `dgv_NPC_*` banks (their cue order isn't their region order) and gave no names at all for
+`sgv/dgv_PC14` (Helghast; cue count != region count): rerun `voices.py` and package pc14 for its voices.
+Subsong order is the raw index (`NNN.wav`).
+Umpires: `sound/game/010_umpire_NN_0V.xb` -> `gag_vcNN{a,b}` (+`_rev`), NN = model `200_court/umpire.xb` u_NN = loading
+card `menu/loadmes/judge/loadmes_jNN.xb0`: 00 Natasha, 01 Nate, 02 Kanani, 03 Xavier, 04 Helghast, 05 Robo T., 06 Suzuki,
+07 Gloria. 45 cues: `vc_voice_point_f_0-3` (love..forty, first word), `point_b_0-3` (second word), `point_all`,
+`point_deuce_0` "deuce", `point_deuce_1` "deuce again", `point_adv_0` "advantage", `adv_1` "server", `adv_2` "receiver",
+`miss_out/fault_0/fault_1 (double fault)/let/net`, `break` "tie-break", `game`, `set`, `change` "change sides",
+`gameset`, `ballhit` (hit by the ball: "Hey!", "Careful now!"), `tiebreak_0-9up/down` (tiebreak point numbers).
+`b` = a second, chattier take set ("That's out!", "We have a tie break!"). Packaged as umpire mods by
+`tools/rerig/gag_umpires.py` (bank `a`, all 24 HST calls; standard HST-COURT-UMPIRE-STANDARD.md §3).
 Character index -> name: not found in any csv/txt (character.csv is `Pc_NN_00` params only). Not guessed.
 
 ## Open Tee 1 (PSP)
@@ -71,8 +85,7 @@ caddie `*_caNN`. `data/sound/voice/menu/me_pc.sgd` (all characters, menu). Cue n
 `pc00_20A`), id -> wave mapping not decoded. Streams `data/sound/stream/*.sgb` (music/ambience).
 
 ## Unresolved
-- Character names for all games. - Fore event -> sample mapping (and any EE-side pitch scale on a play call; voices assumed 1.0). - Cue -> wave mapping for GaG is inferred.
-- OOB / Open Tee cue name -> wave mapping not decoded.
+- Character names for all games. - Fore event -> sample mapping (and any EE-side pitch scale on a play call; voices assumed 1.0). - OOB / Open Tee cue name -> wave mapping not decoded.
 
 ## Language (checked 2026-10-12, HST M1p)
 Some discs carry each voice archive twice, one per language. Use the English copy:
