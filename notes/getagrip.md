@@ -228,8 +228,12 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   has 17 m opaque black cables (`code01`, an ordinary opaque material record, not additive) rising around its core
   9–12 m in front of HST's eye: solid black bars over the match view. The script drops every gimmick.glb island
   with a corner inside HST's resting view within 20 m of either end's eye (`clear_view`; listed in `todo`): only
-  those cables, on all 16 courts. Not caught at 20 m: c05's basket goals (4.8 m, centred 5–7.5 m behind each
-  baseline, ~21 m from the eye) also cover the view's middle.
+  those cables, on all 16 courts. Further out, every placed gimmick instance with a vertex inside that view behind
+  the near baseline is named `…__clear` (standard §2; listed in `todo`): HST hides it while it stands between the
+  eye and the court, so it's still there from the far end, in cut-aways and replays. That is what keeps c05's
+  basket goals (4.8 m, 7.2 m behind each baseline, ~21 m from the eye, square over the view's middle) out of the
+  match view. Gimmicks that come with only a break motion (`_b01_`: the goals) stand still; they used to loop it,
+  falling over every 2.8 s.
 - **Settings** `1_courtsetting.xb`: `court.csv` (Shift-JIS; stem, GRASS/HARD/CLAY, indoor), `courtlight.csv` (row =
   court number; ambient, light 0/1 colour + direction toward the light, Y up → `sun`/`fill`), `fogsetting.csv` (near/
   far amount, near/far distance, colour; off when both amounts are 0 → `fog`). `playerlight.csv`/`balllight.csv` are

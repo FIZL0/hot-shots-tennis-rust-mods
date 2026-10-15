@@ -76,6 +76,12 @@ mods/<id>/
   `fog` an `"amount": [near, far]` (how much fog at `near` and at `far`, 0–1, linear between; absent `[0, 1]`).
 - `ambience_loop`: one `[start, end]` per `sound/ambience_<n>.wav`, as `bgm_loop`.
 - `lens_flare`: the flare sprite (PNG, alpha), drawn toward `sun` when the sun is on screen. Absent: no flare.
+- **Clear of the view**: a node whose name ends in `__clear` (before any `__singles`/`__doubles`) isn't drawn while
+  it stands between the eye and the court: a line from the eye (any camera: match, cut-away, replay) to a point of
+  the playing area (the doubles court and 2 m behind each baseline, on the ground and 2 m up) passes through its box
+  at rest, or the eye is inside it. Its skinned meshes go with it when all their joints are under it. For set pieces
+  that another game's closer camera had behind its back (Get a Grip's basket goals behind each baseline). Applies to
+  `court.glb` and `gimmick.glb`.
 - `gimmick.glb`'s animations each drive one set piece and loop on their own clocks, all playing at once; a set piece
   with none stands still. They are drawn only, like `court.glb`: no collision, the ball passes through.
 - Optional, informational: `indoor` (bool), `gimmicks` (what `gimmick.glb` holds).

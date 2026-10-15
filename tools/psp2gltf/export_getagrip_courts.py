@@ -98,6 +98,10 @@ CAR = {11: "gi10_Car", 31: "gi11_Car"}
 # view: their islands within EYE_CLEAR of either resting eye are left out of gimmick.glb (`clear_view`).
 EYE_PITCH, EYE_DIST, EYE_HALF_V, EYE_WIDE = math.radians(17.0), 41.0, math.radians(7.0 + 1.5), 21 / 9
 EYE_CLEAR = 20.0
+# further out, a set piece standing in that view between the eye and the near baseline (c05's basket goals, 7.2 m
+# behind each baseline, ~21 m from the eye) is named `...__clear`: HST hides it while it stands between the eye and
+# the court (standard §2), so it's still seen from the far end, in cut-aways and in replays.
+BASELINE = 11.885
 
 
 def sjis_csv(path):
@@ -172,7 +176,7 @@ class Scene:
 
     def __init__(self, tex_dirs, unlit=False, clear_view=False):
         self.b = glb.Builder()
-        self.clear_view, self.cleared = clear_view, []
+        self.clear_view, self.cleared, self.marked = clear_view, [], []
         self.tc = build.TextureCache(self.b, tex_dirs, None)
         self.unlit = unlit
         self.meshes, self.mats, self.ibm = {}, {}, {}
@@ -253,6 +257,42 @@ class Scene:
             tv = math.tan(EYE_HALF_V) * d
             hit |= (d > 0.3) & (d < EYE_CLEAR) & (np.abs(D @ up) < tv) & (np.abs(D @ np.cross(fw, up)) < tv * EYE_WIDE)
         return hit
+
+    @staticmethod
+    def near_end(Q):
+        """Points of Q (glTF world, metres) inside HST's resting match view (either end) and behind its near
+        baseline: between the eye and the court."""
+        hit = np.zeros(len(Q), bool)
+        for s in (1, -1):
+            o = EYE_PITCH - math.atan(0.02 * math.tan(math.radians(10.0)) * 0.7)
+            eye = np.array([0, EYE_DIST * math.sin(o), -s * EYE_DIST * math.cos(o)])
+            fw = np.array([0, -math.sin(EYE_PITCH), s * math.cos(EYE_PITCH)])
+            up = np.array([0, math.cos(EYE_PITCH), s * math.sin(EYE_PITCH)])
+            D = Q - eye
+            d = D @ fw
+            tv = math.tan(EYE_HALF_V) * d
+            hit |= ((d > 0.3) & (s * Q[:, 2] < -BASELINE) & (np.abs(D @ up) < tv)
+                    & (np.abs(D @ np.cross(fw, up)) < tv * EYE_WIDE))
+        return hit
+
+    def mark_clear(self, node, path, by):
+        """Name the placed instance `node` (model `path`, its nodes `by` from `add`) `...__clear` if any of its
+        vertices stands between HST's resting eye and the near baseline (`near_end`), at rest."""
+        M = Model(path)
+        sk = M.sk
+        pts = []
+        for j, parts in M.rigid.items():
+            if sk.names[j] in by:  # in the joint's space
+                W = self.world(by[sk.names[j]])
+                pts += [build._prim_arrays(p, None)["P"] @ W[:3, :3].T + W[:3, 3] for p in parts]
+        root = [j for j in range(len(sk.names)) if sk.parents[j] < 0 and sk.names[j] in by]
+        if M.skinned and root:  # in the model's bind space
+            W = self.world(by[sk.names[root[0]]]) @ np.linalg.inv(sk.world[root[0]] @ build.F)
+            pts += [build._prim_arrays(p, None)["P"] @ W[:3, :3].T + W[:3, 3] for p in M.skinned]
+        if pts and self.near_end(np.concatenate(pts)).any():
+            nd = self.b.g["nodes"][node]
+            nd["name"] = re.sub(r"(__singles|__doubles)?$", r"__clear\1", nd["name"], count=1)
+            self.marked.append(nd["name"])
 
     def clear(self, A, W, label):
         """Drop from A's triangles the islands (triangles joined by shared or coincident corners) that have a
@@ -457,6 +497,7 @@ def gimmicks(dirs, n, sc, todo, by_haichi):
         inst = f"{folder}_r{route}"
         node = sc.child(sc.top, name=inst, **placement((100 * x, 100 * y, 100 * z), yaw(angle)))
         by = sc.add(model, node)
+        sc.mark_clear(node, model, by)
         mots = {os.path.basename(m)[:-4].split("_", 3)[-1]: m for m in glob(os.path.join(folders[folder], "*.i3m"))}
         rest = next((k for k in REST if k in mots), None)
         if rest:
@@ -638,12 +679,16 @@ def export(n, label):
         by = scene.add(path, node)
         drawn_sky |= bool(to_sky)
         folders.add(os.path.dirname(path))
-        if mots:
-            names = {os.path.basename(m)[:-4].rsplit("_", 1)[-1]: m for m in mots}
+        if scene is gs:
+            gs.mark_clear(node, path, by)
+        # the resting motion; a break motion (`_b01_`: c05's basket goals falling apart) isn't one, so a piece with
+        # only that stands still
+        names = {os.path.basename(m)[:-4].rsplit("_", 1)[-1]: m for m in mots if not re.search(r"_b\d\d_", os.path.basename(m))}
+        if names:
             m = names[next((k for k in REST if k in names), sorted(names)[0])]
             scene.animate(tr.name, i3m.load(m), by)
-            if scene is gs:
-                placed.append(f"{tr.name} (placed, loops {os.path.basename(m)[:-4]})")
+        if scene is gs:
+            placed.append(f"{tr.name} (placed, {'loops ' + os.path.basename(m)[:-4] if names else 'still'})")
     if skipped:
         todo.append("haichi tracks without a model on the disc: " + ", ".join(skipped))
     sc.write(os.path.join(mod, "court.glb"))
@@ -655,6 +700,9 @@ def export(n, label):
     if gs.cleared:
         todo.append("left out of gimmick.glb, standing in HST's match view within %g m of its eye (Get a Grip's "
                     "closer camera has them behind it): %s" % (EYE_CLEAR, "; ".join(gs.cleared)))
+    if gs.marked:
+        todo.append("hidden by HST while they stand between the eye and the court (`__clear`, Get a Grip's closer "
+                    "camera has them behind it): " + ", ".join(gs.marked))
     if placed:
         gs.write(os.path.join(mod, "gimmick.glb"))
         todo.append("gimmicks only rest where the csvs put them; their reactions to the ball (pigeons fly off "
