@@ -46,8 +46,12 @@ def main():
                 for l in open(f"{d}/names.txt"):
                     k, _, nm = l.rstrip("\n").partition("\t")
                     t = f"{out}/{b}_{nm}.wav"
-                    if k.isdigit() and os.path.exists(f"{d}/{k}.wav") and not os.path.lexists(t):
-                        os.symlink(os.path.relpath(f"{d}/{k}.wav", out), t)
+                    if k.isdigit() and os.path.exists(f"{d}/{k}.wav"):
+                        rel = os.path.relpath(f"{d}/{k}.wav", out)
+                        if os.path.islink(t) and os.readlink(t) != rel:  # names.txt changed (audio.py cue decode)
+                            os.remove(t)
+                        if not os.path.lexists(t):
+                            os.symlink(rel, t)
         print(g, len(n), "dirs", sum(n.values()), "links")
 
 main()
