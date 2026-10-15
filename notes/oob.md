@@ -243,6 +243,15 @@ a/i/u/o/ayo/shout open it with teeth/tongue following, brow targets move the bro
 Standard DDS: DXT1 (15k), DXT5 (900), DXT3 (48), and 8-bit alpha-only (9.5k, `_o`/`_s`). Colour maps are not
 flipped (UV origin top-left, as glTF).
 
+### Static course meshes (`static.py`)
+
+Course `.rem` models (hole ground, structures, props, trees, `bg/`) have no skeleton: header word 2 is 0 and there
+are no joint/weight streams, so `rem.py`'s skinned-mesh finder skips them. Per mesh, the 15-word header sits 64
+bytes before the index count; streams: position f32×3, normal f32×3, colour u8×4, UV f32×2 sets, then tangent and
+binormal when header word 1 is set. Material slots index `texobjs` (→ texture names); the hole ground's textures
+are loose `.dds` in `PS3_GAME/USRDIR/data/course/courseCC/hole/`. Some DDS are uncompressed RGB(A) by channel
+masks (`dds.py`). Placements and the two-worlds-per-course layout: `notes/venues.md`.
+
 ## glTF mapping
 
 - One `.glb` per costume: all REM nodes as glTF nodes (TRS decomposed from the local matrix, transposed), one skin

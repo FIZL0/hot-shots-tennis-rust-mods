@@ -215,3 +215,49 @@ Checked in HST by eye (`--play --singles --court-mod`, held eyes at both resting
 lines, net and chair sit on HST's court, the umpire sits on the chair, the views are clear. Not done: Fore!'s
 drifting clouds, creatures, galleries, pin flag and hole-end scenery, course music, a manifest light from the
 envir files.
+
+### Out of Bounds (`tools/oob2gltf/court.py`, HST-Remastered M8f10a3)
+
+```
+python3 tools/oob2gltf/court.py out/files/oob out/venues/oob.json "iso/Hot Shots Tennis (USA).iso" out/mods [course…] [--end -] [--data DIR]
+```
+
+Needs `tools/fore2gltf` built (it reads the layout courts' umpire chairs from the HST ISO: `fore2gltf chairs`).
+Writes `out/mods/oob_cCC_<stem>/` (`mod.json`, `court.glb`, `sky.glb`) per course in ~25 s each. The Fore! rules
+above (spot, run-off, ground height, laid court, `__clear` within 45 m), with these differences:
+
+- **Space.** OOB is Y-up metres, the height map in the hole model's own space (median |model y − HMP| 0.09 m);
+  `oob_spot` turns it 180° about Z into HST's Y-down game space. The front nine (h00–h09, `_p10`) and the back
+  nine (h10–h19, `_p01`) are separate worlds over the same coordinates (another nine's height map at the same x, z
+  is a different height): every lookup stays in the spot's own nine.
+- **Placements.** OOB's per-kind plant files cover only what each hole shows, so the spot takes every hole's files
+  of its nine (plus the nine's `_out_` files), deduplicated by (category, index, position), where the hole's own
+  ground model has vertices (10 m cells ± 1). Category 0x17 is billboards. A record's index is the position among
+  the non-`_lvN` entries of its kind in `entry.txt`; placed by position, yaw (0x24, about +Y) and scale (0x28).
+  Trees further than 60 m use their lowest `_lvN`.
+- **Blockers.** Circles round each placement (tree 3 m, prop 2, structure 12, billboard 3, × scale 1–4), the
+  vertices of props/structures/billboards within 80 m standing > 5 cm above the ground, and the hole model's own
+  vertices > 0.3 m above the height map within 60 m (walls, steps and kerbs are in the ground model).
+- **Surface.** Hard where > half the hole model's material samples under the slab are paved (names with asphalt,
+  cart, road, concrete, paving, tile, brick, stone, parking, floor), else grass; HST's hard layouts are Park 3 and
+  Extra 6. The laid hard court is a blue court on a green surround.
+- **Textures.** Static `.rem` meshes (`static.py`), colour map = the first material slot that isn't a specular or
+  normal map; alpha < 128 → MASK. The hole models' textures are loose files outside the xb archives
+  (`PS3_GAME/USRDIR/data/course/courseCC/hole/*.dds`, `--data`); `plantmodel01.xb0` holds the billboards.
+- **sky.glb.** The `bg/` models of the course (`_sky`, and `_bg` / `_clo` of the spot's nine) at the eye, turned
+  with the venue, no lift (the envir files aren't decoded).
+
+| Course | Hole | Spot (x, z) yaw | Run-off +z −z +x −x | Layout | Notes |
+|---|---|---|---|---|---|
+| 01 georama | h10 | (−88.9, −282.4) 0 | 15 15 10 6.0 | Extra (hard) | car park by the cart garage |
+| 02 okinawa | h10 | (139.2, 43.5) 30 | 15 12.6 8.5 6.0 | Jungle | practice fairway on the cliff top, sea behind |
+| 03 eu | h16 | (−211.7, 132.3) 150 | 15 11.6 8.5 6.5 | Jungle | windmill behind the far end |
+| 04 africa | h00 | (410.0, 145.3) 0 | 10.6 10.6 6.5 10 | Jungle | on a round green |
+| 06 major | h01 | (345.3, 99.5) 0 | 10.5 5.5 10 10 | Park (hard) | helipad by the manor house |
+| 07 aussie | h00 | (−415.3, 245.6) 0 | 9.1 14.6 6.5 10 | Jungle | rough between red rock hills |
+
+Course 05 (fjord) has no spot: all 41 survey candidates are blocked or not flat. Checked in HST by eye
+(`--play --singles --court-mod`, `HST_WEATHER=0`, held eyes: play view, a resting view, low beside the court,
+high above): slab, lines, net and chair sit on HST's court on the hole's ground, the venue upright around it. Not
+done: plant words 0x14–0x20 (small angles, leans?), envir/light, sky lift, creatures, galleries, course music,
+water shaders and multi-layer ground blends (one colour map each).

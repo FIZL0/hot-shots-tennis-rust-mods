@@ -617,6 +617,15 @@ pub fn court(root: &Path, survey: &Path, iso: &Path, out: &Path, args: &[String]
     Ok(())
 }
 
+/// `fore2gltf chairs <HST iso>`: the umpire chair of each disc court (layout 0–10) as a JSON list, for the
+/// exporters written in Python (oob2gltf `court.py`).
+pub fn chairs(iso: &Path) -> R<()> {
+    let mut iso = Iso::open(iso).map_err(|e| format!("{}: {e}", iso.display()))?;
+    let list: Vec<Value> = (1..=HST.len() as u32).map(|n| hst_sim::court::umpire_chair(&mut iso, n).map_or(Value::Null, |c| json!(c))).collect();
+    println!("{}", Value::Array(list));
+    Ok(())
+}
+
 fn one(ssn: &Path, c: u32, spot: &Spot, iso: &mut Iso, out: &Path) -> R<PathBuf> {
     let h = spot.hole;
     let (stem, name) = COURSES[c as usize - 1];

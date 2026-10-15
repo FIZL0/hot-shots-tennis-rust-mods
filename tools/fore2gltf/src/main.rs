@@ -660,8 +660,9 @@ fn main() {
         Some("hst") if a.len() == 4 => hst(Path::new(&a[2]), Path::new(&a[3])),
         Some("fore") if a.len() == 4 => fore(Path::new(&a[2]), Path::new(&a[3])),
         Some("court") if a.len() >= 6 => court::court(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]), Path::new(&a[5]), &a[6..]),
+        Some("chairs") if a.len() == 3 => court::chairs(Path::new(&a[2])),
         Some("retarget") if a.len() >= 6 => retarget(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]), &a[5..]),
-        _ => Err("usage: fore2gltf info <mdl> | hst <xb root> <out dir> | fore <files/fore> <out root> | retarget <mdl> <mtl> <out.glb> <ani2…> | court <files/fore> <venues/fore.json> <HST iso> <out/mods> [course…] [--end -]".into()),
+        _ => Err("usage: fore2gltf info <mdl> | hst <xb root> <out dir> | fore <files/fore> <out root> | retarget <mdl> <mtl> <out.glb> <ani2…> | court <files/fore> <venues/fore.json> <HST iso> <out/mods> [course…] [--end -] | chairs <HST iso>".into()),
     };
     if let Err(e) = r {
         eprintln!("{e}");
