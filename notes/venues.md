@@ -9,7 +9,8 @@ python3 tools/venues/venues.py                 # all three games (~2 min) -> out
 python3 tools/venues/venues.py fore oob        # some of them
 ```
 
-- `course.py` — the height map (`Hmp`) and placement (`plants`, `oob_plants`) readers.
+- `course.py` — the height map (`Hmp`) and HST-style placement (`plants`) readers (Out of Bounds' records are read
+  in `venues.py`).
 - `survey.py` — the court-spot search on one height map.
 - `venues.py` — finds every hole's files per game, runs the search, writes per-hole results.
 
@@ -56,7 +57,8 @@ Where they live:
 - Fore!: `CRS/SSN0/HOLccHH.XB/database/courseCC/hole/*_hHH.HMP` (spring; the ground is the same every season).
 - Open Tee 2: `xbdata/crs/NN/hmpHH.xb` (18-hole courses 01–06, 13–18) or `holHH.xb` (nine-hole 07–12, 19), path
   `data/course/courseNN/hole/*_hHH.HMP`.
-- Out of Bounds: per course and hole under `course/courseCC/`, heights big-endian.
+- Out of Bounds: `xbdata/course/courseCC/holeHH.xb/data/course/courseCC/hole/*_hHH_*.HMP` (the `*_g.HMP` beside
+  it is a separate green map, skipped).
 
 ## Placements
 
