@@ -179,6 +179,7 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
 }
 ```
 
+- `kind` (optional): `character` or absent for a player mod; courts and umpires are `HST-COURT-UMPIRE-STANDARD.md`.
 - `donor`: HST character (0–13) whose **motions, `.MOR` faces, arm table, shot records and AI rows** are used.
   Pick by body type and play style (`research/characters.md`).
 - `params`: `TParam.csv` row: `base` donor row, `override` by column header (e.g. `Serv POW`, `Strk POW`,

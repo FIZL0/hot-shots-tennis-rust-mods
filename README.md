@@ -21,7 +21,7 @@ The remaster has no mod loader yet. `standard/` defines what one should load.
 ## Layout
 
 ```
-standard/   the character mod standard, the HST skeleton as JSON, and a step-by-step tutorial
+standard/   the character mod standard, the court/umpire mod standard, the HST skeleton as JSON, and a step-by-step tutorial
 notes/      format notes for each game: where things live, file layouts, rosters, known gaps
 tools/
   unxb/       Rust: unpacks the `xe\0\x01` archives every game uses (little-endian on PS2/PSP, big-endian on PS3)
