@@ -40,7 +40,7 @@ mods/<id>/
   sound/ambience_<n>.wav  optional: looping background layers, all played at once
   sound/bgm.wav (or .ogg)  optional: the court's music, looped
   lensflare.png        optional: the sun's lens flare sprite (outdoor courts)
-  previews/court.png   optional: the court select's picture (640×360 RGBA PNG)
+  previews/court.png   optional: the court select's picture (640×360 RGBA PNG; HST-Remastered's tools/court_previews.sh shoots one)
 ```
 
 ```json
@@ -59,7 +59,9 @@ mods/<id>/
 - `court.glb` is in the layout court's game space (the same origin and axes as the disc court's own models; Y
   down). Line it up against the layout court's model: lines and net must sit where the layout's are, since the
   ball bounces and is called there, and the ground must not rise above the layout's playing surface. Drawn as the disc court's own models are
-  (materials as character §2; alpha cut-outs `MASK`, see-through `BLEND`); no skin.
+  (materials as character §2; alpha cut-outs `MASK`, see-through `BLEND`; a `BLEND` material whose name ends in
+  `@add` is drawn additively, colour × alpha added to what is behind it — light pools, lamp rays, glints — and
+  `@sub` subtracts it, as HST's own court materials do); no skin.
 - `light`: the scene light (direction in game space, colours 0–1 linear); `fog` `null` or `{"colour": [r,g,b],
   "near": m, "far": m}`. Absent: the layout court's.
 - Sound: absent `bgm` → the layout court's BGM; absent ambience → the layout court's court bank sounds. Ball

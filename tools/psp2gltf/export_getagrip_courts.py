@@ -181,10 +181,12 @@ class Scene:
     def draws_below(M, j, drawn):
         return any(c in drawn and (c in M.rigid or Scene.draws_below(M, c, drawn)) for c in M.children.get(j, []))
 
-    def material(self, name, vertex_alpha):
+    def material(self, name, vertex_alpha, add=False):
         """build.TextureCache's material; untextured ones (the sky, the bushes' shadow cards) white so their
-        vertex colours show; BLEND where the vertex colours carry alpha."""
-        key = (name, vertex_alpha)
+        vertex colours show; BLEND where the vertex colours carry alpha. `add`: GaG draws it additively (light
+        pools, lamp rays, water glints; render-state byte +0x24 bit 0 of its texture record), which the standard
+        spells as an `@add` name suffix, BLEND."""
+        key = (name, vertex_alpha, add)
         if key not in self.mats:
             if name and self.tc.find(name):
                 i = self.tc.material(name)
@@ -192,10 +194,12 @@ class Scene:
                 i = self.b.add("materials", {"name": name or "vertex_colour", "doubleSided": True,
                                              "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1],
                                                                       "metallicFactor": 0.0, "roughnessFactor": 1.0}})
-            if vertex_alpha or self.unlit:
+            if vertex_alpha or self.unlit or add:
                 m = dict(self.b.g["materials"][i])
-                if vertex_alpha:
+                if vertex_alpha or add:
                     m["alphaMode"] = "BLEND"
+                if add:
+                    m["name"] = m.get("name", "") + "@add"
                 if self.unlit:
                     m["extensions"] = {"KHR_materials_unlit": {}}
                     self.b.g["extensionsUsed"] = ["KHR_materials_unlit"]
@@ -226,8 +230,10 @@ class Scene:
                 attrs["JOINTS_0"] = b.accessor(A["J"], glb.USHORT, "VEC4", 34962)
                 attrs["WEIGHTS_0"] = b.accessor(A["W"], glb.FLOAT, "VEC4", 34962)
             name = materials[mi].texture if mi < len(materials) else ""
+            raw = materials[mi].raw if mi < len(materials) else b""
+            add = len(raw) > 0x24 and raw[0x24] & 1 == 1
             out.append({"attributes": attrs, "indices": b.accessor(A["I"], glb.UINT, "SCALAR", 34963),
-                        "material": self.material(name, bool((A["C"][:, 3] < 255).any())), "mode": 4})
+                        "material": self.material(name, bool((A["C"][:, 3] < 255).any()), add), "mode": 4})
         return out
 
     def add(self, path, parent, nodes=None, mesh_nodes=None):
@@ -540,7 +546,9 @@ def export(n, label):
             continue
         pos, rot, scl = i3m.evaluate(tr, 0.0)
         mots = sorted(glob(os.path.join(os.path.dirname(path), "*.i3m")))
-        to_sky = re.search(r"_bg0[12]_", model, re.I)
+        # only the dome and the clouds follow the eye; distant scenery (c02's and c14's `bg02_Enkei`, 75-200 m out, with its own
+        # ground) stays put, as seen from the HST match camera 41 m off the centre
+        to_sky = re.search(r"_bg01_|_bg02_cloud", model, re.I)
         scene = ss if to_sky else gs if mots else sc
         node = scene.child(scene.top, name=tr.name, **placement(pos, rot, scl))
         by = scene.add(path, node)
@@ -557,6 +565,8 @@ def export(n, label):
     sc.write(os.path.join(mod, "court.glb"))
     if drawn_sky:
         ss.write(os.path.join(mod, "sky.glb"))
+    elif os.path.exists(os.path.join(mod, "sky.glb")):
+        os.remove(os.path.join(mod, "sky.glb"))
     placed += gimmicks(dirs, n, gs, todo, folders)
     if placed:
         gs.write(os.path.join(mod, "gimmick.glb"))
