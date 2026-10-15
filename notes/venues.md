@@ -163,3 +163,55 @@ A golf hole has no court lines, net or umpire chair: a mod built here lays its o
 at the chosen spot and moves the venue so that spot lands on HST's court origin, along the court's length
 (standard §2: lines and net where the layout puts them). Export tasks in HST-Remastered's plan (M8f10b–d) cover
 the hole ground, sky/background, placed trees and props, and the laid court per game.
+
+### Fore! (`tools/fore2gltf court`, HST-Remastered M8f10a2)
+
+```
+cd tools/fore2gltf && cargo build --release && cd ../..
+tools/fore2gltf/target/release/fore2gltf court out/files/fore out/venues/fore.json "iso/Hot Shots Tennis (USA).iso" out/mods [course…] [--end -]
+```
+
+Writes `out/mods/fore_cCC_<stem>/` (`mod.json`, `court.glb`, `sky.glb`) per course in ~1 s each. Per course:
+
+- **Spot.** The flattest fitting survey spot (all holes, each hole's best yaws) whose ground the hole model draws
+  (≥ 95 % of 0.5 m points under the slab): the mini-golf height maps (14, 15) run on as flat green well past the
+  drawn holes. Course 14 has no such spot, so it isn't exported; 15 lands on h04.
+- **Run-off.** Grown 0.5 m a side from the survey footprint (8.115 / 4.515 m) up to 15 / 10 m while the slab stays
+  on the height map, off water (lie 27) and off-map (0), clear of placed objects and within 0.5 m of height. The
+  survey's cell window can sit a cell off; where its footprint fails this 0.5 m check (06, 09, 11) the run-off grows
+  from 3 / 2 m instead.
+- **Layout.** Surface grass for every course (lawn); HST's grass court (Wimbledon 4, Kar 5, Jungle 7, Greece 9)
+  with the closest run-off, |ln(back / min(+z, −z))| + |ln(side / min(+x, −x))|. Umpire chair at the layout's own
+  plant position (from the HST ISO).
+- **Ground height.** The highest point under the slab and 2 m round it, from the height map and from the hole
+  model's near-level triangles within 1 m of it (vertices and every 0.5 m), goes 3 cm under the slab. Whole holes
+  draw blended (PRIM ABE), so blending can't tell ground from decoration. The hole model is read by path: GRD's
+  `data/arrow.MDL` sorts first, and `HOL…/holeend/` reuses the hole model's stem.
+- **court.glb.** `fore_spot` (the venue: hole ground model, plant categories 17–20 placed with `world::place`;
+  anything within 45 m of the court gets `__clear`), `court` (striped grass slab with skirts down to the ground,
+  lines at HST's judging edges, net panel/tape/strap, posts at ±6.4 m, a simple umpire chair).
+- **sky.glb.** The first in-season sky of the hole plus the course's `_clo` / `_acc` / `_bg`, BG`cc`0 (p10) for the
+  front nine and h00, BG`cc`1 (p01) for the back nine where it exists; yaw and lift by HST's backdrop rule
+  (course envir 0x450 yaws − hole heading, lifts from the hole envir, 370 without one).
+
+| Course | Hole | Spot (x, z) yaw | Run-off +z −z +x −x | Layout | Notes |
+|---|---|---|---|---|---|
+| 01 hakone | h01 | (−53.1, −299.0) 0 | 15 15 10 5.0 | Jungle | fairway by the pond |
+| 02 nangoku | h00 | (72.0, −136.8) 0 | 15 15 10 5.5 | Jungle | above the lagoon |
+| 03 western | h12 | (−21.6, 93.9) 0 | 8.1 15 10 6.5 | Jungle | |
+| 04 england | h00 | (69.2, −198.7) 0 | 9.6 8.1 10 6.0 | Jungle | between town houses (their backs are flat grey) |
+| 05 america | h01 | (−14.5, −333.3) 90 | 10.6 11.6 8.0 8.0 | Jungle | |
+| 06 hokkaido | h03 | (−107.7, −521.8) 120 | 12.5 6 4.5 10 | Greece | |
+| 07 extra | h00 | (−144.2, −168.4) 135 | 15 15 6.0 10 | Jungle | in a fenced road cutting; road at both ends |
+| 08 jungle | h05 | (−54.3, 20.2) 45 | 15 11.1 10 5.5 | Jungle | |
+| 09 china | h09 | (−88.6, 10.0) 90 | 15 9.5 4 5.5 | Greece | on top of the fort wall; battlements beside |
+| 10 carib | h16 | (22.8, −132.4) 135 | 8.6 9.1 5.5 6.5 | Greece | |
+| 11 fujizakura | h14 | (−2.1, 73.9) 120 | 15 8 4 7 | Greece | |
+| 12 kawana | h02 | (−2.2, −263.7) 90 | 12.1 10.6 5.5 5.5 | Jungle | |
+| 13 samurai | h00 | (−83.7, −179.7) 0 | 15 8.1 10 10 | Jungle | on the beach; the slab overhangs the drawn sea |
+| 15 mini_b | h04 | (−50.2, −28.2) 0 | 15 8.1 9.0 5.5 | Greece | flat panel by the sea |
+
+Checked in HST by eye (`--play --singles --court-mod`, held eyes at both resting views and high above): slab,
+lines, net and chair sit on HST's court, the umpire sits on the chair, the views are clear. Not done: Fore!'s
+drifting clouds, creatures, galleries, pin flag and hole-end scenery, course music, a manifest light from the
+envir files.

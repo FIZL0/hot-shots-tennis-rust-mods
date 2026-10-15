@@ -5,6 +5,8 @@
 //! fore2gltf hst  <HST xb root> <out dir>       HST pc00 costume 0 + racket + its PCANI motions (reference rig)
 //! fore2gltf fore <out/files/fore> <out root>   every Fore character × costume, and per character its motions
 //! fore2gltf retarget <mdl> <mtl> <out.glb> <ani2…>  Biped motions (e.g. HST's) onto a model, names matched sans spaces
+//! fore2gltf court <out/files/fore> <out/venues/fore.json> <HST iso> <out/mods> [course…] [--end -]
+//!                                              golf holes as HST court mods (court.rs)
 //! ```
 //! A .glb holds the model's node tree as joints (game space: Y down, feet at the origin, under a `game_space`
 //! node that turns it Y up), one skinned mesh with a primitive per MTL material (KHR_materials_unlit, PNG
@@ -13,6 +15,8 @@
 //! likewise (`hst_sim::face`). Time is 3ds Max ticks / 4800.
 
 use std::path::{Path, PathBuf};
+
+mod court;
 
 use hst_data::{ani, mdl, mor, mtl, noi};
 use hst_sim::pose::{Clip, Skeleton};
@@ -655,8 +659,9 @@ fn main() {
         Some("info") if a.len() == 3 => info(Path::new(&a[2])),
         Some("hst") if a.len() == 4 => hst(Path::new(&a[2]), Path::new(&a[3])),
         Some("fore") if a.len() == 4 => fore(Path::new(&a[2]), Path::new(&a[3])),
+        Some("court") if a.len() >= 6 => court::court(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]), Path::new(&a[5]), &a[6..]),
         Some("retarget") if a.len() >= 6 => retarget(Path::new(&a[2]), Path::new(&a[3]), Path::new(&a[4]), &a[5..]),
-        _ => Err("usage: fore2gltf info <mdl> | hst <xb root> <out dir> | fore <files/fore> <out root> | retarget <mdl> <mtl> <out.glb> <ani2…>".into()),
+        _ => Err("usage: fore2gltf info <mdl> | hst <xb root> <out dir> | fore <files/fore> <out root> | retarget <mdl> <mtl> <out.glb> <ani2…> | court <files/fore> <venues/fore.json> <HST iso> <out/mods> [course…] [--end -]".into()),
     };
     if let Err(e) = r {
         eprintln!("{e}");
