@@ -220,6 +220,13 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
 - **Sound**: `900_sound/020_courtNN.xb` `BGM/bgm_court_NN` and `stream_SE/env_coNN` (the ambience loop); loop
   points from `vgmstream-cli -m` on the raw `.sgh` + `extracted/.../.sgb` side by side. `cNN_se.csv` (one-shot birds,
   bells, buzzers) is a template copied between courts whose cue names are in no bank: noted in `todo`.
+- **Additive materials**: in each material's 0x3a-byte texture record (type 0x26, `i3d.Material.raw`) byte +0x24 is
+  0x11 instead of 0x10 on additive draws; +0x31 = 2 and +0x33 = 0x10 always go with it (38 of 2558 records in
+  `200_court`, no mixed cases; +0x31 = 2 alone is on 4 plain grounds/roofs). Flagged: light pools (`c01_yamate_light`,
+  `c13_hiyoko_light01`, `c15_ob01_lightmask`), lamp rays and window light (c02, c08 `gaslamp02`), water glints
+  (`c03_ob18_mizu`, `c04_resort_waterAdd`, c06's water/rainbow/fog, c13's pool ripples), fireworks (c15), c20's
+  `bg_cloud02`, and c17's glow layers (`plates`, a `court` copy over the opaque court, `ob13` pieces). The textures
+  are mostly black, so drawn plainly they are black patches (yamate's octagon). → `<name>@add`, BLEND.
 - **Layout**: same surface as `court.csv`, then the HST court with the nearest flat run-off (shorter end and side,
   log ratio); a crude metric, the numbers are in `layout_why`.
 - `201_court/` is a lower-detail copy of the same courts (`data/adcourt`, fewer textures): not exported.
