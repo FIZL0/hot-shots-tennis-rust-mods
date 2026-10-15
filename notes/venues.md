@@ -190,6 +190,12 @@ Writes `out/mods/fore_cCC_<stem>/` (`mod.json`, `court.glb`, `sky.glb`) per cour
 - **court.glb.** `fore_spot` (the venue: hole ground model, plant categories 17–20 placed with `world::place`;
   anything within 45 m of the court gets `__clear`), `court` (striped grass slab with skirts down to the ground,
   lines at HST's judging edges, net panel/tape/strap, posts at ±6.4 m, a simple umpire chair).
+- **Slab surface** (opentennis M8f10a4). The slab wears the hole's own turf: the court and an apron (1.8 m beside
+  the doubles sidelines, 3 m behind the baselines) in the textured material covering most green-lie (4) ground,
+  mown stripes as an 8 % darker vertex colour every other twelfth; the rest and the skirts in the fairway-lie (1)
+  material's. Each is tiled at the scale the hole model lays it (area-weighted √(world area / UV area): greens
+  0.6–1.1 m, fairways 1.8–2.7 m) and drawn at its mean vertex colour there, opaque (the hole draws blended).
+  Mini-golf c15's spot hole has neither lie: its turf under the slab serves for both.
 - **sky.glb.** The first in-season sky of the hole plus the course's `_clo` / `_acc` / `_bg`, BG`cc`0 (p10) for the
   front nine and h00, BG`cc`1 (p01) for the back nine where it exists; yaw and lift by HST's backdrop rule
   (course envir 0x450 yaws − hole heading, lifts from the hole envir, 370 without one).
@@ -241,6 +247,11 @@ above (spot, run-off, ground height, laid court, `__clear` within 45 m), with th
 - **Surface.** Hard where > half the hole model's material samples under the slab are paved (names with asphalt,
   cart, road, concrete, paving, tile, brick, stone, parking, floor), else grass; HST's hard layouts are Park 3 and
   Extra 6. The laid hard court is a blue court on a green surround.
+- **Slab surface** (opentennis M8f10a4, as Fore!'s). Grass: the green-lie (6) material over the court and its
+  apron, the fairway-lie (1) one round it. Hard: the paved material covering most of the ground under the slab
+  (c01 `cart00`, c06 `asphalt`): the court and an apron (3.66 m beside, 6.40 m behind: the ITF's recommendation)
+  in that texture tinted to the old blue and green (vertex colour = target ÷ the texture's mean colour), the
+  run-off beyond as the hole draws that paving.
 - **Textures.** Static `.rem` meshes (`static.py`), colour map = the first material slot that isn't a specular or
   normal map; alpha < 128 → MASK. The hole models' textures are loose files outside the xb archives
   (`PS3_GAME/USRDIR/data/course/courseCC/hole/*.dds`, `--data`); `plantmodel01.xb0` holds the billboards.

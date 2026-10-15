@@ -12,8 +12,9 @@
 //!   `SSN0/GRDccHH.XB`) and its placed trees, props, structures and billboards (HST's plant records, placed with
 //!   HST's own `world::place`, models resolved by `layout::resolve` as HST does); those within 45 m of the court
 //!   are `__clear`. Beside it `court`: the laid court in HST's game space (a grass slab over the flat ground the
-//!   height map allows round the court, lines at HST's judging edges, net and posts, the umpire's chair under the
-//!   layout court's chair position read from the HST disc).
+//!   height map allows round the court: the court and its apron in the hole's own green texture with mown stripes,
+//!   the rest in its fairway's, each at the scale and colour the hole draws it; lines at HST's judging edges, net
+//!   and posts, the umpire's chair under the layout court's chair position read from the HST disc).
 //! - `sky.glb`: the hole's first in-season sky and the course's `_clo`/`_acc`/`_bg` backdrops (`BGcc0` front nine,
 //!   `BGcc1` back nine), each stood at the eye turned and lifted as HST stands its own (the course and hole
 //!   `envir` files are HST's format), turned with the venue.
@@ -237,6 +238,8 @@ struct Prim {
     uv: Vec<[f32; 2]>,
     col: Vec<[f32; 4]>,
     idx: Vec<u32>,
+    /// Texture coordinates in metres over this (a laid surface: x, z from above, along the side and down on a skirt).
+    metres: Option<f32>,
 }
 
 impl Prim {
@@ -249,7 +252,11 @@ impl Prim {
         for q in p {
             self.pos.push(q);
             self.nrm.push(n.map(|v| v / l));
-            self.uv.push([0.0; 2]);
+            self.uv.push(match self.metres {
+                Some(m) if (n[1] / l).abs() > 0.7 => [q[0] / m, q[2] / m],
+                Some(m) => [(q[0] + q[2]) / m, q[1] / m],
+                None => [0.0; 2],
+            });
             self.col.push(col);
         }
         self.idx.extend([b, b + 1, b + 2, b, b + 2, b + 3]);
@@ -370,6 +377,23 @@ impl Doc {
         self.mesh(name, prims)
     }
 
+    /// A copy of material `m` (a hole model's, textured) drawn opaque with its texture repeating, for a laid surface.
+    fn tiled(&mut self, name: &str, m: usize) -> usize {
+        let mut mat = self.doc["materials"][m].clone();
+        mat["name"] = json!(name);
+        mat.as_object_mut().unwrap().remove("alphaMode");
+        let tex = self.doc["textures"][mat["pbrMetallicRoughness"]["baseColorTexture"]["index"].as_u64().unwrap() as usize]["source"].clone();
+        let samplers = self.doc["samplers"].as_array_mut().unwrap();
+        samplers.push(json!({"magFilter": 9729, "minFilter": 9729, "wrapS": 10497, "wrapT": 10497}));
+        let sampler = samplers.len() - 1;
+        let textures = self.doc["textures"].as_array_mut().unwrap();
+        textures.push(json!({"source": tex, "sampler": sampler}));
+        mat["pbrMetallicRoughness"]["baseColorTexture"] = json!({"index": textures.len() - 1});
+        let list = self.doc["materials"].as_array_mut().unwrap();
+        list.push(mat);
+        list.len() - 1
+    }
+
     /// An untextured material (vertex colour × `color`).
     fn plain(&mut self, name: &str, color: [f32; 4], blend: bool) -> usize {
         let mut m = json!({"name": name, "pbrMetallicRoughness": {"baseColorFactor": color, "metallicFactor": 0.0, "roughnessFactor": 1.0},
@@ -433,6 +457,75 @@ fn triangles(model: &mdl::Model) -> Vec<[[f32; 3]; 3]> {
         out.extend(tris.iter().filter(|t| t.iter().all(|&i| (i as usize) < verts.len())).map(|t| t.map(|i| verts[i as usize])));
     }
     out
+}
+
+/// A model's triangles at the bind pose with their material, UVs and vertex colours (0x80 = 1.0).
+fn textured_triangles(model: &mdl::Model) -> Vec<(usize, [[f32; 3]; 3], [[f32; 2]; 3], [[f32; 4]; 3])> {
+    let mut out = Vec::new();
+    for (mi, packets) in model.materials.iter().enumerate() {
+        for pk in packets {
+            let (verts, tris): (Vec<([f32; 3], [f32; 2], [u8; 4])>, Vec<[u32; 3]>) = if pk.palette.len() > 1 {
+                let (v, t, _) = model.skin_packet(pk);
+                (v.iter().map(|v| (v.pos, v.uv, v.color)).collect(), t)
+            } else {
+                let b = pk.palette.first().and_then(|&n| model.node_bind.get(n)).copied();
+                let v = pk.vertices.iter().map(|v| {
+                    let q = match &b {
+                        Some(m) => std::array::from_fn(|k| v.pos[0] * m[0][k] + v.pos[1] * m[1][k] + v.pos[2] * m[2][k] + m[3][k]),
+                        None => v.pos,
+                    };
+                    (q, v.uv, v.color)
+                });
+                (v.collect(), pk.triangles.clone())
+            };
+            for t in tris.iter().filter(|t| t.iter().all(|&i| (i as usize) < verts.len())) {
+                let v = t.map(|i| verts[i as usize]);
+                out.push((mi, v.map(|v| v.0), v.map(|v| v.1), v.map(|v| v.2.map(|c| c as f32 / 128.0))));
+            }
+        }
+    }
+    out
+}
+
+/// A hole-model material laid as a surface: which, its metres per texture repeat, and its mean vertex colour.
+#[derive(Clone, Copy, Debug)]
+struct Surface {
+    material: usize,
+    metres: f32,
+    colour: [f32; 4],
+}
+
+/// The hole model's textured material covering the most ground (by area seen from above) where `keep` says (the
+/// triangle's centre in the hole's x, z, and its lie), with the scale and colour it's drawn at there.
+fn surface_of(tris: &[(usize, [[f32; 3]; 3], [[f32; 2]; 3], [[f32; 4]; 3])], mats: &mtl::Mtl, keep: impl Fn(f32, f32) -> bool) -> Option<Surface> {
+    let mut area: HashMap<usize, (f32, f32, [f32; 4])> = HashMap::new();
+    for (mi, p, uv, col) in tris {
+        if !mats.materials.get(*mi).and_then(|m| m.texture).is_some_and(|t| !mats.textures[t].rgba.is_empty()) {
+            continue;
+        }
+        let (cx, cz) = ((p[0][0] + p[1][0] + p[2][0]) / 3.0, (p[0][2] + p[1][2] + p[2][2]) / 3.0);
+        if !keep(cx, cz) {
+            continue;
+        }
+        let cross = |a: [f32; 2], b: [f32; 2]| (a[0] * b[1] - a[1] * b[0]).abs() / 2.0;
+        let flat = cross([p[1][0] - p[0][0], p[1][2] - p[0][2]], [p[2][0] - p[0][0], p[2][2] - p[0][2]]);
+        let e1: [f32; 3] = std::array::from_fn(|k| p[1][k] - p[0][k]);
+        let e2: [f32; 3] = std::array::from_fn(|k| p[2][k] - p[0][k]);
+        let n = [e1[1] * e2[2] - e1[2] * e2[1], e1[2] * e2[0] - e1[0] * e2[2], e1[0] * e2[1] - e1[1] * e2[0]];
+        let world = (n[0] * n[0] + n[1] * n[1] + n[2] * n[2]).sqrt() / 2.0;
+        let tex = cross([uv[1][0] - uv[0][0], uv[1][1] - uv[0][1]], [uv[2][0] - uv[0][0], uv[2][1] - uv[0][1]]);
+        if flat < 1e-4 || tex < 1e-9 {
+            continue;
+        }
+        let a = area.entry(*mi).or_insert((0.0, 0.0, [0.0; 4]));
+        a.0 += flat;
+        // metres per UV unit, area-weighted (as √(world area / UV area))
+        a.1 += flat * (world / tex).sqrt();
+        let c: [f32; 4] = std::array::from_fn(|k| (col[0][k] + col[1][k] + col[2][k]) / 3.0);
+        a.2 = std::array::from_fn(|k| a.2[k] + flat * c[k]);
+    }
+    let (&material, &(a, m, c)) = area.iter().max_by(|x, y| x.1.0.total_cmp(&y.1.0))?;
+    Some(Surface { material, metres: m / a, colour: c.map(|v| v / a) })
 }
 
 fn unit_or_down(n: [f32; 3]) -> [f32; 3] {
@@ -503,27 +596,54 @@ fn runoff(hmp: &Hmp, spot: &Spot, blockers: &[(f32, f32, f32)]) -> ([f32; 4], f3
     (ro, range, fits)
 }
 
+/// How far round the court the court's own surface runs (beside the doubles sidelines, behind the baselines, m);
+/// the run-off beyond it is the hole's fairway.
+const APRON: [f32; 2] = [1.8, 3.0];
+
 /// The laid court in HST's game space: slab over the run-off (mown stripes), white lines, net, posts and the chair.
-fn laid(d: &mut Doc, ro: [f32; 4], depth: f32, chair: [f32; 3]) {
+/// `turf`: the hole's own green and fairway (M8f10a4: glTF material, how they're laid): the court in the green's
+/// texture, the run-off and the slab's skirts in the fairway's; without them a plain striped slab.
+fn laid(d: &mut Doc, ro: [f32; 4], depth: f32, chair: [f32; 3], turf: Option<[(usize, Surface); 2]>) {
     let grass = d.plain("court_grass", [1.0; 4], false);
     let white = d.plain("court_lines", [1.0; 4], false);
     let net = d.plain("court_net", [1.0, 1.0, 1.0, 0.55], true);
     let (x0, x1, z0, z1) = (-(DOUBLES + ro[3]), DOUBLES + ro[2], -(BASE + ro[1]), BASE + ro[0]);
-    // grass: 0..1 vertex colours (the loader's untextured scale makes 1.0 full brightness)
-    let (light, dark, side) = ([0.36, 0.56, 0.24, 1.0], [0.31, 0.50, 0.21, 1.0], [0.27, 0.40, 0.18, 1.0]);
-    let mut g = Prim::default();
+    // grass: 0..1 vertex colours (the loader's untextured scale makes 1.0 full brightness); laid turf: the colour the
+    // hole draws it at, the darker stripes 8 % down
+    let (light, dark, side) = match turf {
+        Some([(_, g), (_, f)]) => (g.colour, g.colour.map(|c| c * 0.92), f.colour.map(|c| c * 0.8)),
+        None => ([0.36, 0.56, 0.24, 1.0], [0.31, 0.50, 0.21, 1.0], [0.27, 0.40, 0.18, 1.0]),
+    };
+    let opaque = |c: [f32; 4]| [c[0], c[1], c[2], 1.0];
+    let (light, dark, side) = (opaque(light), opaque(dark), opaque(side));
+    let mut g = Prim { metres: turf.map(|t| t[0].1.metres), ..Prim::default() };
+    let mut f = Prim { metres: turf.map(|t| t[1].1.metres), ..Prim::default() };
+    // the striped part: the whole slab, or with turf the court and its apron (the fairway round it)
+    let (cx0, cx1, cz0, cz1) = match turf {
+        Some(_) => (x0.max(-DOUBLES - APRON[0]), x1.min(DOUBLES + APRON[0]), z0.max(-BASE - APRON[1]), z1.min(BASE + APRON[1])),
+        None => (x0, x1, z0, z1),
+    };
+    if let Some([_, (_, fw)]) = turf {
+        let c = opaque(fw.colour);
+        for (a, b, c0, c1) in [(x0, x1, z0, cz0), (x0, x1, cz1, z1), (x0, cx0, cz0, cz1), (cx1, x1, cz0, cz1)] {
+            if a < b && c0 < c1 {
+                f.flat(a, b, c0, c1, 0.0, c);
+            }
+        }
+    }
     // stripes across the court, 12 to a baseline-to-baseline length, from the court's centre
     let w = 2.0 * BASE / 12.0;
-    let mut z = z0;
-    while z < z1 {
-        let k = ((z - z0 + 1e-3) / w).floor();
-        let zn = (z0 + (k + 1.0) * w).min(z1);
+    let mut z = cz0;
+    while z < cz1 {
+        let k = ((z - cz0 + 1e-3) / w).floor();
+        let zn = (cz0 + (k + 1.0) * w).min(cz1);
         let band = ((z + 1e-3 + BASE) / w).floor() as i32;
-        g.flat(x0, x1, z, zn, 0.0, if band.rem_euclid(2) == 0 { light } else { dark });
+        g.flat(cx0, cx1, z, zn, 0.0, if band.rem_euclid(2) == 0 { light } else { dark });
         z = zn;
     }
+    let skirt = if turf.is_some() { &mut f } else { &mut g };
     for (a, b) in [([x0, 0.0, z0], [x1, 0.0, z0]), ([x1, 0.0, z0], [x1, 0.0, z1]), ([x1, 0.0, z1], [x0, 0.0, z1]), ([x0, 0.0, z1], [x0, 0.0, z0])] {
-        g.quad([a, b, [b[0], depth, b[2]], [a[0], depth, a[2]]], side);
+        skirt.quad([a, b, [b[0], depth, b[2]], [a[0], depth, a[2]]], side);
     }
     // lines 3 mm above the slab, outer edges on HST's judging edges
     let mut l = Prim::default();
@@ -575,8 +695,9 @@ fn laid(d: &mut Doc, ro: [f32; 4], depth: f32, chair: [f32; 3]) {
         p.cuboid([cx - out * 0.33 - 0.02, y, cz - 0.3], [cx - out * 0.33 + 0.02, y - 0.03, cz + 0.3], frame);
     }
     let court = d.node(0, json!({"name": "court"}));
-    for (name, prim, mat) in [("slab", g, grass), ("lines", l, white), ("net", n, net), ("posts_chair", p, grass)] {
-        if let Some(m) = d.mesh(name, vec![(mat, prim)]) {
+    let (court_mat, run_mat) = turf.map_or((grass, grass), |[(g, _), (f, _)]| (g, f));
+    for (name, prims) in [("slab", vec![(court_mat, g), (run_mat, f)]), ("lines", vec![(white, l)]), ("net", vec![(net, n)]), ("posts_chair", vec![(grass, p)])] {
+        if let Some(m) = d.mesh(name, prims) {
             d.node(court, json!({"name": name, "mesh": m}));
         }
     }
@@ -674,8 +795,14 @@ fn one(ssn: &Path, c: u32, spot: &Spot, iso: &mut Iso, out: &Path) -> R<PathBuf>
     let ground = mdl::parse(&read(&hole_mdl)?).map_err(|e| format!("{}: {e:?}", hole_mdl.display()))?;
     let ground_mats = mtl::parse(&read(&hole_mtl)?, hole_mti.as_deref()).map_err(|e| format!("{}: {e:?}", hole_mtl.display()))?;
     let v0 = spot.venue(0.0);
+    let tex_tris = textured_triangles(&ground);
+    let name_of = |s: &Option<Surface>| s.map(|s| format!("{} ({:.1} m, colour {:.2?})", ground_mats.materials[s.material].name, s.metres, s.colour)).unwrap_or("-".into());
+    let green = surface_of(&tex_tris, &ground_mats, |x, z| hmp.at(x, z).is_some_and(|h| h.1 == 4));
+    let fairway = surface_of(&tex_tris, &ground_mats, |x, z| hmp.at(x, z).is_some_and(|h| h.1 == 1));
     let (x0, x1, z0, z1) = (-(DOUBLES + ro[3]) - 2.0, DOUBLES + ro[2] + 2.0, -(BASE + ro[1]) - 2.0, BASE + ro[0] + 2.0);
     let inside = |q: [f32; 3]| (x0..=x1).contains(&q[0]) && (z0..=z1).contains(&q[2]);
+    let under = surface_of(&tex_tris, &ground_mats, |x, z| inside(apply(&v0, [x, 0.0, z])));
+    eprintln!("  surfaces: green {}, fairway {}, under the slab {}", name_of(&green), name_of(&fairway), name_of(&under));
     let (mut top, mut low) = (f32::MAX, f32::MIN);
     let (mut above, mut above_n) = (Vec::<[f32; 3]>::new(), 0usize);
     let tris: Vec<[[f32; 3]; 3]> = triangles(&ground).into_iter().map(|t| t.map(|p| apply(&v0, p))).collect();
@@ -748,6 +875,7 @@ fn one(ssn: &Path, c: u32, spot: &Spot, iso: &mut Iso, out: &Path) -> R<PathBuf>
     // court.glb
     let mut d = Doc::new();
     let vn = d.node(0, json!({"name": "fore_spot", "matrix": gl(&venue)}));
+    let hole_m0 = d.doc["materials"].as_array().unwrap().len();
     if let Some(m) = d.model("hole", &ground, &ground_mats) {
         d.node(vn, json!({"name": format!("hole_{hole_stem}"), "mesh": m}));
     }
@@ -789,7 +917,14 @@ fn one(ssn: &Path, c: u32, spot: &Spot, iso: &mut Iso, out: &Path) -> R<PathBuf>
         d.node(vn, json!({"name": format!("{}_{k}{}", e.stem, if clear { "__clear" } else { "" }), "mesh": mesh, "matrix": gl(&m)}));
         *placed.entry(e.stem.clone()).or_default() += 1;
     }
-    laid(&mut d, ro, depth, chair);
+    // the court in the hole's green, the run-off in its fairway (else what's under the slab: mini-golf c15 has
+    // neither green nor fairway lie under its spot's hole, so both are its own turf)
+    let run = fairway.or(under);
+    let turf = match (green.or(run), run) {
+        (Some(g), Some(f)) => Some([(d.tiled("court_green", hole_m0 + g.material), g), (d.tiled("court_fairway", hole_m0 + f.material), f)]),
+        _ => None,
+    };
+    laid(&mut d, ro, depth, chair, turf);
     let slug = format!("fore_c{c:02}_{stem}");
     let dir = out.join(&slug);
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
@@ -822,7 +957,7 @@ fn one(ssn: &Path, c: u32, spot: &Spot, iso: &mut Iso, out: &Path) -> R<PathBuf>
 
     let r = HST[lay].1;
     let mut todo = vec![
-        "the court is laid by the exporter (grass slab, lines at HST's judging edges, net, posts, umpire chair): Fore! has no tennis court".to_string(),
+        "the court is laid by the exporter (slab in the hole's own green texture over the court, its fairway's round it; lines at HST's judging edges, net, posts, umpire chair): Fore! has no tennis court".to_string(),
         "light: none in the manifest; the hole is lit as the layout court lights its own models (Fore!'s envir isn't mapped to the manifest light)".to_string(),
         "Fore!'s drifting clouds (cmn cloud models), creatures, galleries, the pin flag and the hole-end scenery are left out".to_string(),
         "sound: the layout court's (Fore!'s course music isn't exported)".to_string(),

@@ -13,7 +13,9 @@ Per course (1–7, or the ones named) the survey's flattest spot whose ground th
   structures and billboards (the per-kind plant files of `half_p10.xb` / `half_p01.xb`); trees further than 60 m
   from the court use the game's own lowest level of detail (`_lvN`). Those within 45 m are `__clear`. Beside it
   `court`: the laid court (fore2gltf's: slab over the run-off, lines at HST's judging edges, net, posts, the
-  umpire's chair under the layout court's chair, read from the HST disc by `fore2gltf chairs`).
+  umpire's chair under the layout court's chair, read from the HST disc by `fore2gltf chairs`). The slab wears the
+  hole's own textures: on grass the green's (lie 6) over the court and the fairway's (lie 1) round it; on hard the
+  paving under the slab, tinted to a blue court and a green apron, and as drawn beyond.
 - `sky.glb`: the course's sky dome, clouds and panorama (`bg/`, `_p10` front nine and h00, `_p01` back nine) at
   the eye, turned with the venue.
 - `mod.json`: surface hard where the ground under the court is paved (car parks, paths), else grass; layout = the
@@ -169,6 +171,68 @@ def plants(data):
     return out
 
 
+def colour_map(r, mi, ix):
+    """Material `mi`'s colour map: the first texture slot that isn't a specular or normal map, as a loose .dds."""
+    for s in r.materials[mi]['slots']:
+        if not 0 <= s < len(r.texobjs):
+            continue
+        t = r.textures[r.texobjs[s][1]]
+        stem = os.path.splitext(t)[0].lower()
+        if stem.endswith(('_sp', '_s', '-nomal', '-normal', '_n', '_nomal', '_normal')):
+            continue
+        p = ix.get(stem + '.dds')
+        if p is not None:
+            return p
+    return None
+
+
+class Surface:
+    """A ground-model material laid as a surface: its index, colour map, metres per texture repeat, mean vertex
+    colour (0..1) and its texture's mean colour (0..1)."""
+
+    def __init__(self, material, tex, metres, colour, tex_mean):
+        self.material, self.tex, self.metres, self.colour, self.tex_mean = material, tex, metres, colour, tex_mean
+
+    def __repr__(self):
+        return f'{self.tex.stem if self.tex else self.material} ({self.metres:.1f} m, colour {[round(c, 2) for c in self.colour]}, texture {[round(c, 2) for c in self.tex_mean]})'
+
+
+def surface_of(ground, gmeshes, ix, keep):
+    """The ground model's textured material covering the most ground (by area seen from above) where `keep(x, z)`
+    says (triangle centres in the hole's space, arrays -> bool array), with the scale and colour it's drawn at."""
+    acc = {}
+    for m in gmeshes:
+        mi = m['material']
+        tex = colour_map(ground, mi, ix)
+        if tex is None or not m['uvs'] or not len(m['tris']):
+            continue
+        T, U = m['pos'][m['tris']], m['uvs'][0][:, :2][m['tris']]
+        C = (m['color'].astype(np.float32) / 255.0)[m['tris']].mean(1)
+        cen = T.mean(1)
+        sel = keep(cen[:, 0], cen[:, 2])
+        if not sel.any():
+            continue
+        T, U, C = T[sel], U[sel], C[sel]
+        e1, e2 = T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]
+        world = np.linalg.norm(np.cross(e1, e2), axis=1) / 2
+        flat = np.abs(e1[:, 0] * e2[:, 2] - e1[:, 2] * e2[:, 0]) / 2
+        f1, f2 = U[:, 1] - U[:, 0], U[:, 2] - U[:, 0]
+        tex_a = np.abs(f1[:, 0] * f2[:, 1] - f1[:, 1] * f2[:, 0]) / 2
+        ok = (flat > 1e-4) & (tex_a > 1e-9)
+        if not ok.any():
+            continue
+        a = acc.setdefault(mi, [0.0, 0.0, np.zeros(4), tex])
+        w = flat[ok]
+        a[0] += float(w.sum())
+        a[1] += float((w * np.sqrt(world[ok] / tex_a[ok])).sum())
+        a[2] += (C[ok] * w[:, None]).sum(0)
+    if not acc:
+        return None
+    mi, (a, metres, colour, tex) = max(acc.items(), key=lambda kv: kv[1][0])
+    rgb = np.asarray(dds.load(tex.read_bytes()).convert('RGB'), np.float32) / 255.0
+    return Surface(mi, tex, metres / a, [float(v) for v in colour / a], [float(v) for v in rgb.reshape(-1, 3).mean(0)])
+
+
 # ---- glTF ------------------------------------------------------------------------------------------------------
 class Doc:
     def __init__(self, generator):
@@ -229,6 +293,13 @@ class Doc:
         self.g['materials'].append(m)
         return len(self.g['materials']) - 1
 
+    def laid_material(self, name, path):
+        """An opaque material in the colour map at `path` (a laid surface: vertex colour × texture)."""
+        t, _ = self.texture(path)
+        self.g['materials'].append({'name': name, 'pbrMetallicRoughness': {'baseColorTexture': {'index': t}, 'metallicFactor': 0.0, 'roughnessFactor': 1.0},
+                                    'doubleSided': True, 'extensions': {'KHR_materials_unlit': {}}})
+        return len(self.g['materials']) - 1
+
     def texture(self, path):
         """A DDS as an embedded PNG texture -> (texture index, has cut-out alpha)."""
         if path not in self.tex:
@@ -257,18 +328,7 @@ class Doc:
             mi = m['material']
             if mi not in mats:
                 mat = r.materials[mi]
-                tex = None
-                for s in mat['slots']:
-                    if not 0 <= s < len(r.texobjs):
-                        continue
-                    t = r.textures[r.texobjs[s][1]]
-                    stem = os.path.splitext(t)[0].lower()
-                    if stem.endswith(('_sp', '_s', '-nomal', '-normal', '_n', '_nomal', '_normal')):
-                        continue
-                    p = ix.get(stem + '.dds')
-                    if p is not None:
-                        tex = p
-                        break
+                tex = colour_map(r, mi, ix)
                 g = {'name': f'{name}_{mat["name"]}', 'pbrMetallicRoughness': {'metallicFactor': 0.0, 'roughnessFactor': 1.0},
                      'doubleSided': True, 'extensions': {'KHR_materials_unlit': {}}}
                 if tex is None:
@@ -314,14 +374,24 @@ def rot_y(a):
 
 # ---- the laid court (fore2gltf court.rs `laid`) ----------------------------------------------------------------
 class Prim:
-    def __init__(self):
-        self.pos, self.col, self.tris = [], [], []
+    def __init__(self, metres=None):
+        """`metres`: texture coordinates in metres over this (a laid surface: x, z from above; along the side and
+        down on a skirt)."""
+        self.pos, self.col, self.tris, self.uv, self.metres = [], [], [], [], metres
 
     def quad(self, p, col):
         b = len(self.pos)
         self.pos += p
         self.col += [col] * 4
         self.tris += [(b, b + 1, b + 2), (b, b + 2, b + 3)]
+        n = np.cross(np.subtract(p[1], p[0]), np.subtract(p[3], p[0]))
+        m = self.metres
+        if m is None:
+            self.uv += [[0.0, 0.0]] * 4
+        elif abs(n[1]) > 0.7 * max(np.linalg.norm(n), 1e-9):
+            self.uv += [[q[0] / m, q[2] / m] for q in p]
+        else:
+            self.uv += [[(q[0] + q[2]) / m, q[1] / m] for q in p]
 
     def flat(self, x0, x1, z0, z1, y, col):
         self.quad([[x0, y, z0], [x1, y, z0], [x1, y, z1], [x0, y, z1]], col)
@@ -338,36 +408,73 @@ class Prim:
     def arrays(self, mat):
         n = len(self.pos)
         return (mat, np.array(self.pos, np.float32).reshape(-1, 3), np.tile([[0.0, -1.0, 0.0]], (n, 1)),
-                np.zeros((n, 2)), np.array(self.col, np.float32).reshape(-1, 4), np.array(self.tris, np.uint32).reshape(-1, 3))
+                np.array(self.uv, np.float32).reshape(-1, 2), np.array(self.col, np.float32).reshape(-1, 4), np.array(self.tris, np.uint32).reshape(-1, 3))
 
 
-def laid(d, ro, depth, chair, surface):
+# How far round the court the court's own surface runs on grass (beside the doubles sidelines, behind the
+# baselines, m); the run-off beyond it is the hole's fairway (fore2gltf court.rs `APRON`)
+APRON = (1.8, 3.0)
+# A hard court's colours (court, surround, skirt) as drawn: the paved ground's texture tinted to them
+HARD = ([0.17, 0.30, 0.50], [0.22, 0.42, 0.30], [0.30, 0.30, 0.30])
+# A laid hard court's painted apron (beside the doubles sidelines, behind the baselines, m: the ITF's recommended
+# 3.66 / 6.40); the run-off beyond it is the paved ground as the hole draws it
+HARD_APRON = (3.66, 6.40)
+
+
+def laid(d, ro, depth, chair, surface, turf=None):
     """The laid court in HST's game space: the slab over the run-off (mown stripes on grass; a green surround and a
-    blue court on hard), white lines on HST's judging edges, the net, posts and the umpire's chair."""
+    blue court on hard), white lines on HST's judging edges, the net, posts and the umpire's chair. `turf`
+    (M8f10a4): the hole's own surfaces, (court, run-off) pairs of (glTF material, `Surface`): on grass the court in
+    the green's texture and the run-off in the fairway's; on hard both in the paved ground's, tinted. Without them,
+    plain colours."""
     plain = d.plain('court_plain', [1.0] * 4, False)
     net = d.plain('court_net', [1.0, 1.0, 1.0, 0.55], True)
     x0, x1, z0, z1 = -(DOUBLES + ro[3]), DOUBLES + ro[2], -(BASE + ro[1]), BASE + ro[0]
-    g = Prim()
+    (cm, cs), (fm, fs) = turf if turf else ((plain, None), (plain, None))
+    g, f = Prim(cs and cs.metres), Prim(fs and fs.metres)
+
+    def tint(target, sf):
+        """The vertex colour that draws `sf`'s texture at `target` (textured: colour = texel × vertex colour)."""
+        return [min(t / max(m, 0.05), 1.99) for t, m in zip(target, sf.tex_mean)] + [1.0]
+
     if surface == 'grass':
-        light, dark, side = [0.36, 0.56, 0.24, 1.0], [0.31, 0.50, 0.21, 1.0], [0.27, 0.40, 0.18, 1.0]
+        if turf:
+            light = cs.colour[:3] + [1.0]
+            dark, side = [v * 0.92 for v in cs.colour[:3]] + [1.0], [v * 0.8 for v in fs.colour[:3]] + [1.0]
+            cx0, cx1, cz0, cz1 = max(x0, -DOUBLES - APRON[0]), min(x1, DOUBLES + APRON[0]), max(z0, -BASE - APRON[1]), min(z1, BASE + APRON[1])
+            for a, b, c0, c1 in [(x0, x1, z0, cz0), (x0, x1, cz1, z1), (x0, cx0, cz0, cz1), (cx1, x1, cz0, cz1)]:
+                if a < b and c0 < c1:
+                    f.flat(a, b, c0, c1, 0.0, fs.colour[:3] + [1.0])
+        else:
+            light, dark, side = [0.36, 0.56, 0.24, 1.0], [0.31, 0.50, 0.21, 1.0], [0.27, 0.40, 0.18, 1.0]
+            cx0, cx1, cz0, cz1 = x0, x1, z0, z1
         w = 2.0 * BASE / 12.0
-        z = z0
-        while z < z1:
-            k = math.floor((z - z0 + 1e-3) / w)
-            zn = min(z0 + (k + 1) * w, z1)
+        z = cz0
+        while z < cz1:
+            k = math.floor((z - cz0 + 1e-3) / w)
+            zn = min(cz0 + (k + 1) * w, cz1)
             band = math.floor((z + 1e-3 + BASE) / w)
-            g.flat(x0, x1, z, zn, 0.0, light if band % 2 == 0 else dark)
+            g.flat(cx0, cx1, z, zn, 0.0, light if band % 2 == 0 else dark)
             z = zn
     else:
-        surround, court, side = [0.22, 0.42, 0.30, 1.0], [0.17, 0.30, 0.50, 1.0], [0.30, 0.30, 0.30, 1.0]
-        # the surround in four pieces round the court (no overlap to fight over)
-        g.flat(x0, x1, z0, -BASE, 0.0, surround)
-        g.flat(x0, x1, BASE, z1, 0.0, surround)
-        g.flat(x0, -DOUBLES, -BASE, BASE, 0.0, surround)
-        g.flat(DOUBLES, x1, -BASE, BASE, 0.0, surround)
+        if turf:
+            # the court and its apron painted (the paving's texture tinted), the run-off beyond as the paving is drawn
+            court, surround, paving = tint(HARD[0], cs), tint(HARD[1], cs), fs.colour[:3] + [1.0]
+            side = [v * 0.8 for v in fs.colour[:3]] + [1.0]
+            ax0, ax1, az0, az1 = max(x0, -DOUBLES - HARD_APRON[0]), min(x1, DOUBLES + HARD_APRON[0]), max(z0, -BASE - HARD_APRON[1]), min(z1, BASE + HARD_APRON[1])
+        else:
+            court, surround, side = HARD[0] + [1.0], HARD[1] + [1.0], HARD[2] + [1.0]
+            paving = surround
+            ax0, ax1, az0, az1 = x0, x1, z0, z1
+        # each ring in four pieces round the one inside it (no overlap to fight over)
+        for (a0, a1, b0, b1), (i0, i1, j0, j1), col, prim in [((x0, x1, z0, z1), (ax0, ax1, az0, az1), paving, f),
+                                                            ((ax0, ax1, az0, az1), (-DOUBLES, DOUBLES, -BASE, BASE), surround, g)]:
+            for u0, u1, w0, w1 in [(a0, a1, b0, j0), (a0, a1, j1, b1), (a0, i0, j0, j1), (i1, a1, j0, j1)]:
+                if u0 < u1 and w0 < w1:
+                    prim.flat(u0, u1, w0, w1, 0.0, col)
         g.flat(-DOUBLES, DOUBLES, -BASE, BASE, 0.0, court)
     for a, b in [([x0, 0, z0], [x1, 0, z0]), ([x1, 0, z0], [x1, 0, z1]), ([x1, 0, z1], [x0, 0, z1]), ([x0, 0, z1], [x0, 0, z0])]:
-        g.quad([a, b, [b[0], depth, b[2]], [a[0], depth, a[2]]], side)
+        f.quad([a, b, [b[0], depth, b[2]], [a[0], depth, a[2]]], side)
     ln = Prim()
     c = [0.95, 0.95, 0.93, 1.0]
     y = -0.003
@@ -411,8 +518,8 @@ def laid(d, ro, depth, chair, surface):
         yy = seat * k / 5
         p.cuboid([cx - out * 0.33 - 0.02, yy, cz - 0.3], [cx - out * 0.33 + 0.02, yy - 0.03, cz + 0.3], frame)
     court = d.node(0, {'name': 'court'})
-    for name, prim, mat in [('slab', g, plain), ('lines', ln, plain), ('net', n, net), ('posts_chair', p, plain)]:
-        m = d.mesh(name, [prim.arrays(mat)])
+    for name, prims in [('slab', [g.arrays(cm), f.arrays(fm)]), ('lines', [ln.arrays(plain)]), ('net', [n.arrays(net)]), ('posts_chair', [p.arrays(plain)])]:
+        m = d.mesh(name, [q for q in prims if len(q[5])])
         if m is not None:
             d.node(court, {'name': name, 'mesh': m})
 
@@ -664,7 +771,26 @@ def one(root, c, spot, chair_of, out):
         cleared += clear
         d.node(vn, {'name': f'{use}_{k}{"__clear" if clear else ""}', 'mesh': meshes[use], 'matrix': gl(local(r))})
         placed[st] += 1
-    laid(d, ro, depth, chair, surface)
+    # the court's own surfaces from the hole (M8f10a4): grass the green (lie 6) and the fairway (lie 1), else what's
+    # under the slab; hard the paved ground under the slab
+    def lie_is(v):
+        return lambda x, z: hmp.at(x, z)[1] == v
+
+    def under_slab(x, z):
+        X_, Z_ = spot.to_hst(x, z)
+        return (X_ >= x0) & (X_ <= x1) & (Z_ >= z0) & (Z_ <= z1)
+
+    under_s = surface_of(ground, [m for m in gmeshes if surface == 'grass' or any(w in ground.materials[m['material']]['name'].lower() for w in PAVED)], ix, under_slab)
+    if surface == 'grass':
+        run = surface_of(ground, gmeshes, ix, lie_is(1)) or under_s
+        court_s = surface_of(ground, gmeshes, ix, lie_is(6)) or run
+    else:
+        court_s = run = under_s
+    turf = None
+    if court_s and run:
+        turf = ((d.laid_material('court_surface', court_s.tex), court_s), (d.laid_material('court_runoff', run.tex), run))
+    print(f'  surfaces: court {court_s}, run-off {run}')
+    laid(d, ro, depth, chair, surface, turf)
     slug = f'oob_c{c:02d}_{stem}'
     out_dir = out / slug
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -690,7 +816,7 @@ def one(root, c, spot, chair_of, out):
 
     r = HST[lay][1]
     todo = [
-        "the court is laid by the exporter (slab, lines at HST's judging edges, net, posts, umpire chair): Out of Bounds has no tennis court",
+        "the court is laid by the exporter (slab in the hole's own textures: grass in its green and fairway, hard in its paving tinted blue/green round the court; lines at HST's judging edges, net, posts, umpire chair): Out of Bounds has no tennis court",
         "light: none in the manifest; the hole is lit as the layout court lights its own models (Out of Bounds' lighting isn't mapped)",
         "sky: dome, clouds and panorama at the eye with no lift (the game's own placement isn't decoded); clouds don't drift",
         "placements: position, yaw and scale only (the records' four other words, 0x14-0x20, aren't decoded; they look like leans)",
