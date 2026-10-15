@@ -32,6 +32,20 @@ wire fence `kanami@metal` at ≈ 24.7 m. The spot isn't on the hole's height map
 so it's scenery outside the play area; the mesh-to-height-map mapping isn't confirmed. It's the one venue in the
 three games with a court already built: the first candidate for a court mod.
 
+Looked at closer (HST-Remastered M8f10a1): the playing surface is bare earth (`c13bare@mud`); the
+`breakwator02@asphalt` pieces are the white lines, modelled as 0.1–0.2 m strips over the earth (no painted
+texture); `redge01@rough` is a 1.6 m border. Two courts side by side, centres ±9.75 m along the nets; each net 11.74 m
+(posts ±5.87 m), so no doubles alleys wider than HST's. Line rows in HST's game metres after the export: x 0.05,
+4.015/4.115, 5.385/5.485; z 6.2/6.4, 11.585/11.685/11.885. The outer edges match HST's to the mm, and the court is
+flat within 2 mm. The `+` court (along the net direction) is the flatter one, so it goes on HST's origin. Plant
+records (HST's 0x40 format) map to mesh space as (x, y, z) → (−x, −y, z), checked against the tee marks.
+
+Exported as `out/mods/ot2_c13_h07_nakagawa` by `tools/psp2gltf/export_opentee2_court.py` (`--court ±`, `--end ±`):
+ground and scenery from the hole model, the kasen00 sky dome plus bg0's `p10` panorama and clouds (dropped 386 m so
+the far bank sits at eye level; judged by eye), trees/huts/kei trucks/tee marks from the plant records, the course BGM
+`at_c_07` and the hole's `co_40` ambience. Surface is **clay** (earth courts), and the layout is HST's Western (2) by the
+closest-run-off rule. Light is the layout's; the hole's `envir_c13_h07.dat` isn't decoded.
+
 No other course has courts: the string `tennis` appears in no other extracted file of the three games except a
 profile text (Out of Bounds `pc16.dat`) and Open Tee 2's `body.bin` text.
 
