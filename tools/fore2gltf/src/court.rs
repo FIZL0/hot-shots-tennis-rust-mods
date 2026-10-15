@@ -1,5 +1,5 @@
 //! `fore2gltf court`: Hot Shots Golf Fore! holes as HST court mods (standard/HST-COURT-UMPIRE-STANDARD.md §2,
-//! notes/venues.md; open-tennis M8f10a2).
+//! notes/venues.md; opentennis M8f10a2).
 //!
 //! ```text
 //! fore2gltf court <out/files/fore> <out/venues/fore.json> <HST iso> <out/mods> [course…] [--end -]
@@ -440,7 +440,7 @@ fn unit_or_down(n: [f32; 3]) -> [f32; 3] {
     if l > 1e-6 { n.map(|v| v / l) } else { [0.0, -1.0, 0.0] }
 }
 
-/// HST's backdrop turn and lift (open-tennis `gs::backdrop`): the course envir's yaw for backdrop kind `i`
+/// HST's backdrop turn and lift (opentennis `gs::backdrop`): the course envir's yaw for backdrop kind `i`
 /// (sky, clo, acc, bg) less the hole envir's turn, folded into ±π; the hole envir's lift (370 without one).
 fn backdrop(envir: &[u8], hole: Option<&[u8]>, i: usize) -> (f32, f32) {
     use hst_sim::ps2::{add, mul, sub};

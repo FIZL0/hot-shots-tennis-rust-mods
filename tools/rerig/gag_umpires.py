@@ -1,10 +1,10 @@
-"""Get a Grip's eight chair umpires' voices as umpire mods (standard/HST-COURT-UMPIRE-STANDARD.md §3; open-tennis
+"""Get a Grip's eight chair umpires' voices as umpire mods (standard/HST-COURT-UMPIRE-STANDARD.md §3; opentennis
 task M8f2) -> out/mods/gag_umpNN_<name>/ (mod.json + voice/<program>_<key>.wav).
 
-python3 tools/rerig/gag_umpires.py [open-tennis dir]      (default ../open-tennis)
+python3 tools/rerig/gag_umpires.py [opentennis dir]      (default ../opentennis)
 
 Needs: tools/audio.py getagrip (the umpire banks as wavs with names.txt from the SEQD cue decode), and from the
-open-tennis checkout the disc image and its release `bankwav` (the donor umpires' calls, for the timing fit).
+opentennis checkout the disc image and its release `bankwav` (the donor umpires' calls, for the timing fit).
 Game data: the outputs stay in out/ (git-ignored).
 
 Umpire NN = `sound/game/010_umpire_NN_0V.xb` bank `gag_vcNN{a,b}` = model `200_court/umpire.xb` u_NN (face textures
@@ -13,7 +13,7 @@ loadmes_jNN.xb0` (English names below). Bank `a` is used: shorter single-word ta
 second take set ("That's out!", "We have a tie break!") that would mostly be cut by the donor's timing.
 
 Each of HST's 24 calls (CALLS) has a Get a Grip cue of the same words, checked by a whisper transcript of all 16
-banks (2026-10-14; open-tennis research/journal/2026-10-14-m8f-courts-umpires/2-GAG-UMPIRE-VOICES-*.md). Unused
+banks (2026-10-14; opentennis research/journal/2026-10-14-m8f-courts-umpires/2-GAG-UMPIRE-VOICES-*.md). Unused
 cues: `ballhit` (the umpire hit by the ball: HST has no such call) and `tiebreak_Nup/down` (Get a Grip calls tiebreak
 points as numbers; HST's umpire calls no tiebreak points, `umpire.rs` `call_score`). `b` and the `_rev` banks are not shipped.
 
@@ -50,7 +50,7 @@ CALLS = {
     (0, 11): "vc_voice_point_adv_1",    # HST "server" / Get a Grip "server"
     (0, 12): "vc_voice_point_adv_2",    # "receiver"
     (0, 13): "vc_voice_point_deuce_1",  # Get a Grip "deuce again": HST's second-deuce key, which no disc umpire has a
-                                        # take for (silent on the disc, no donor length; open-tennis M8f3 decides)
+                                        # take for (silent on the disc, no donor length; opentennis M8f3 decides)
     (1, 0): "vc_voice_miss_out", (1, 1): "vc_voice_miss_fault_0",  # "out", "fault"
     (1, 2): "vc_voice_miss_fault_1",    # "double fault"
     (1, 3): "vc_voice_miss_let", (1, 4): "vc_voice_miss_net",
@@ -101,7 +101,7 @@ def donor_lengths(hst):
 
 
 def main():
-    hst = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "../open-tennis"))
+    hst = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "../opentennis"))
     lengths = donor_lengths(hst)
     for n, (slug, name, sex, same) in UMPIRES.items():
         c = cues(n)

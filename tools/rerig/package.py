@@ -5,8 +5,8 @@ python3 tools/rerig/package.py [game…]     (after batch.py; default every game
 Files are hard links into out/ (game data: never commit). Every game gets: costumes; a same-sex donor with the
 nearest Bip01 height; the face (morph, or face.json for the PSP texture swaps); voices sorted into HST programs; the
 source stats ranked onto TParam as params.override (gag_stats.overrides; needs HST's TParam.csv: HST_TPARAM or
-../open-tennis/context/xb) with ai_row by play style where the game has one; the game's own point/set reactions
-as motions.glb (motions.py; needs ../open-tennis/context/xb/PCANI for the donor clip lengths; golf roots held,
+../opentennis/context/xb) with ai_row by play style where the game has one; the game's own point/set reactions
+as motions.glb (motions.py; needs ../opentennis/context/xb/PCANI for the donor clip lengths; golf roots held,
 PIN); and a racket of its own (pick_racket: no two mods of a game share one). Get a Grip's data is
 in gag_stats.py, the golf games' in fore_data.py / oob_data.py / opentee_data.py. Handedness: a golf mod whose
 costumes wear a glove on the left hand is left-handed (glove hand = racket hand, standard §6 `hand`) and ships its
@@ -288,7 +288,7 @@ def main():
             if hand_why:
                 manifest["hand_why"] = hand_why
             if game == "fore":
-                # already high-res: open-tennis's upscale_mods.py leaves it alone
+                # already high-res: opentennis's upscale_mods.py leaves it alone
                 manifest["upscale"] = False
             if game in ("getagrip",):
                 f = gag_faces.get(slug) or next((v for k, v in gag_faces.items() if k.startswith(f"pc{n:02d}")), None)

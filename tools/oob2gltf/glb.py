@@ -11,7 +11,7 @@ _TY = {1: 'SCALAR', 2: 'VEC2', 3: 'VEC3', 4: 'VEC4', 16: 'MAT4'}
 
 class Builder:
     def __init__(self):
-        self.g = {'asset': {'version': '2.0', 'generator': 'open-tennis-mods oob2gltf'}, 'scene': 0, 'scenes': [{'nodes': []}],
+        self.g = {'asset': {'version': '2.0', 'generator': 'opentennis-mods oob2gltf'}, 'scene': 0, 'scenes': [{'nodes': []}],
                   'nodes': [], 'buffers': [], 'bufferViews': [], 'accessors': []}
         self.bin = bytearray()
 

@@ -1,6 +1,6 @@
 # Golf venues as tennis courts — Fore!, Open Tee 2, Out of Bounds
 
-Survey for open-tennis M8f10: which holes of Hot Shots Golf Fore! (PS2), Open Tee 2 (PSP) and Out of Bounds
+Survey for opentennis M8f10: which holes of Hot Shots Golf Fore! (PS2), Open Tee 2 (PSP) and Out of Bounds
 (PS3) have room for a tennis court, and which umpires those games have. Tools: `tools/venues/` (Python 3 + numpy,
 reads `out/files/<game>/` from `tools/extract.py`; no game data in the tools).
 
@@ -32,7 +32,7 @@ wire fence `kanami@metal` at ≈ 24.7 m. The spot isn't on the hole's height map
 so it's scenery outside the play area; the mesh-to-height-map mapping isn't confirmed. It's the one venue in the
 three games with a court already built: the first candidate for a court mod.
 
-Looked at closer (open-tennis M8f10a1): the playing surface is bare earth (`c13bare@mud`); the
+Looked at closer (opentennis M8f10a1): the playing surface is bare earth (`c13bare@mud`); the
 `breakwator02@asphalt` pieces are the white lines, modelled as 0.1–0.2 m strips over the earth (no painted
 texture); `redge01@rough` is a 1.6 m border. Two courts side by side, centres ±9.75 m along the nets; each net 11.74 m
 (posts ±5.87 m), so no doubles alleys wider than HST's. Line rows in HST's game metres after the export: x 0.05,
@@ -161,10 +161,10 @@ Names from the help text and `challengeitem.csv`. Exact spots (yaw, centre, rang
 
 A golf hole has no court lines, net or umpire chair: a mod built here lays its own court (slab, lines, net, chair)
 at the chosen spot and moves the venue so that spot lands on HST's court origin, along the court's length
-(standard §2: lines and net where the layout puts them). Export tasks in open-tennis's plan (M8f10b–d) cover
+(standard §2: lines and net where the layout puts them). Export tasks in opentennis's plan (M8f10b–d) cover
 the hole ground, sky/background, placed trees and props, and the laid court per game.
 
-### Fore! (`tools/fore2gltf court`, open-tennis M8f10a2)
+### Fore! (`tools/fore2gltf court`, opentennis M8f10a2)
 
 ```
 cd tools/fore2gltf && cargo build --release && cd ../..
@@ -216,7 +216,7 @@ lines, net and chair sit on HST's court, the umpire sits on the chair, the views
 drifting clouds, creatures, galleries, pin flag and hole-end scenery, course music, a manifest light from the
 envir files.
 
-### Out of Bounds (`tools/oob2gltf/court.py`, open-tennis M8f10a3)
+### Out of Bounds (`tools/oob2gltf/court.py`, opentennis M8f10a3)
 
 ```
 python3 tools/oob2gltf/court.py out/files/oob out/venues/oob.json "iso/Hot Shots Tennis (USA).iso" out/mods [course…] [--end -] [--data DIR]

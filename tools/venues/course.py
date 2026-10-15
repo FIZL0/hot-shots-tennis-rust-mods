@@ -3,7 +3,7 @@ PS3 big-endian): a hole's height/lie map (`*_hNN*.HMP`) and its placements (`pla
 
 HMP: `f32 x0, f32 z0, u32 nx, u32 nz`, then nx*nz f32 heights (game space, Y down) and nx*nz u8 lies, both stored
 x-major (row = x, column = z), cells CELL m square from (x0, z0). Lie 0 = outside the hole's playable area.
-Plant: HST's 0x40-byte records (open-tennis `hst_data::layout`): i16 index, u8 category-0x11, u8 sub,
+Plant: HST's 0x40-byte records (opentennis `hst_data::layout`): i16 index, u8 category-0x11, u8 sub,
 f32 pos[3], f32 extra[4], f32 yaw (0x20), f32 scale (0x24), u8 code[4], ..., f32 radius (0x30).
 """
 import struct

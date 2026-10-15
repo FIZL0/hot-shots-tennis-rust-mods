@@ -1,5 +1,5 @@
 """Get a Grip's eight chair umpires' models and motions -> each umpire mod's `umpire.glb` (standard/
-HST-COURT-UMPIRE-STANDARD.md §3b; open-tennis task M8f4).
+HST-COURT-UMPIRE-STANDARD.md §3b; opentennis task M8f4).
 
     python3 tools/psp2gltf/export_getagrip_umpires.py
 

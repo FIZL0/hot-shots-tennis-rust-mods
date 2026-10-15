@@ -35,7 +35,7 @@ Helghast 314/414 belt (Spine1). Other PCs have none. `Acce_6xx`/`Head_6xx`/`Body
 set), not costume sets. Every PC's default racket is `Racket_000` (racket000.xb → `parts/racket/racket00.glb`;
 Racket_param: owned from the start, price 0, No 0, all stats 0). The rackets: 10 models, `racket00`–`08` (items
 `Racket_0N0`–`0N2`, three colours of one model with no separate textures in the part) and `racket50` (`Racket_500`).
-Since M1r (open-tennis, 2026-10-13) each mod of a game gets a different racket (`package.py pick_racket`: Emi
+Since M1r (opentennis, 2026-10-13) each mod of a game gets a different racket (`package.py pick_racket`: Emi
 keeps `Racket_000`, the others the next model in pc order, the rest and the golf games HST disc rackets via
 `mod.json` `disc_racket`; Gloria and Suzuki get HST's own Gloria's/Suzuki's), a Get a Grip one packaged as `racket.glb` by
 `tools/rerig/racket.py`: the source grip on the hand kept (scaled with the body), resized about the hand to HST's

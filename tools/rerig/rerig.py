@@ -318,7 +318,7 @@ def rerig(src_path, out_path, donor=None, motions=None, height=None, head=1.0):
                 above.add(i)
     skinned_mesh = {i for i, n in enumerate(nodes) if "mesh" in n and "skin" in n}
     out = glb.Builder()
-    out.g["asset"]["generator"] = "open-tennis-mods rerig"
+    out.g["asset"]["generator"] = "opentennis-mods rerig"
     root = out.node(name="game_space", rotation=GAME_SPACE, children=[])
     idx, M = {}, {}
     def depth(n):

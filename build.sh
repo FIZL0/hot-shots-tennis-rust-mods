@@ -92,7 +92,7 @@ done
 # HST's own data, for stat ranks (TParam.csv) and reaction timing (PCANI): from the HST disc in iso/, else the
 # remaster's context/xb; without either the mods keep the donor's stats
 hst_data() {
-  [ -d out/files/hst ] || [ -d ../open-tennis/context/xb ] && return
+  [ -d out/files/hst ] || [ -d ../opentennis/context/xb ] && return
   if have hst; then
     unpack hst
     for d in PCDATA PCANI; do tools/unxb/target/release/unxb "extracted/hst/$d/" "out/files/hst/$d"; done

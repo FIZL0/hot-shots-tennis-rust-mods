@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-hst-data = { path = "../../../open-tennis/crates/hst-data" }
-hst-sim = { path = "../../../open-tennis/crates/hst-sim" }
+hst-data = { path = "../../../opentennis/crates/hst-data" }
+hst-sim = { path = "../../../opentennis/crates/hst-sim" }
 png = "0.18.1"
 serde_json = "1"

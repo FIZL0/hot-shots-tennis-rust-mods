@@ -153,7 +153,7 @@ def mirror(src, dst):
     for k, n in enumerate(names):  # core and name-swapped pairs
         t = _twin_name(n)
         # midline only with every ancestor on it too: fore pc09's lace joints sit at the origin under the calves, so
-        # alone at x = 0 they twinned themselves and each boot's laces went to the other leg (open-tennis B241)
+        # alone at x = 0 they twinned themselves and each boot's laces went to the other leg (opentennis B241)
         if all(abs(P[a, 0]) < 0.005 for a in _chain(k, jpar)) and (t is None or t not in idx):
             twin[k] = k
             stats["midline"] += 1

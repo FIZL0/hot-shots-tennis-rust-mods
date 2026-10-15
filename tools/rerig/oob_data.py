@@ -173,7 +173,7 @@ def _bank(pc, kind):
 # (0,29)-(0,34) and their second takes (1,9)-(1,14) are one family (pc01 calls them all line 16A-16L; two are
 # named Rare_Gattsu = rare guts pose): 6 hole-result reactions, multi-part cues timed to the ga_* clips.
 # No table ties any other slot to a golf event (the program, HSG5PS3.self, is encrypted), so the events below were
-# read off the lines themselves: every sg cue of all 17 transcribed with faster-whisper (open-tennis B209); the
+# read off the lines themselves: every sg cue of all 17 transcribed with faster-whisper (opentennis B209); the
 # same slot says the same thing in each actor's words. The family is NOT all celebrations: (0,29)/(1,9) is the
 # disaster ("No! That was awful!", "Oh no! It's not there!"), (0,30)/(1,10) par (some sound let down), (0,31)/(1,11)
 # and (0,33)/(1,13) the big wins, (0,32)/(1,12) a win that ends in a stumble ("Yeah! Ugh! Oops!"), (0,34)/(1,14)

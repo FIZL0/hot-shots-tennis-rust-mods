@@ -1,4 +1,4 @@
-"""Which golf holes of Fore!, Open Tee 2 and Out of Bounds could hold a tennis court (open-tennis M8f10).
+"""Which golf holes of Fore!, Open Tee 2 and Out of Bounds could hold a tennis court (opentennis M8f10).
 
 `python3 tools/venues/venues.py [fore|opentee2|oob ...]` -> out/venues/<game>.json and a table per course: for every
 hole its best spot (survey.py) from its height map and placements (course.py). Reads `out/files/<game>/` (extract.py).

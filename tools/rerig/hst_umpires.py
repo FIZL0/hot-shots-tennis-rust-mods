@@ -1,8 +1,8 @@
-"""HST's five chair umpires as playable mods (open-tennis task M1g) -> out/mods/hst_umpire_NN_<name>/.
+"""HST's five chair umpires as playable mods (opentennis task M1g) -> out/mods/hst_umpire_NN_<name>/.
 
-python3 tools/rerig/hst_umpires.py [open-tennis dir]      (default ../open-tennis)
+python3 tools/rerig/hst_umpires.py [opentennis dir]      (default ../opentennis)
 
-Needs from the open-tennis checkout: the disc image `Hot Shots Tennis (USA).iso`, the unpacked `context/xb`, and
+Needs from the opentennis checkout: the disc image `Hot Shots Tennis (USA).iso`, the unpacked `context/xb`, and
 its release tools `hst-gltf` (`umpires`) and `bankwav` (in $CARGO_TARGET_DIR or target/release). Game data: the
 outputs stay in out/ (git-ignored).
 
@@ -212,7 +212,7 @@ def tool(hst, name):
 
 
 def main():
-    hst = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "../open-tennis"))
+    hst = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "../opentennis"))
     iso = os.path.join(hst, "Hot Shots Tennis (USA).iso")
     chars = json.load(open(os.path.join(ROOT, "standard/hst_skeleton.json")))["characters"]
     models = os.path.join(ROOT, "out/models/hst/umpires")

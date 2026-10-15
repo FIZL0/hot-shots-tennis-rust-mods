@@ -1,4 +1,4 @@
-"""Get a Grip's sixteen courts -> court mods (standard/HST-COURT-UMPIRE-STANDARD.md §2; open-tennis task M8f5).
+"""Get a Grip's sixteen courts -> court mods (standard/HST-COURT-UMPIRE-STANDARD.md §2; opentennis task M8f5).
 
     python3 tools/psp2gltf/export_getagrip_courts.py [01 04 ...]
 
@@ -66,9 +66,9 @@ RAW_SOUND = os.path.join(ROOT, "extracted/getagrip/PSP_GAME/USRDIR/data/sound")
 NAMES = os.path.join(ROOT, "out/files/getagrip/PSP_GAME/USRDIR/xbdata/common/common_22.xb0/data/menu/text/CommonText_Court.to")
 COURTS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 13, 14, 15, 16, 17, 18, 20]  # in the game's court list order
 
-# HST's eleven courts (the layout numbers): surface (`SURFACE`, open-tennis play/main_menu.rs) and flat run-off in
+# HST's eleven courts (the layout numbers): surface (`SURFACE`, opentennis play/main_menu.rs) and flat run-off in
 # metres beyond the baselines (+z, -z) and sidelines (+x, -x), measured on each disc court's ground model the same
-# way `runoff` measures Get a Grip's (open-tennis mdlstat obj dump, 2026-10-15; capped at 40 m)
+# way `runoff` measures Get a Grip's (opentennis mdlstat obj dump, 2026-10-15; capped at 40 m)
 HST = [("clay", (8.5, 8.5, 35.0, 4.9)), ("clay", (40, 40, 40, 40)), ("clay", (40, 13.1, 40, 37.7)),
        ("hard", (10.7, 10.7, 25.8, 8.4)), ("grass", (21.3, 21.3, 9.6, 9.4)), ("grass", (18.6, 29.2, 27.8, 10.8)),
        ("hard", (14.9, 14.4, 7.6, 7.6)), ("grass", (40, 13.6, 7.0, 14.5)), ("clay", (17.3, 15.5, 40, 40)),
@@ -91,7 +91,7 @@ REST = ("Stay", "stay", "Stay2", "wait", "pool", "Swim", "Fly", "WingBeat", "kyo
 # the two 車 rows (ids 11 and 31) are c05's two cars
 CAR = {11: "gi10_Car", 31: "gi11_Car"}
 
-# HST's match camera (open-tennis hst_sim::camera::base): 41 m from the court centre at 17 degrees, behind
+# HST's match camera (opentennis hst_sim::camera::base): 41 m from the court centre at 17 degrees, behind
 # either baseline (it turns round when its human is on the far half), 20-degree lens on the PS2's 0.7 aspect ->
 # 7 degrees above and below the view's centre; sideways up to a 21:9 window. Get a Grip's PSP camera sits closer,
 # so set pieces it leaves behind its back (c17's NORMA, 17 m cables 9-12 m in front of HST's eye) stand in HST's

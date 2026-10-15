@@ -1,5 +1,5 @@
 """Get a Grip's eight chair umpires' select pictures -> each umpire mod's `previews/umpire.png` (standard/
-HST-COURT-UMPIRE-STANDARD.md §3: 384x480 RGBA, transparent background; open-tennis task B400).
+HST-COURT-UMPIRE-STANDARD.md §3: 384x480 RGBA, transparent background; opentennis task B400).
 
     python3 tools/psp2gltf/export_getagrip_umpire_previews.py
 

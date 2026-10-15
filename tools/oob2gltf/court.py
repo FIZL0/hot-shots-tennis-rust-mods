@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Hot Shots Golf: Out of Bounds (PS3) holes as HST court mods (standard/HST-COURT-UMPIRE-STANDARD.md §2,
-notes/venues.md; open-tennis M8f10a3). The Out of Bounds counterpart of `fore2gltf court` (M8f10a2): same rules,
+notes/venues.md; opentennis M8f10a3). The Out of Bounds counterpart of `fore2gltf court` (M8f10a2): same rules,
 same laid court.
 
   python3 tools/oob2gltf/court.py out/files/oob out/venues/oob.json "iso/Hot Shots Tennis (USA).iso" out/mods [course…] [--end -] [--data DIR]
