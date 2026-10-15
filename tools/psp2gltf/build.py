@@ -28,7 +28,9 @@ def root_local(sk):
 def skin_space(part, sk):
     """Skinned vertices -> glTF model space: v @ C @ F, C = IB_k @ W_k (the skinned mesh node's world; == F for
     most parts, so this is identity; OT1's mesh node is Z-up with a non-uniform scale, some GaG/OT2 skirt and
-    pouch groups are offset)."""
+    pouch groups are offset). Bone-local groups (one bone, no weights): v @ W_bone @ F."""
+    if part.bone_local:  # vertices in the palette's one bone's space: that bone's bind world
+        return sk.world[sk.names.index(part.skin.names[part.palette[0]])] @ F
     k = next(i for i, n in enumerate(part.skin.names) if n in sk.names)
     M = part.skin.inv_bind[k] @ sk.world[sk.names.index(part.skin.names[k])] @ F
     return None if np.allclose(M, np.eye(4), atol=1e-3) else M  # GaG/OT2: float noise < 2e-5

@@ -7,7 +7,9 @@ Reads out/files/getagrip/.../xbdata/game/200_court/umpire.xb (unpacked), writes 
 next to the voices tools/rerig/gag_umpires.py packaged (run that first; it keeps the glb). Game data: out/ only.
 
 umpire.xb holds u_00..u_07 (model u_NN.psp.i3r, seated, one 28-33 node skeleton shared by all eight: no leg bones,
-the legs ride the pelvis) and motions: u_00 and u_04 have h/r/l/w/s/r_w/l_w, the others only s (each the same
+the legs ride the pelvis; u_02/03/05-07's hands, u_02's legs and a u_04 pelvis piece
+are one-bone groups stored in that bone's space, which i3d.py flags `bone_local` and build.py places by the bone's
+bind world) and motions: u_00 and u_04 have h/r/l/w/s/r_w/l_w, the others only s (each the same
 gesture as u_00's). The ones without their own set take u_00's (same skeleton; u_04's set equals u_00's key for key
 on the sampled frames). What each motion is, by its poses (rendered, 2026-10-14):
   h    both hands brought together and held (0.5 s)        -> `idle`: HST's umpire motion 0, frame 0 during play,

@@ -197,6 +197,8 @@ class MeshPart:
     skinned: bool        # True: palette = indices into skin.names; False: palette[0] = record value of 0x4b
     prims: list
     skin: "Skin" = None  # the 0x46 skin this part's palette indexes (a file may have several)
+    bone_local: bool = False  # skinned group flag bit 3 (0x0c vs 0x04): one bone, no weights, vertices in that
+    #                           bone's space (Get a Grip umpires' hands/legs), not model space
 
 
 @dataclass
@@ -214,8 +216,8 @@ def read_skin(d, r):
 
 
 def _palette(d, o):
-    _h, cnt, _fl = struct.unpack_from("<IBB", d, o)
-    return list(struct.unpack_from(f"<{cnt}H", d, o + 8))
+    _h, cnt, fl = struct.unpack_from("<IBB", d, o)
+    return list(struct.unpack_from(f"<{cnt}H", d, o + 8)), bool(fl & 8)
 
 
 def read_meshes(d, root):
@@ -232,12 +234,12 @@ def read_meshes(d, root):
         if group is None:
             continue
         if group.type == 0x4C:
-            pal, skinned = _palette(d, group.data), True
+            (pal, local), skinned = _palette(d, group.data), True
         else:
-            pal, skinned = [struct.unpack_from("<I", d, group.data)[0]], False
+            pal, skinned, local = [struct.unpack_from("<I", d, group.data)[0]], False, False
         prims = [read_prim(d, x.data) for x, _ in iter_recs(r) if x.type == 0x50]
         owner = next((p for p in reversed(path) if p.type == 0x46), None)
-        parts.append(MeshPart(mat_id, pal, skinned, prims, skins.get(owner.off) if owner else None))
+        parts.append(MeshPart(mat_id, pal, skinned, prims, skins.get(owner.off) if owner else None, local))
     return next(iter(skins.values()), None), parts
 
 
