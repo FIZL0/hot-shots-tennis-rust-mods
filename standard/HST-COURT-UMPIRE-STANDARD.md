@@ -94,14 +94,23 @@ Spectators, ball kids, line judges, mascots: drawn and animated only, never touc
 }
 ```
 
-- Each model is a skinned `.glb` (own skeleton allowed) with animations named by **cue**: `idle` (required,
-  looped), and any of `cheer`, `clap`, `groan`, `point`, `rally` (watching a long rally), `serve` (quiet before a
-  serve), `change_ends`. A cue the model lacks plays `idle`.
-- `role`: `gallery` (cued like the disc gallery: cheer on a point won, groan on an error, clap on a game),
-  `ballkid`, `linejudge` (turns its head with the ball; `point` on an out call), `mascot` (like gallery, bigger
-  reactions). The cues follow the match the way the disc gallery's do (HST-Remastered `play/npcs.rs`), so they fire
-  on the same ticks; they read the match, never write it.
-- `sounds` (optional): `{"cheer": ["npcs/cheer_0.wav", …], …}` per cue, picked at random.
+- Each model is a `.glb` (skinned with its own skeleton, or rigid; under `game_space`, facing +Z) with animations
+  named by **cue**: `idle` (required, looped), and any of `cheer`, `clap`, `groan`, `point`, `rally` (watching a
+  long rally), `serve` (quiet before a serve), `change_ends`, `win` / `lose` (match over: the side the crowd favours
+  won / lost; missing, `cheer` / `groan`). A cue the model lacks plays `idle`. Every clip loops; a reaction plays
+  for about two seconds, then the person goes back to `idle`.
+- `<cue>_back` (optional): played instead of `<cue>` while the camera is behind the person (the eye on the far side
+  of the plane through `pos` square to `facing`); missing, `idle_back`, then `<cue>` itself.
+- A model value may be `{"glb": "npcs/fan_a.glb", "billboard": true}`: the person turns about the vertical to face
+  the camera every frame (cardboard spectators); `facing` then only decides front or back.
+- `role`: `gallery` (cued like the disc gallery: cheer on a point won, groan on an error, clap on a game won),
+  `ballkid` (`serve` before each serve, `change_ends`, else `idle`), `linejudge` (`point` on an out call; a node
+  named `head` turns about the vertical toward the ball), `mascot` (like gallery). The cues follow the match the way
+  the disc gallery's do (HST-Remastered `play/npcs/court_people.rs`): they fire on the same ticks, read the match,
+  never write it. Each person starts its reaction a few frames apart from its neighbours.
+- `sounds` (optional): `{"cheer": ["npcs/cheer_0.wav", …], …}` per cue (`cheer`, `clap`, `groan`, `win`, `lose`,
+  `point`), one picked at random, played once from the middle of the people when the cue fires. They come on top
+  of the disc gallery's own applause and groans.
 
 ## 3. Umpire mod
 

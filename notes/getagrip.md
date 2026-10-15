@@ -204,6 +204,15 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   (or `<model>__singles`); tracks with `:` are Maya reference duplicates, `pc_locator`/`player_locator` people spots,
   `gall` the gallery (M8f7), c08's `eff560` effect emitters (no model). Models live in `obj/`, `tree/`, `bg/` and
   (c07) `gimmick/` of `courtNN_obj_0/1.xb`; `_col` = collision.
+- **Gallery** (`export_getagrip_gallery.py` → `npcs.json`, `npcs/`): `courtNN_gallery.xb` (not c09/c16)
+  `gallery/gall00..06.psp.i3r` = one 1 × 1.95 m card (`pPlane1`, x ±50, y −5..190 cm, u along +x; gall00 empty),
+  textures `gallNN_act0..7` (gall06 act0 only): act0 front, act1 back view, act2 head down, act3 waving, act4–7
+  clapping; `.tat`s (material `gallery`) front = act0, back = act1, down = act2, clap = act3..7 at 0, 0.067, 0.1,
+  0.167, 0.2 s. `setting/cNN_galleryarea.dat`: u32 n, n × (u32 id, f32 x, y, z, sx, sy, sz) metres Y up (sy = 2,
+  the height); `cNN_gallery.csv` people per area for no / normal / many gallery. c09, c16: one whole-stand crowd
+  model `courtNN_obj_0.xb …/gallery/gall00/cNN_gall00.psp.i3r` (haichi `cNN_gall00__01`), same tats. Sounds:
+  `galsg_GL_[mw]NN_[ab].sgd` group_glee_0..2 / group_sad_0..1 / group_win / group_lose (identical in some sets),
+  `co_seNN.sgd` clap_1 (one clap; none on c02, c16, c17). Who stands where and the cue timing: encrypted program.
 - **Sky**: the ground's `bg01_sky` (c04/c06: `meshSky01/02`) node, or a separate `bg01_Sky` model (c07), plus
   `bg02_cloud*` with a looping motion: untextured, vertex-coloured, 200–500 m across → `sky.glb` (unlit).
 - **Gimmicks**: `cNN_escape_gimmick.csv` / `cNN_break_gimmick.csv` name each (Japanese; the script's `GIMMICK`
