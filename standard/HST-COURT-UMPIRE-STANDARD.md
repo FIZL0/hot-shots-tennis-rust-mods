@@ -39,6 +39,7 @@ mods/<id>/
   npcs.json + npcs/    optional: the people (§2b)
   sound/ambience_<n>.wav  optional: looping background layers, all played at once
   sound/bgm.wav (or .ogg)  optional: the court's music, looped
+  lensflare.png        optional: the sun's lens flare sprite (outdoor courts)
   previews/court.png   optional: the court select's picture (640×360 RGBA PNG)
 ```
 
@@ -66,6 +67,16 @@ mods/<id>/
   loop start and end in samples (0, 0 = the whole file).
 - Optional, informational: `layout_why` (why that disc court), `surface` (`clay`, `grass`, `hard`, `carpet`: shown
   in Browse; must agree with `layout`), `time` (`day`/`night`), `todo`.
+- **Singles / doubles variants**: a node directly under the scene's top nodes whose name ends in `__singles` or
+  `__doubles` is drawn only in a match of that kind (the net with or without its singles sticks, the umpire's chair
+  set further out for doubles); every other node is always drawn. Applies to `court.glb` and `gimmick.glb`.
+- `light` may also carry `fill` / `fill_colour` (a second directional light, same conventions as `sun`), and
+  `fog` an `"amount": [near, far]` (how much fog at `near` and at `far`, 0–1, linear between; absent `[0, 1]`).
+- `ambience_loop`: one `[start, end]` per `sound/ambience_<n>.wav`, as `bgm_loop`.
+- `lens_flare`: the flare sprite (PNG, alpha), drawn toward `sun` when the sun is on screen. Absent: no flare.
+- `gimmick.glb`'s animations each drive one set piece and loop on their own clocks, all playing at once; a set piece
+  with none stands still. They are drawn only, like `court.glb`: no collision, the ball passes through.
+- Optional, informational: `indoor` (bool), `gimmicks` (what `gimmick.glb` holds).
 
 ### 2b. Court people (`npcs.json`)
 

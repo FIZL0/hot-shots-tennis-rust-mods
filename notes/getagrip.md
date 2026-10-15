@@ -183,3 +183,37 @@ The motions key Bip01Pelvis 45.7 cm lower than the bind pose (in motion the mode
 seat lift comes from `idle`'s first pelvis key; ROOTNODE and the locators are put in the skin so a player that
 drops non-joint nodes keeps the lift. The PSP code is encrypted: which motion it plays when is a guess by name.
 Helghast (u_04) has a canister (`Bip01RThigh9…`) that, with no thigh bone, rides the pelvis beside the chair.
+
+## Courts (`python3 tools/psp2gltf/export_getagrip_courts.py [NN ...]`)
+
+Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods (standard court §2): `court.glb`,
+`sky.glb`, `gimmick.glb`, `sound/bgm.wav` + `sound/ambience_0.wav` (with loop points), `lensflare.png` (outdoor),
+`mod.json`. Everything about the file layout is in the script's docstring; the findings:
+
+- **Space**: true scale in cm, net at the origin, long axis Z, Y up, umpire's chair on +X (`pc_locator__singles`
+  (650, 172.8, 0) = HST's umpire seat). → HST game space (0.01x, −0.01y, −0.01z): `game_space` → `gag_cm`
+  (rotation [1,0,0,0], scale 0.01). The painted lines' vertex rows sit on 5.485 / 4.115 / 11.885 / 6.40 m on all 16.
+- **Placement** `haichi/cNN_<stem>__haichi.i3m`: one single-key track per instance, `<model>__<NN>[__singles|__doubles]`
+  (or `<model>__singles`); tracks with `:` are Maya reference duplicates, `pc_locator`/`player_locator` people spots,
+  `gall` the gallery (M8f7), c08's `eff560` effect emitters (no model). Models live in `obj/`, `tree/`, `bg/` and
+  (c07) `gimmick/` of `courtNN_obj_0/1.xb`; `_col` = collision.
+- **Sky**: the ground's `bg01_sky` (c04/c06: `meshSky01/02`) node, or a separate `bg01_Sky` model (c07), plus
+  `bg02_cloud*` with a looping motion: untextured, vertex-coloured, 200–500 m across → `sky.glb` (unlit).
+- **Gimmicks**: `cNN_escape_gimmick.csv` / `cNN_break_gimmick.csv` name each (Japanese; the script's `GIMMICK`
+  table maps them to `giNN_<Name>` folders: カメ = 甕 the urn, バルーン = c16's Tools, c20's nameless row = 工具)
+  with a route in `cNN_route.dat` (u32 routes; each u32 n then n × (u32 route id, f32 x, y, z in **metres**)). Placed
+  at the route's first point, turned by the csv's default angle, looping a resting motion (Stay, Swim, WingBeat …).
+  The reactions (escape along the route at the csv speed, break into `_b01`) are code: not exported. Folders with no
+  csv row (Swallow, Weeds, koishi, Bird, dolphin, Can, Banana, Snow, Wolf, pool, seito, watari, Squirrel, Dragon,
+  WTigers, phantom, Jumbo …) are spawned by the program: listed in each `todo`, not placed.
+- **Settings** `1_courtsetting.xb`: `court.csv` (Shift-JIS; stem, GRASS/HARD/CLAY, indoor), `courtlight.csv` (row =
+  court number; ambient, light 0/1 colour + direction toward the light, Y up → `sun`/`fill`), `fogsetting.csv` (near/
+  far amount, near/far distance, colour; off when both amounts are 0 → `fog`). `playerlight.csv`/`balllight.csv` are
+  the same on every court; `camera_time.csv` is per-gimmick cutaway timing.
+- **Sound**: `900_sound/020_courtNN.xb` `BGM/bgm_court_NN` and `stream_SE/env_coNN` (the ambience loop); loop
+  points from `vgmstream-cli -m` on the raw `.sgh` + `extracted/.../.sgb` side by side. `cNN_se.csv` (one-shot birds,
+  bells, buzzers) is a template copied between courts whose cue names are in no bank: noted in `todo`.
+- **Layout**: same surface as `court.csv`, then the HST court with the nearest flat run-off (shorter end and side,
+  log ratio); a crude metric, the numbers are in `layout_why`.
+- `201_court/` is a lower-detail copy of the same courts (`data/adcourt`, fewer textures): not exported.
+- Validation: Khronos validator 0 errors / 0 warnings on all 47 glbs; top views of all 16 checked by eye.
