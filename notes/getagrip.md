@@ -267,6 +267,9 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   the shadow pass was a second opaque copy of the ground in the court texture at the shadow map's UVs, z-fighting
   over the real one: why c01, c03, c04, c05, c07, c15 and c18 showed their lines only in fragments (and c04 looked
   low-res). The court textures carry the lines on all 16 (a quarter court per 512² texture).
+  The characters' parts have the same layout on three accessories only (etc18, etc51, etc81): an untextured second
+  pass, +0x24 = 0x11, vertex colours 0x59/0xb2/0xff/0 grey → `vertex_colour@add` (`build._gl_prims`, opentennis
+  M8f51); merged into pass 0 it was a z-fighting darker copy in the accessory's texture.
 - **Layout**: same surface as `court.csv`, then the HST court with the nearest flat run-off (shorter end and side,
   log ratio); a crude metric, the numbers are in `layout_why`.
 - `201_court/` is a lower-detail copy of the same courts (`data/adcourt`, fewer textures): not exported.

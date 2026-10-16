@@ -1,4 +1,5 @@
 """Assemble I3D_BIN parts (one skinned body + rigid attachments) into a glTF scene."""
+import dataclasses
 import io
 import os
 import re
@@ -67,7 +68,23 @@ class TextureCache:
                     return p
         return None
 
-    def material(self, name):
+    def material(self, name, add=False, sub=False):
+        """`add`/`sub`: a material's second texture pass drawn additively (+0x24 of its texture record 0x11) or
+        subtracted (0x12), which the standard spells as an `@add`/`@sub` name suffix, BLEND; untextured ones white
+        so their vertex colours show (as export_getagrip_courts.py's)."""
+        if add or sub:
+            key = (name, add, sub)
+            if key not in self.mats:
+                if name and self.find(name):
+                    m = dict(self.b.g["materials"][self.material(name)])
+                else:
+                    m = {"name": name or "vertex_colour", "doubleSided": True,
+                         "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1], "metallicFactor": 0.0,
+                                                  "roughnessFactor": 1.0}}
+                m["name"] = m["name"] + ("@add" if add else "@sub")
+                m["alphaMode"] = "BLEND"
+                self.mats[key] = self.b.add("materials", m)
+            return self.mats[key]
         if name in self.mats:
             return self.mats[name]
         p = self.find(name)
@@ -129,11 +146,16 @@ def _prim_arrays(part, joint_map):
 
 
 def _gl_prims(b, parts, texcache, materials, joint_map):
+    # a material with two textures draws its triangles twice, each pass with its own UVs and render state
+    # (i3d.Material.passes, Prim.pass_): Get a Grip's etc18/etc51/etc81 accessories add an untextured second pass.
+    # Merged into the first it was a z-fighting copy in the first texture.
     by_mat = {}
     for part in parts:
-        by_mat.setdefault(part.material, []).append(part)
+        for k in sorted({pr.pass_ for pr in part.prims}):
+            by_mat.setdefault((part.material, k), []).append(
+                dataclasses.replace(part, prims=[pr for pr in part.prims if pr.pass_ == k]))
     prims = []
-    for m, ps in sorted(by_mat.items()):
+    for (m, k), ps in sorted(by_mat.items()):
         arrs = [_prim_arrays(p, joint_map) for p in ps]
         off = np.cumsum([0] + [len(a["P"]) for a in arrs])
         A = {k: np.concatenate([a[k] for a in arrs]) for k in arrs[0] if k != "I"}
@@ -148,9 +170,17 @@ def _gl_prims(b, parts, texcache, materials, joint_map):
         if joint_map is not None:
             attrs["JOINTS_0"] = b.accessor(A["J"], glb.USHORT, "VEC4", 34962)
             attrs["WEIGHTS_0"] = b.accessor(A["W"], glb.FLOAT, "VEC4", 34962)
-        name = materials[m].texture if m < len(materials) else "missing"
+        mat = materials[m] if m < len(materials) else None
+        if mat is None:
+            name, raw = "missing", b""
+        elif k:
+            name, raw = mat.passes[k]
+        else:
+            name, raw = mat.texture, mat.raw
+        add = k > 0 and len(raw) > 0x24 and raw[0x24] & 3 == 1
+        sub = k > 0 and len(raw) > 0x24 and raw[0x24] & 3 == 2
         prims.append({"attributes": attrs, "indices": b.accessor(A["I"], glb.UINT, "SCALAR", 34963),
-                      "material": texcache.material(name), "mode": 4})
+                      "material": texcache.material(name, add, sub), "mode": 4})
     return prims
 
 
