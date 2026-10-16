@@ -36,7 +36,7 @@ tools/
 
 ## Requirements
 
-- Rust (cargo), and a checkout of [Hot Shots Tennis Rust](https://github.com/FIZL0/opentennis) next to this
+- Rust (cargo), and a checkout of [OpenTennis](https://github.com/FIZL0/opentennis) next to this
   one as `../opentennis`, since `fore2gltf` depends on its `hst-data` crate.
 - Python 3 with numpy, scipy and Pillow.
 - `vgmstream-cli`, `ffmpeg` and `7z`.
