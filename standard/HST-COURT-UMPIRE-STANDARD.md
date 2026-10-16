@@ -23,10 +23,11 @@ Every `mod.json` may carry `"kind"`:
 | `character` (or absent) | a player | `HST-CHARACTER-STANDARD.md` |
 | `court` | a venue | §2 here |
 | `umpire` | a chair umpire | §3 here |
+| `textures` | replacement images for the disc's textures | `HST-TEXTURE-PACK-STANDARD.md` |
 
-Any other value is a kind this loader doesn't know yet (e.g. `textures`, opentennis M5a): it is skipped
-quietly, not reported as broken. The character select only lists `character` mods; the court select lists `court`
-mods, the umpire select `umpire` mods. Store metadata (`meta.json`) carries the same `kind`.
+Any other value is a kind this loader doesn't know yet: it is skipped quietly, not reported as broken. The
+character select only lists `character` mods; the court select lists `court` mods, the umpire select `umpire`
+mods; texture packs are on no select (they stack, `HST-TEXTURE-PACK-STANDARD.md` §4). Store metadata (`meta.json`) carries the same `kind`.
 
 ## 2. Court mod
 
