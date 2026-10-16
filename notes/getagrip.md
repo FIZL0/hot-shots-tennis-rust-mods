@@ -256,6 +256,16 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   (`c03_ob18_mizu`, `c04_resort_waterAdd`, c06's water/rainbow/fog, c13's pool ripples), fireworks (c15), c20's
   `bg_cloud02`, and c17's glow layers (`plates`, a `court` copy over the opaque court, `ob13` pieces). The textures
   are mostly black, so drawn plainly they are black patches (yamate's octagon). → `<name>@add`, BLEND.
+- **Two-texture materials** (baked shadows): a material record (0x25) can hold two texture records (0x26); each 0x55
+  batch of its mesh then holds one 0x4f per texture, in that order, the second drawing the same triangles again with
+  its own UVs (`i3d.Material.passes`, `Prim.pass_`; 185 of 5013 batches in `200_court`, never more 0x4f than
+  textures). The second texture's +0x24 is 0x12 on the grounds' baked shadow maps (`c01_yamate_shadow00/01`,
+  `c03_baked01`, `c04_resort_baked`, `c05_GroundShadow`, `c07_baked`, `c08_castle_baketex01`, `c15_baked01`,
+  `c18_china_shadow00`): black where lit, bright in shadow, so subtracted → `<name>@sub`, BLEND. 0x11 (additive) on
+  c08's statue `c08_refmap02`, c09's chair highlight (untextured) and c16's `roof01` glow → `@add`. Read as one pass,
+  the shadow pass was a second opaque copy of the ground in the court texture at the shadow map's UVs, z-fighting
+  over the real one: why c01, c03, c04, c05, c07, c15 and c18 showed their lines only in fragments (and c04 looked
+  low-res). The court textures carry the lines on all 16 (a quarter court per 512² texture).
 - **Layout**: same surface as `court.csv`, then the HST court with the nearest flat run-off (shorter end and side,
   log ratio); a crude metric, the numbers are in `layout_why`.
 - `201_court/` is a lower-detail copy of the same courts (`data/adcourt`, fewer textures): not exported.

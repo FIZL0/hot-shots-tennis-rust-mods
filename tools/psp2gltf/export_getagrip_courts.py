@@ -29,9 +29,12 @@ What each court is made of (notes/getagrip.md "Courts"):
 Into HST game space: Get a Grip's courts are true scale in centimetres, net at the origin, long axis Z, Y up, the
 umpire's chair on +X; HST's are metres, Y down, chair on +X. So (x, y, z) cm -> (0.01x, -0.01y, -0.01z) m: under
 `game_space` (rotation [0,0,1,0], the standard's root) one `gag_cm` node, rotation [1,0,0,0] (that map) and scale 0.01.
+A material with two textures draws its triangles twice (`prims`): the second pass is the ground's baked shadow map,
+subtracted (`@sub`), or an additive glint (`@add`).
 Checked on every court: the painted lines' vertex rows land on HST's 5.485 / 4.115 / 11.885 / 6.40 m to the mm (`lines`).
 """
 import csv
+import dataclasses
 import io
 import json
 import math
@@ -204,12 +207,13 @@ class Scene:
     def draws_below(M, j, drawn):
         return any(c in drawn and (c in M.rigid or Scene.draws_below(M, c, drawn)) for c in M.children.get(j, []))
 
-    def material(self, name, vertex_alpha, add=False):
+    def material(self, name, vertex_alpha, add=False, sub=False):
         """build.TextureCache's material; untextured ones (the sky, the bushes' shadow cards) white so their
         vertex colours show; BLEND where the vertex colours carry alpha. `add`: GaG draws it additively (light
         pools, lamp rays, water glints; render-state byte +0x24 bit 0 of its texture record), which the standard
-        spells as an `@add` name suffix, BLEND."""
-        key = (name, vertex_alpha, add)
+        spells as an `@add` name suffix, BLEND. `sub`: subtracted (+0x24 bit 1: the baked shadow maps' pass over
+        the ground), `@sub`."""
+        key = (name, vertex_alpha, add, sub)
         if key not in self.mats:
             if name and self.tc.find(name):
                 i = self.tc.material(name)
@@ -217,12 +221,12 @@ class Scene:
                 i = self.b.add("materials", {"name": name or "vertex_colour", "doubleSided": True,
                                              "pbrMetallicRoughness": {"baseColorFactor": [1, 1, 1, 1],
                                                                       "metallicFactor": 0.0, "roughnessFactor": 1.0}})
-            if vertex_alpha or self.unlit or add:
+            if vertex_alpha or self.unlit or add or sub:
                 m = dict(self.b.g["materials"][i])
-                if vertex_alpha or add:
+                if vertex_alpha or add or sub:
                     m["alphaMode"] = "BLEND"
-                if add:
-                    m["name"] = m.get("name", "") + "@add"
+                if add or sub:
+                    m["name"] = m.get("name", "") + ("@add" if add else "@sub")
                 if self.unlit:
                     m["extensions"] = {"KHR_materials_unlit": {}}
                     self.b.g["extensionsUsed"] = ["KHR_materials_unlit"]
@@ -416,15 +420,25 @@ class Scene:
     def prims(self, parts, materials, joint_map, world=None, label="", tris=None):
         """world: the mesh node's world matrix, to `clear` the view (rigid meshes of a clear_view scene). tris: per
         part, the triangles to keep (`split_blockers`)."""
+        # a material with two textures draws its triangles twice, each pass with its own UVs and render state
+        # (i3d.Material.passes): the ground's baked shadow map is the second pass, subtracted. Drawn with the
+        # first texture it stood over the court as a second opaque copy and hid its lines (c01, c03, c04, c05,
+        # c07, c15, c18).
         by_mat = {}
         for i, p in enumerate(parts):
-            by_mat.setdefault(p.material, []).append(i)
+            for k in sorted({pr.pass_ for pr in p.prims}):
+                by_mat.setdefault((p.material, k), []).append(i)
         out = []
-        for mi, ii in sorted(by_mat.items()):
-            arrs = [build._prim_arrays(parts[i], joint_map) for i in ii]
+        for (mi, ps), ii in sorted(by_mat.items()):
+            arrs = [build._prim_arrays(dataclasses.replace(parts[i], prims=[pr for pr in parts[i].prims if pr.pass_ == ps]),
+                                       joint_map) for i in ii]
             if tris is not None:
                 for a, i in zip(arrs, ii):
-                    a["I"] = a["I"].reshape(-1, 3)[tris[i]].reshape(-1)
+                    # tris[i] counts the part's triangles over all its passes: this pass's among them
+                    tp = np.concatenate([[pr.pass_] * len(i3d.prim_triangles(pr)) for pr in parts[i].prims])
+                    keep = np.zeros(len(tp), bool)
+                    keep[tris[i]] = True
+                    a["I"] = a["I"].reshape(-1, 3)[keep[tp == ps]].reshape(-1)
                     used, a["I"] = np.unique(a["I"], return_inverse=True)  # only its own corners (HST boxes them)
                     a["I"] = a["I"].reshape(-1).astype(np.uint32)
                     for key in [k for k in a if k != "I" and len(a[k]) and len(a[k]) == len(a["P"])]:
@@ -432,7 +446,7 @@ class Scene:
             off = np.cumsum([0] + [len(a["P"]) for a in arrs])
             A = {k: np.concatenate([a[k] for a in arrs]) for k in arrs[0] if k != "I"}
             A["I"] = np.concatenate([a["I"] + o for a, o in zip(arrs, off)])
-            name = materials[mi].texture if mi < len(materials) else ""
+            name, raw = materials[mi].passes[ps] if mi < len(materials) and materials[mi].passes else ("", b"")
             if world is not None:
                 self.clear(A, world, f"{label} {name}")
             if not len(A["I"]):
@@ -447,10 +461,10 @@ class Scene:
             if joint_map is not None:
                 attrs["JOINTS_0"] = b.accessor(A["J"], glb.USHORT, "VEC4", 34962)
                 attrs["WEIGHTS_0"] = b.accessor(A["W"], glb.FLOAT, "VEC4", 34962)
-            raw = materials[mi].raw if mi < len(materials) else b""
-            add = len(raw) > 0x24 and raw[0x24] & 1 == 1
+            add = len(raw) > 0x24 and raw[0x24] & 3 == 1
+            sub = len(raw) > 0x24 and raw[0x24] & 3 == 2
             out.append({"attributes": attrs, "indices": b.accessor(A["I"], glb.UINT, "SCALAR", 34963),
-                        "material": self.material(name, bool((A["C"][:, 3] < 255).any()), add), "mode": 4})
+                        "material": self.material(name, bool((A["C"][:, 3] < 255).any()), add, sub), "mode": 4})
         return out
 
     def add(self, path, parent, nodes=None, mesh_nodes=None):

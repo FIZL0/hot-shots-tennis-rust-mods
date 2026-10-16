@@ -86,6 +86,9 @@ def read_skeleton(d, root):
 class Material:
     texture: str
     raw: bytes       # the 0x26 record (texture/render state), name at +0x3a
+    passes: list = field(default_factory=list)  # every 0x26 record as (texture, raw): pass 0 = texture/raw; a
+    #                                             second one draws the same triangles again (Prim.pass_) with its
+    #                                             own UVs: Get a Grip's baked shadow maps, +0x24 = 0x12, subtracted
 
 
 def read_materials(d, root):
@@ -93,10 +96,11 @@ def read_materials(d, root):
     for c in root.children:
         if c.type == 0x03 and c.children and c.children[0].type == 0x25:
             for m in c.children:
-                tex = next((x for x, _ in iter_recs(m) if x.type == 0x26), None)
                 # +0x18: offset of the texture name (0x3a in Get a Grip / OT2; OT1 has "Channel0000" first)
-                name = cstr(d, tex.data + struct.unpack_from("<I", d, tex.data + 0x18)[0]) if tex else ""
-                mats.append(Material(name, d[tex.data: tex.data + 0x3A] if tex else b""))
+                passes = [(cstr(d, x.data + struct.unpack_from("<I", d, x.data + 0x18)[0]), d[x.data: x.data + 0x3A])
+                          for x, _ in iter_recs(m) if x.type == 0x26]
+                name, raw = passes[0] if passes else ("", b"")
+                mats.append(Material(name, raw, passes))
     return mats
 
 
@@ -162,6 +166,7 @@ class Prim:
     uv: np.ndarray
     col: np.ndarray
     w: np.ndarray        # (n, nw) weights, or (n, 0)
+    pass_: int = 0       # which of its material's textures (Material.passes) this draw is with
 
 
 def read_prim(d, o):
@@ -237,7 +242,15 @@ def read_meshes(d, root):
             (pal, local), skinned = _palette(d, group.data), True
         else:
             pal, skinned, local = [struct.unpack_from("<I", d, group.data)[0]], False, False
-        prims = [read_prim(d, x.data) for x, _ in iter_recs(r) if x.type == 0x50]
+        prims = []
+        for x, p in iter_recs(r):
+            if x.type == 0x50:
+                prims.append(read_prim(d, x.data))
+                # a 0x55 batch holds one 0x4f per texture pass of the material, in pass order
+                f = next((i for i in range(len(p) - 1, 0, -1) if p[i].type == 0x4F), None)
+                if f is not None:
+                    prims[-1].pass_ = next(k for k, c in enumerate(q for q in p[f - 1].children if q.type == 0x4F)
+                                           if c is p[f])
         owner = next((p for p in reversed(path) if p.type == 0x46), None)
         parts.append(MeshPart(mat_id, pal, skinned, prims, skins.get(owner.off) if owner else None, local))
     return next(iter(skins.values()), None), parts
