@@ -209,7 +209,9 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
   `sh_f_t`, … as `hst_data::ani::MOTIONS`, one the donor has) and keys the costume's joints by name with their
   local rotation and translation, in the costume's own terms (the costume's node tree, no meshes needed). Key
   times are seconds at 60 Hz (frame f at f/60), as the source plays it; the clip may run past the donor's (it is
-  drawn on its own clock, holding its last frame or looping as the donor's motion does) but not stop short of it; gameplay (clip lengths, the
+  drawn on its own clock, holding its last frame or looping as the donor's motion does) but not stop short of it,
+  except the four reactions `re_gu`/`re_di`/`re_gu_set`/`re_di_set`: they never loop, so a shorter one holds its last frame
+  until the post-point, game or set transition ends (HST B478); gameplay (clip lengths, the
   arm table, serve toss, body hits, root paths, cut-away cameras) keeps reading the donor's clip, and a match
   plays out exactly as without it. Unkeyed joints hold their rest; the left-hand mirror applies as to the donor's.
   One file serves every costume: a key on a joint a costume lacks is skipped for that costume.
@@ -225,7 +227,7 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
 - `eyes` (optional): the glTF material names of the eyes, moved by the donor's `.UVA` eye track (§4c).
 - The HST loader (`crates/hst/src/mods.rs`) rejects a mod with `<path>: <reason>` when the manifest is off
   (`standard` ≠ 1, a missing costume, a `costume_of` whose `donor`/`base`/`ai_row` differ from it or that overrides params, `donor`/`base`/`ai_row` outside 0–13, `hand` not right/left, an `override`
-  key that is no TParam column, an `eyes` that is not a list of names, a `motions` file that is missing, names no motion the donor has or is shorter than the donor's clip) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
+  key that is no TParam column, an `eyes` that is not a list of names, a `motions` file that is missing, names no motion the donor has or, other than the four reactions, is shorter than the donor's clip) or a costume fails §7's FAIL checks; WARN checks are logged. Buffers and images
   must be embedded in the `.glb`; it skips glTF accessor validation (older rerig output lacks POSITION min/max).
 - Optional, informational: `donor_why`, `size_why` (how the height and head were set), `racket_why`, `source_stats` (the source game's raw stats), `params_why` (per overridden column: source stat, value, rank → HST value), `ai_row_why`, `motions_why`, `voice_counts`, and `todo`
   (what a human or agent still has to decide). A loader ignores unknown keys.

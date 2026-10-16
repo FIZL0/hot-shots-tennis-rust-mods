@@ -202,7 +202,8 @@ def _anims(game, pc):
 def reactions(game, pc):
     """(glb, {hst: [intro, loop?]}, {hst: why}). Times are as exported (60 Hz); the face TATs run twice as long as
     the I3M clips (e.g. win00 3.0 s vs 90 frames), so the game likely plays them at 30 Hz. package.py retimes to
-    the donor's clip anyway. Golf celebrations walk off their spot: package.py holds the root (PIN)."""
+    the donor's clip anyway. Golf celebrations walk off their spot: package.py holds the root (PIN). Each is one
+    clip, never followed by the idle: it holds its last frame to the end of the transition (opentennis B478)."""
     f, a = _anims(game, pc)
     if not a:
         return f, {}, {}
@@ -211,21 +212,20 @@ def reactions(game, pc):
     clips, why = {}, {}
     gu = pick(f"ku{n}_gl", f"ga_pc{n}_bi_r00", f"ga_pc{n}_pa_r00")
     di = pick(f"ku{n}_di", f"re_pc{n}_os", f"ga_pc{n}_bo_r00")
-    wait = pick(f"wait{n}")
     if gu:
         clips["re_gu"] = [gu]
         why["re_gu"] = ("ku_gl, Open Tee 2's 'glad' emote (joy face)" if gu.startswith("ku") else
                         "ga_bi_r00, the birdie celebration (Open Tee has no emotes)")
     if di:
-        clips["re_di"] = [di] + ([wait] if wait and di.startswith("ku") else [])
-        why["re_di"] = {"k": "ku_di, Open Tee 2's 'down' emote (sorrow face), then the idle", "r": "re_pc_os, the "
+        clips["re_di"] = [di]
+        why["re_di"] = {"k": "ku_di, Open Tee 2's 'down' emote (sorrow face)", "r": "re_pc_os, the "
                         "missed-shot reaction (sorrow face; Open Tee has no emotes)", "g": "ga_bo_r00, the bogey reaction"}[di[0]]
     if f"win{n}" in a:
         clips["re_gu_set"] = [f"win{n}"]
         why["re_gu_set"] = "win, the result screen's winner motion"
     if f"lost{n}" in a:
-        clips["re_di_set"] = [f"lost{n}"] + ([wait] if wait else [])
-        why["re_di_set"] = "lost, the result screen's loser motion, then the idle"
+        clips["re_di_set"] = [f"lost{n}"]
+        why["re_di_set"] = "lost, the result screen's loser motion"
     return f, clips, why
 
 
