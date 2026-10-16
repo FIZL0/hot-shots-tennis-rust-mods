@@ -287,7 +287,7 @@ def main():
                         "ai_row": donor["index"], "face": "morph", "voice": None, "todo": []}
             if hand_why:
                 manifest["hand_why"] = hand_why
-            if game == "fore":
+            if game in ("fore", "oob"):
                 # already high-res: opentennis's upscale_mods.py leaves it alone
                 manifest["upscale"] = False
             if game in ("getagrip",):

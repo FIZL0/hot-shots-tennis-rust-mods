@@ -203,7 +203,7 @@ Get a Grip's labelled cues map almost 1:1: smash→0, swing→1, receive→3, po
   every mod of a game a different racket (Get a Grip's models as `racket.glb`, else an HST one here) and says why in
   `racket_why`.
 - `upscale` (optional, default `true`): `false` for mods whose textures are already high-res (e.g. Hot Shots
-  Golf Fore! players): `upscale_mods.py` skips the mod, the game never reads its `textures/upscaled/` (it draws
+  Golf Fore! and Out of Bounds players): `upscale_mods.py` skips the mod, the game never reads its `textures/upscaled/` (it draws
   the embedded textures whatever the "upscaled textures" setting), and the mod store never downloads that set
   (an upload's `meta.json` carries `"no_upscale": true`). Anything other than `true`/`false` is refused.
 - `motions` (optional): a `.glb` in the folder whose animations replace the donor's clips **on screen only**.
