@@ -83,7 +83,7 @@ caddie `*_caNN`. `data/sound/voice/menu/me_pc.sgd` (all characters, menu). Cue n
 ## Unused lines (`out/voice_candidates/`, 2026-10-16)
 `tools/voice_candidates.py` transcribes (faster-whisper small) every voice wave of a golf mod's character that the mod does not
 ship and sorts it by keyword into `0-1-3_shout`, `2-4_mishit_whiff`, `7-9_won_point`, `8-10_lost_point`, `other_long`, with
-`index.tsv`. Keyword buckets are rough (whisper mishears grunts; "Not bad" lands in lost); pick by ear. Used so far: Open Tee 2
+`index.tsv`. Sources: the English banks the mods draw from, plus OOB's prize (`ga_pz_pcNN`) and profile (`me_pro_pcNN`) banks; wordless grunts (< 1 s, kana interjections only, not はい/いや/..) from the Japanese copies (OOB `ga_pc_NN.xb`, pc00-14; Open Tee 2 `.xb`) go in `grunts_from_japanese/`. Samples in more than one character's banks are left out (OOB `ga_ya` 012-017 are shared effects; Open Tee 2's `lastchk/dataNN` select-screen banks are identical for all). Keyword buckets are rough (whisper mishears grunts; "Not bad" lands in lost); pick by ear. Used so far: Open Tee 2
 pc00-09 won/lost (`opentee_data.py` WON/LOST). Thin spots it can fill: Open Tee 2 pc10-20 (no 7-10), pc03 Shu (no shouts),
 pc06 Patricia (1 shout), every golf mod's 2/4 except OOB/Fore, Fore's single-take 8/10.
 
