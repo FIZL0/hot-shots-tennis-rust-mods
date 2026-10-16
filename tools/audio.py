@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Convert every audio bank/stream of a game to WAV: out/audio/<game>/<relpath>/<NNN>.wav
-usage: tools/audio.py <fore|getagrip|opentee|opentee2|oob> [jobs]
+usage: tools/audio.py <fore|getagrip|opentee2|oob> [jobs]
 Fore .hd/.bd (PS2 SShd bank): one wav per sample at its true rate, NNN = tone sample order by BD address (index.txt lists
 set/note/addr/semitones/rate).
 Others: vgmstream-cli, all subsongs (NNN = subsong). Identical files are converted once and hard-linked.

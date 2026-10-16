@@ -1,7 +1,10 @@
 # Hot Shots Golf: Open Tee 1 & 2 (PSP) — character export
 
-Re-run (≈1 min each; python3 + numpy + Pillow):
-`python3 tools/psp2gltf/export_opentee.py` and `python3 tools/psp2gltf/export_opentee2.py`
+**Open Tee 1 is no longer built (user, 2026-10-16)**: its exporter and packaging are gone; its ten characters are Open
+Tee 2's pc00-09, and the game hides old `opentee_pc*` mods (opentennis B380). The OT1 format notes below stay as
+research (the shared PSP parsers still handle 3ds Max-style exports).
+
+Re-run (≈1 min; python3 + numpy + Pillow): `python3 tools/psp2gltf/export_opentee2.py`
 (`--only textures,parts,characters,anims`, `--pc 0,3`). Shared logic: `tools/psp2gltf/opentee_common.py`; readers
 `i3d.py / i3m.py / gim.py / build.py` are the Get a Grip ones (see "Reader changes"). Check render:
 `python3 tools/psp2gltf/render.py file.glb out.png [--anim NAME --times 0,0.5]`. Formats: `notes/psp-formats.md`.
@@ -104,13 +107,13 @@ both casts) feeds package.py's golf() path, gag_stats.overrides and sizing.py.
   Side spin (曲げ/SS) informs no tennis column. No play style (golf タイプ is sex), no cm height (only `scale` %,
   OT2 `頭scale` %); sex: OT1 second タイプ / OT2 タイプ, 1 m, 2 f.
 - **Voices**: no event labels anywhere (program or banks). All banks are SGXD (.sgd): the region pitch issue applies.
-  OT1 banks decode with every wave running on to the bank's end (wave k = its clip + all later ones, checked sample for
-  sample); the module cuts them into `out/voices/opentee/trim/` until tools/audio.py does. OT1 stores lines last-first:
-  st/vs/ya waves 7-10 are lines 05..02. OT2's `.xb1` copies hold the English takes (`Mika_..`, `_US`), `.xb` the
-  Japanese (`Yum_..`); a and b banks are identical. Heuristic fill: the short lines every per-mode bank (st/vs/ya)
-  shares = in-play shouts → 0 and 3 (three loudest by RMS), 1 (all, ≤5); OT1 `tnk/result/Voice/hy_NN` (表彰, awards)
-  → 7 and 9 (OT2 pc00-09 borrow them; OT2's own `cd_hy_NN`/`cd_ma_NN` are the caddies'). 2, 4, 6, 8, 10 empty.
-  The long `g` lines (1.5-4 s) are unlabelled and unused.
+  OT2's `.xb1` copies hold the English takes (`Mika_..`, `_US`), `.xb` the Japanese (`Yum_..`). Heuristic fill: the
+  short lines every per-mode bank (st/vs/ya) shares = in-play shouts → 0 and 3 (three loudest by RMS), 1 (all, ≤5).
+  **Voice lines** (2026-10-16): 7/9 (won) and 8/10 (lost) for pc00-09 are hand-picked from faster-whisper transcripts
+  of the unused st/vs/ya/g waves (`opentee_data.py` WON/LOST, e.g. Mika "Yeah!"/"Amazing!", "Oh no!"/"Ugh!"); the `g`
+  bank's 2.5-4 s lines are the golf hole celebrations. Before, 7/9 were OT1's `hy_NN` awards lines, which mix losing
+  lines ("Oh dear!", "This can't be!") into the win programs. OT2's own `cd_hy_NN`/`cd_ma_NN` are the caddies'.
+  pc10-20 and programs 2/4 not sorted yet: candidates in `out/voice_candidates/` (see notes/audio.md).
 - **Reactions** (`out/anims/<game>/pcNN_<slug>.glb`): re_gu = OT2 `kuNN_gl` (glad emote) / OT1 `ga_pcNN_bi_r00`
   (birdie); re_di = OT2 `kuNN_di` + `waitNN` / OT1 `re_pcNN_os`; re_gu_set = `winNN`; re_di_set = `lostNN` + `waitNN`.
   Celebrations walk off (root up to ~1 m): package.py PIN holds the root. Every TAT runs about twice its I3M clip

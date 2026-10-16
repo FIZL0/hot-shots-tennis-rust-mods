@@ -24,7 +24,7 @@ def who(g, d):
     return f"pc{m[1]}" if m else None
 
 def main():
-    for g in ["fore", "getagrip", "opentee", "opentee2", "oob"]:
+    for g in ["fore", "getagrip", "opentee2", "oob"]:
         if not os.path.isdir(f"{A}/{g}"): continue
         code = {}
         if g == "fore":  # code -> NN from PC/PCNN/

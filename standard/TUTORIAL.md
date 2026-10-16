@@ -23,7 +23,7 @@ tools/fore2gltf/target/release/fore2gltf hst ../opentennis/context/xb out/models
 | Hot Shots Tennis (reference) | `out/models/hst/pcNN_c00.glb` (with all 47 motions) | `fore2gltf hst` |
 | Fore! (PS2) | `out/models/fore/pcNN/*.glb` | same Biped as HST; `notes/fore.md` |
 | Get a Grip (PSP) | `out/models/getagrip/pcNN_name/*.glb`, parts | rotation-reset rig, cm; `notes/getagrip.md` |
-| Open Tee 1/2 (PSP) | `out/models/opentee*/…` | `notes/opentee.md` |
+| Open Tee 2 (PSP) | `out/models/opentee*/…` | `notes/opentee.md` |
 | Out of Bounds (PS3) | `out/models/oob/pcNN_name/*.glb` | clavicles/thighs reparented; `notes/oob.md` |
 
 All use Biped joint names (with or without spaces) — that's what makes one tool work for all.
@@ -77,7 +77,7 @@ Known failure signs and fixes (the first three bit us already and are handled):
 - *Forearm stretched toward the body, hand floating*: a helper joint *between* core joints (OOB's
   `Bip01RForearmRoll` between Forearm and Hand) was dropped as a root helper, so its weights fell to the pelvis.
   Only nodes above the topmost mapped joint may be dropped.
-- *Crash "non-positive determinant"*: a mirrored helper (3ds Max, Open Tee 1); stored as a negative scale.
+- *Crash "non-positive determinant"*: a mirrored helper (3ds Max exports); stored as a negative scale.
 - *Crash on accessors*: sparse morph deltas (OOB) — `rerig.read` densifies them.
 - *Arm twisted along its length*: the source bind roll differs a lot from HST's; check the source's palms
   orientation in bind pose. Swing-only alignment keeps HST's roll.
@@ -92,7 +92,7 @@ Known failure signs and fixes (the first three bit us already and are handled):
   them by word (standard §4a). Some channels simply don't exist for some characters (check.txt WARN lines).
 - Get a Grip: texture faces → `package.py` writes `face.json` from `out/models/getagrip/faces.json` (§4b) and
   copies the textures into `face/`.
-- Open Tee 1/2: texture faces too, but the expression textures aren't labelled yet (`face: "none"` + a todo).
+- Open Tee 2: texture faces too, but the expression textures aren't labelled yet (`face: "none"` + a todo).
   Do it like Get a Grip: contact sheet of `out/textures/opentee*/…face*.png`, label, write `face.json`.
 
 ## 4. Package

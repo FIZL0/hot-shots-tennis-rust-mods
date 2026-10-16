@@ -15,7 +15,6 @@ game_of() {
   case "$1" in
     SCUS_974.01) echo fore ;;
     UCUS-98701) echo getagrip ;;
-    UCUS-98614) echo opentee ;;
     UCUS-98693) echo opentee2 ;;
     BCUS-98115) echo oob ;;
     SCUS_976.10) echo hst ;;  # HST itself: only its stats table and reaction motions, for the mods' stats
@@ -56,7 +55,6 @@ export_models() {
   case "$1" in
     fore) tools/fore2gltf/target/release/fore2gltf fore out/files/fore out ;;
     getagrip) python3 tools/psp2gltf/export_getagrip.py && python3 tools/psp2gltf/export_getagrip_faces.py ;;
-    opentee) python3 tools/psp2gltf/export_opentee.py ;;
     opentee2) python3 tools/psp2gltf/export_opentee2.py ;;
     oob) python3 tools/oob2gltf/export.py ;;
   esac
@@ -67,18 +65,6 @@ build() {
   echo "== $g"
   unpack "$g"
   tools/unxb/target/release/unxb "extracted/$g/" "out/files/$g"
-  # Open Tee's face emotions are read off Open Tee 2's face animations (opentee_data.py _tats)
-  if [ "$g" = opentee ] && [ ! -d out/files/opentee2 ]; then
-    if have opentee2; then unpack opentee2; tools/unxb/target/release/unxb extracted/opentee2/ out/files/opentee2
-    else echo "note: no Open Tee 2; Open Tee faces get no emotion textures"; fi
-  fi
-  # Open Tee 2's pc00-09 winning lines are Open Tee's own hy_NN banks (opentee_data.py voices)
-  if [ "$g" = opentee2 ] && [ ! -d out/audio/opentee ]; then
-    if have opentee; then
-      unpack opentee; tools/unxb/target/release/unxb extracted/opentee/ out/files/opentee
-      python3 tools/audio.py opentee "$JOBS"
-    else echo "note: no Open Tee; Open Tee 2 pc00-09 get no winning lines (voice programs 7, 9)"; fi
-  fi
   export_models "$g"
   python3 tools/audio.py "$g" "$JOBS"
   python3 tools/voices.py
@@ -105,15 +91,15 @@ find_discs
 if [ $# -gt 0 ]; then WANT=" $* "
 else
   WANT=" "
-  for g in getagrip fore opentee opentee2 oob; do have "$g" && WANT+="$g "; done
+  for g in getagrip fore opentee2 oob; do have "$g" && WANT+="$g "; done
   [ "$WANT" != " " ] || { echo "no supported discs under iso/ (see README)"; exit 1; }
 fi
 # golf mods borrow Get a Grip's rackets and Emi's grip (package.py pick_racket, GAG_GRIP)
-if [[ "$WANT" =~ fore|opentee|oob ]] && [ ! -d out/rerig/getagrip/pc00_emi ] && [[ "$WANT" != *" getagrip "* ]]; then
+if [[ "$WANT" =~ fore|opentee2|oob ]] && [ ! -d out/rerig/getagrip/pc00_emi ] && [[ "$WANT" != *" getagrip "* ]]; then
   if have getagrip; then WANT+="getagrip "; else echo "note: no Get a Grip; golf mods hold HST disc rackets only"; fi
 fi
 GAMES=""
-for g in getagrip fore opentee2 opentee oob; do [[ "$WANT" == *" $g "* ]] && GAMES+="$g "; done  # Get a Grip first; Open Tee 2 before Open Tee (sizing.py SHARED)
+for g in getagrip fore opentee2 oob; do [[ "$WANT" == *" $g "* ]] && GAMES+="$g "; done  # Get a Grip first
 echo "building: $GAMES"
 
 cargo build -q --release --manifest-path tools/unxb/Cargo.toml

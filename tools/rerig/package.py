@@ -32,10 +32,10 @@ import motions  # noqa: E402
 import mirror  # noqa: E402
 
 GAME_NAME = {"fore": "Hot Shots Golf Fore! (PS2)", "oob": "Hot Shots Golf: Out of Bounds (PS3)",
-             "getagrip": "Hot Shots Tennis: Get a Grip (PSP)", "opentee": "Hot Shots Golf: Open Tee (PSP)",
+             "getagrip": "Hot Shots Tennis: Get a Grip (PSP)",
              "opentee2": "Hot Shots Golf: Open Tee 2 (PSP)"}
 # HST reaction motion <- Get a Grip's own reaction (intro, then its loop), per character (motions.py)
-PIN = {"fore": True, "oob": True, "opentee": True, "opentee2": True}  # golf celebrations walk off their spot (notes/fore.md, oob.md): hold the root
+PIN = {"fore": True, "oob": True, "opentee2": True}  # golf celebrations walk off their spot (notes/fore.md, oob.md): hold the root
 GAG_REACT = {"re_gu": "gu01", "re_di": "di01", "re_gu_set": "gu_set01", "re_di_set": "di_set01"}
 HST_ANI = gagmap.hst_xb(ROOT) + "/PCANI"
 # Get a Grip cue -> HST voice program (programs 7-10 follow reaction motions 0x2c-0x2f: re_gu, re_di, re_gu_set,
@@ -172,7 +172,7 @@ def voices(prog, dst):
 
 
 def golf(game, n, mod, manifest, costumes, donor, h, hst, tp, hst_type):
-    """Fore, Out of Bounds, Open Tee 1/2 to the Get a Grip standard, from the game's data module."""
+    """Fore, Out of Bounds, Open Tee 2 to the Get a Grip standard, from the game's data module."""
     D = data(game)
     if D is None:
         manifest["todo"].append("no data module for this game (tools/rerig/<game>_data.py)")

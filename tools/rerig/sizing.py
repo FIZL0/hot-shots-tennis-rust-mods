@@ -8,7 +8,7 @@ has no Gloria but is Open Tee 2's first ten at the same sizes, so it takes their
 or the other games (its Brad is not Get a Grip's) and keeps its own model scale (factor 1: the same engine and units
 as HST's MDLs). One factor per game keeps the source's relative heights; per-sex metres-per-cm keeps HST's women/men
 proportions.
-Head: chibi games (Get a Grip, Open Tee) shrink each character's head about the neck by its own factor: the game's
+Head: chibi games (Get a Grip, Open Tee 2) shrink each character's head about the neck by its own factor: the game's
 head share of the way from 1 to the factor that would bring that character's head ratio (neck joint to the top of the
 head mesh, over Bip01 height; the smallest over its costumes, so a hat doesn't count) to the median of HST's standard
 bodies; never grown. The share is the one that makes the game's Gloria as tall head to foot as HST's Gloria, else
@@ -35,8 +35,6 @@ STANDARD_BODY = (0, 4, 5)  # TParam モデルタイプ of 標準 bodies (1 JJ ch
 HEAD_SHARE = 0.5
 # each game's Gloria (pc number), the one character on HST's disc too: her Bip01 sets the game's factor (user 2026-10-12)
 GLORIA = {"getagrip": 13, "oob": 16, "opentee2": 20}
-# games with no Gloria but another game's cast: Open Tee's ten are Open Tee 2's pc00–09 (same bodies and scales)
-SHARED = {"opentee": ("opentee2", range(10))}
 # games whose whole cast shares one skeleton: everyone takes Gloria's head factor, since the per-character one
 # measures hair too (Taiga's spiky hair got him 0.50 against Brad's 0.62, the smallest head on screen; user 2026-10-12)
 ONE_HEAD = {"getagrip"}
@@ -159,8 +157,8 @@ def plan(game, models):
             if sc:  # the game's own body scale of a shared skeleton (Open Tee face.csv `scale`)
                 raw[n] *= sc[0]
                 how[n] += f" × the game's scale {sc[0]:g}"
-    # one factor per game, calibrated on a character HST's disc also has (Gloria), else on the same cast in another game
-    share, why_c = HEAD_SHARE, "no character shared with HST's disc or another sized game: the game's own model scale"
+    # one factor per game, calibrated on a character HST's disc also has (Gloria)
+    share, why_c = HEAD_SHARE, "no character shared with HST's disc: the game's own model scale"
     c = 1.0
     if game in GLORIA:
         n = GLORIA[game]
@@ -174,15 +172,6 @@ def plan(game, models):
         if f < 1 and r > want:
             share = (1 - f) / (1 - want / r)
             why_c += f", head share {share:.3f} so her top is HST's Gloria's {disc['top_height']:g} m"
-    elif game in SHARED:
-        other, pcs = SHARED[game]
-        sj = os.path.join(ROOT, f"out/rerig/{other}/sizing.json")
-        if not os.path.exists(sj):
-            sys.exit(f"{game} is sized from {other}'s cast: build {other} first ({sj} missing)")
-        o = json.load(open(sj))
-        c = float(np.median([o["characters"][f"pc{n:02d}"]["bip01_height"] / raw[n] for n in pcs if n in raw]))
-        share = o["head_share"]
-        why_c = f"the same cast (pc{min(pcs):02d}–pc{max(pcs):02d}) as sized in {other}, its head share {share:.3f}"
     sizes = {n: (raw[n] * c, f"{how[n]} × game factor {c:.4f} ({why_c})") for n in models}
     heads = {}
     for n in models:

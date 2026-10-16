@@ -11,7 +11,6 @@ The remaster has no mod loader yet. `standard/` defines what one should load.
 |---|---|---|
 | Hot Shots Golf Fore! | PS2 | 24 × 8 costumes |
 | Hot Shots Tennis: Get a Grip | PSP | 15 |
-| Hot Shots Golf: Open Tee | PSP | 10 |
 | Hot Shots Golf: Open Tee 2 | PSP | 22 |
 | Hot Shots Golf: Out of Bounds | PS3 | 17 × 6 costumes |
 
@@ -26,7 +25,7 @@ notes/      format notes for each game: where things live, file layouts, rosters
 tools/
   unxb/       Rust: unpacks the `xe\0\x01` archives every game uses (little-endian on PS2/PSP, big-endian on PS3)
   fore2gltf/  Rust: Fore! (and HST's own) MDL/MTL/TM2/ANI/MOR to glTF, using Hot Shots Tennis Rust's hst-data crate
-  psp2gltf/   Python: GIM/I3R/I3M/TAT (Get a Grip, Open Tee 1/2) to glTF; render.py is a small software renderer
+  psp2gltf/   Python: GIM/I3R/I3M/TAT (Get a Grip, Open Tee 2) to glTF; render.py is a small software renderer
   oob2gltf/   Python: REM/MOT/MOR/DDS (Out of Bounds) to glTF
   audio.py    every sound bank to WAV (vgmstream; Fore!'s PS2 banks are decoded directly)
   voices.py   folders of each character's voice lines
@@ -80,7 +79,6 @@ cargo build --release --manifest-path tools/fore2gltf/Cargo.toml
 tools/fore2gltf/target/release/fore2gltf fore out/files/fore out
 tools/fore2gltf/target/release/fore2gltf hst ../opentennis/context/xb out/models/hst   # HST reference rigs
 python3 tools/psp2gltf/export_getagrip.py && python3 tools/psp2gltf/export_getagrip_faces.py
-python3 tools/psp2gltf/export_opentee.py
 python3 tools/psp2gltf/export_opentee2.py
 python3 tools/oob2gltf/export.py
 

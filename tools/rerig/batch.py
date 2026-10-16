@@ -1,6 +1,6 @@
 """Rerig every exported character model onto the HST standard and check each.
 
-python3 tools/rerig/batch.py [game…]     (games: fore oob getagrip opentee opentee2; default all)
+python3 tools/rerig/batch.py [game…]     (games: fore oob getagrip opentee2; default all)
 
 out/models/<game>/<char>/*.glb -> out/rerig/<game>/<char>/*.glb, and out/rerig/<game>/check.txt.
 Parts folders (`parts`, `_face_check`) are skipped. Games `sizing.py` knows (Get a Grip) are rerigged twice: plain,
@@ -22,7 +22,7 @@ import re  # noqa: E402
 import rerig  # noqa: E402
 import sizing  # noqa: E402
 
-GAMES = ["fore", "oob", "getagrip", "opentee2", "opentee"]  # opentee after opentee2: sized from its sizing.json
+GAMES = ["fore", "oob", "getagrip", "opentee2"]
 
 
 def one(src, height=None, head=1.0):

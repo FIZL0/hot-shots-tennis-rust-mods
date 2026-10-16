@@ -1,8 +1,9 @@
-"""Hot Shots Golf: Open Tee (opentee, pc00-09) and Open Tee 2 (opentee2, pc00-20) character data for HST mods
+"""Hot Shots Golf: Open Tee 2 (opentee2, pc00-20) character data for HST mods
 (notes/opentee.md "Mod data"). Everything is read at run time from extracted/ and out/ (never committed).
 
 stats(game), MAP[game], style(game, pc), heights(game), voices(game, pc), reactions(game, pc), faces(game, pc) as
-package.py / gag_stats.py / sizing.py expect. `python3 tools/rerig/opentee_data.py` prints both games.
+package.py / gag_stats.py / sizing.py expect (they take `game` like the other data modules; only "opentee2").
+`python3 tools/rerig/opentee_data.py` prints the cast.
 """
 import csv
 import glob
@@ -13,7 +14,7 @@ import struct
 import wave
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-GAMES = ("opentee", "opentee2")
+GAMES = ("opentee2",)
 USR = "out/files/{g}/PSP_GAME/USRDIR/xbdata"
 SLUG = ["mika", "rio", "alia", "shu", "julie", "cj", "patricia", "logan", "holly", "roger", "carly", "luke", "alice",
         "malachy", "frauada", "montcalm", "lauryn", "mifune", "lee", "chad", "gloria"]
@@ -29,7 +30,7 @@ def _rows(game):
 
 
 def _table(game):
-    """{pc: row dict}. OT1: one row per pc. OT2: rows 000-020 per pc, then one PId block (Ctr/BS/TS/SS) of 21 rows each."""
+    """{pc: row dict}: rows 000-020 per pc, then one PId block (Ctr/BS/TS/SS) of 21 rows each."""
     rows = _rows(game)
     h = next(i for i, r in enumerate(rows) if "名称" in r)
     hdr = [c.strip() for c in rows[h]]
@@ -39,21 +40,16 @@ def _table(game):
         if not r or not r[0].strip().isdigit():
             continue
         d = dict(zip(hdr, r))
-        if game == "opentee":
-            d["sex"] = r[11]  # second タイプ column: 1 male, 2 female
-            out[int(r[0])] = d
-        else:
-            pc = int(d["ＩＤ"])
-            e = out.setdefault(pc, dict(d, sex=d["タイプ"]))
-            e[d["PId"]] = d["LV00"]  # level-0 value of this stat (Pow: yards)
-            e[d["PId"] + "_BL"] = d["BL"]
+        pc = int(d["ＩＤ"])
+        e = out.setdefault(pc, dict(d, sex=d["タイプ"]))
+        e[d["PId"]] = d["LV00"]  # level-0 value of this stat (Pow: yards)
+        e[d["PId"] + "_BL"] = d["BL"]
     return out
 
 
 def stats(game):
-    """{pc: {stat: str}}. OT1: Pow Ctr Imp Spn(back spin) 曲げ(side spin/curve), all 'bigger is better'.
-    OT2: Pow (level-0 driver yards), Ctr, Imp, BS (back spin), SS (side spin), TS (top spin)."""
-    keys = ["Pow", "Ctr", "Imp", "Spn", "曲げ"] if game == "opentee" else ["Pow", "Ctr", "Imp", "BS", "SS", "TS"]
+    """{pc: {stat: str}}: Pow (level-0 driver yards), Ctr, Imp, BS (back spin), SS (side spin), TS (top spin)."""
+    keys = ["Pow", "Ctr", "Imp", "BS", "SS", "TS"]
     return {pc: {k: d.get(k, "") for k in keys} for pc, d in _table(game).items()}
 
 
@@ -62,14 +58,12 @@ _IMP = "Imp (impact window size; the beginner Mika has the biggest): a forgiving
 
 
 def _map(game):
-    pw, bs = ("Pow", "Spn") if game == "opentee" else ("Pow", "BS")
+    pw, bs = "Pow", "BS"
     m = {c: ([pw], _POW.format(pw)) for c in ("Serv POW", "Strk POW", "LOW POW", "Voley POW", "V LOW POW", "Lob POW", "Lob POW2")}
     m.update({c: (["Ctr"], "Ctr (golf shot control): straighter, steadier strokes") for c in ("Strk CON", "Voley CON", "Serv CON")})
     m.update({c: (["Imp"], _IMP) for c in ("ショット ウサギIMP GI/NI/BI", "ショット カメIMP GI/NI/BI")})
     m.update({c: ([bs], f"{bs} (golf back spin): more under-spin on slices and drops") for c in ("Slice SPIN", "Drop SPIN")})
-    if game == "opentee2":
-        m["Top SPIN"] = (["TS"], "TS (golf top spin, 40 for most, 50 for Logan, Mifune, Chad)")
-    # ponytail: OT1 has no top-spin stat (its 'TS' column is a different, unlabelled number), so Top SPIN keeps HST's
+    m["Top SPIN"] = (["TS"], "TS (golf top spin, 40 for most, 50 for Logan, Mifune, Chad)")
     return m
 
 
@@ -88,7 +82,7 @@ def heights(game):
     for pc, d in _table(game).items():
         sx = "m" if d["sex"] == "1" else "f"
         hs = f", head scale {d['頭scale']} %" if d.get("頭scale") else ""
-        out[pc] = (sx, None, f"{'Open Tee 2' if game == 'opentee2' else 'Open Tee'} face.csv has no height in cm, "
+        out[pc] = (sx, None, f"Open Tee 2 face.csv has no height in cm, "
                              f"only a model scale of {d['scale']} %{hs}", float(d["scale"]) / 100)
     return out
 
@@ -105,30 +99,6 @@ def _rms(p):
     with wave.open(p) as w:
         a = np.frombuffer(w.readframes(w.getnframes()), np.int16).astype(float)
     return float(np.sqrt((a ** 2).mean())) if len(a) else 0.0
-
-
-def _ot1_clips(bank):
-    """OT1 banks decode with every wave running on to the bank's end (wave k = clip k + all later clips, checked
-    sample for sample). Cut each to its own part into out/voices/opentee/trim/ (generated, gitignored)."""
-    d = glob.glob(_p(USR.format(g="opentee").replace("out/files", "out/audio"), f"**/{bank}.sgd"), recursive=True)
-    if not d:
-        return []
-    fs = sorted(glob.glob(os.path.join(d[0], "[0-9][0-9][0-9].wav")))
-    out = []
-    for i, f in enumerate(fs):
-        nxt = _wavlen(fs[i + 1]) if i + 1 < len(fs) else 0
-        dst = _p("out/voices/opentee/trim", f"{bank}_{i + 1:03d}.wav")
-        if not os.path.exists(dst):
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            with wave.open(f) as w:
-                par, n = w.getparams(), w.getnframes()
-                data = w.readframes(n)
-            keep = n - nxt if nxt and data.endswith(_tail(fs[i + 1])) else n
-            with wave.open(dst, "wb") as o:
-                o.setparams(par)
-                o.writeframes(data[:keep * par.sampwidth * par.nchannels])
-        out.append(dst)
-    return out
 
 
 def _tail(p):
@@ -150,18 +120,45 @@ def _shared(first, *others):
     return [f for f in first if all(_tail(f) in k for k in keys)]
 
 
+# Won/lost lines by what they say (faster-whisper transcripts of the unused st/vs/ya/g waves, out/voice_candidates/
+# opentee2_pcNN/index.tsv; notes/opentee.md "Voice lines"). "<bank>/<wave>" of the `a` banks. ya's "Good shot!" is
+# left out: it compliments the other player. pc10-20 not sorted yet (their candidates are in out/voice_candidates).
+WON = {0: ["st/006", "vs/007", "vs/005", "g/005"],  # Good! Yeah! Amazing! Yes!
+       1: ["vs/010", "st/005", "vs/007", "g/003", "g/004"],  # Woo! YES! Nice! Ha ha! Oh yeah! Woohoo!
+       2: ["st/006", "st/007", "st/005", "ya/008", "g/004"],  # Good! Yes! Yes, that's it! Nice shot! All right!
+       3: ["st/003", "ya/008", "vs/005", "g/005"],  # Woo! Nice shot! Oh, pretty good! ..Yeah!
+       4: ["st/006", "vs/007", "ya/008", "g/005"],  # Yeah! Nice! Nice shot! Ha ha ha!
+       5: ["vs/007", "vs/005", "st/007", "st/005", "g/006"],  # Great! Excellent! Perfect! Very good! Hooray!
+       6: ["st/005", "st/004", "vs/006", "vs/005"],  # There's a good one! Yes, that's it! Very good! Oh, wow, yes!
+       7: ["st/005", "st/006", "ya/007", "g/003"],  # Yeah! Yeah! You got it! Ha ha ha ha! Yeah!
+       8: ["st/005", "g/003", "g/004", "g/005"],  # Very nice. Yes! I am that good. Yeah!
+       9: ["st/004", "vs/006"]}  # Yes! Excellent job!
+LOST = {0: ["st/009", "st/008", "g/001"],  # Ugh! Oh no! Oh, why?
+        1: ["g/001", "g/002"],  # Ugh! Awww!
+        2: ["st/010"],  # No!
+        3: ["st/008", "vs/009", "ya/009"],  # UGH! Bad luck! NO! NO!
+        4: ["st/010", "st/009", "vs/008"],  # Ugh! Oh no! No good.
+        5: ["st/009", "g/002"],  # This could be bad. No! No! No!
+        6: ["st/003", "st/009", "st/008"],  # No! Terrible! Oh no!
+        7: ["st/009", "g/001"],  # No! Nah, I didn't miss that shot!
+        8: ["st/010", "vs/008"]}  # Aww. That's awful.
+
+
+def _picks(pc, table):
+    out = []
+    for k in table.get(pc, []):
+        bank, w = k.split("/")
+        fs = _ot2_bank(bank, pc)
+        if int(w) <= len(fs):
+            out.append(fs[int(w) - 1])
+    return out
+
+
 def voices(game, pc):
     """({program: [wav]}, {program: why}). No voice is labelled with an event in either game (no cue table in the
-    program or the banks), so this is a heuristic from bank layout, not from listening."""
+    program or the banks): shouts from bank layout, won/lost lines from transcripts (WON/LOST)."""
     why = {}
-    if game == "opentee":
-        banks = [_ot1_clips(f"{k}_{pc:02d}") for k in ("st", "vs", "ya")]
-        hy = _ot1_clips(f"hy_{pc:02d}")
-    else:
-        banks = [_ot2_bank(k, pc) for k in ("st", "vs", "ya")]
-        hy = _ot1_clips(f"hy_{pc:02d}") if pc < 10 else []
-    # OT1: every bank ends with the same four lines (equal lengths, not always equal samples): st's last four
-    common = banks[0][-4:] if game == "opentee" else _shared(*banks)
+    common = _shared(*[_ot2_bank(k, pc) for k in ("st", "vs", "ya")])
     prog = {}
     if common:
         loud = sorted(common, key=_rms, reverse=True)
@@ -169,22 +166,24 @@ def voices(game, pc):
         prog[1] = loud[:5]
         prog[3] = loud[:3]
         why[0] = (f"the {len(common)} short (0.1-0.6 s) waves every per-mode bank shares "
-                  "(st/vs/ya; OT2: equal samples, OT1: each bank's last four; the rest are mode lines), i.e. the in-play shouts; the three loudest by RMS "
+                  "(st/vs/ya, equal samples; the rest are mode lines), i.e. the in-play shouts; the three loudest by RMS "
                   "(heuristic: unlabelled)")
         why[1] = "the same shared in-play shouts, loudest first (heuristic: unlabelled)"
         why[3] = "same three loudest shouts as program 0 for the dive effort (heuristic: no dive voice in golf)"
-    if hy:
-        prog[7] = hy
-        prog[9] = hy
-        why[7] = why[9] = ("tnk/result/Voice hy_NN: the awards-ceremony (表彰, menu 'mHyousyouVoice') lines, i.e. winning "
-                           "lines" + (" (Open Tee's own, for its pc00-09: Open Tee 2 keeps their voices; e.g. Mika's first shared shout is identical sample for sample)" if game == "opentee2" else ""))
+    won, lost = _picks(pc, WON), _picks(pc, LOST)
+    if won:
+        prog[7] = prog[9] = won
+        why[7] = why[9] = "the st/vs/ya/g lines that say a win ('Yes!', 'Nice!', 'Hooray!'; by transcript, WON)"
+    if lost:
+        prog[8] = prog[10] = lost
+        why[8] = why[10] = "the st/vs/ya/g lines that say a loss ('Oh no!', 'Ugh!', 'Bad luck!'; by transcript, LOST)"
     for p, w in ((2, "no mis-hit voice identifiable"), (4, "no whiff voice identifiable"),
                  (6, "no partner call in golf; the long g bank lines (1.5-4 s, unlabelled) are not calls"),
-                 (8, "no losing line identifiable (no labels; the mode-specific st/vs/ya lines are unsigned)"),
-                 (10, "no losing line identifiable")):
+                 (8, "no losing line sorted yet (candidates: out/voice_candidates)"),
+                 (10, "no losing line sorted yet")):
         why.setdefault(p, w)
     if 7 not in prog:
-        why[7] = why[9] = "no winning lines: Open Tee 2's own result voices (cd_hy_NN) are the caddies', not the golfers'"
+        why[7] = why[9] = "no winning line sorted yet (candidates: out/voice_candidates; cd_hy_NN are the caddies')"
     return prog, why
 
 
@@ -215,11 +214,11 @@ def reactions(game, pc):
     if gu:
         clips["re_gu"] = [gu]
         why["re_gu"] = ("ku_gl, Open Tee 2's 'glad' emote (joy face)" if gu.startswith("ku") else
-                        "ga_bi_r00, the birdie celebration (Open Tee has no emotes)")
+                        "ga_bi_r00, the birdie celebration")
     if di:
         clips["re_di"] = [di]
         why["re_di"] = {"k": "ku_di, Open Tee 2's 'down' emote (sorrow face)", "r": "re_pc_os, the "
-                        "missed-shot reaction (sorrow face; Open Tee has no emotes)", "g": "ga_bo_r00, the bogey reaction"}[di[0]]
+                        "missed-shot reaction (sorrow face)", "g": "ga_bo_r00, the bogey reaction"}[di[0]]
     if f"win{n}" in a:
         clips["re_gu_set"] = [f"win{n}"]
         why["re_gu_set"] = "win, the result screen's winner motion"
@@ -270,7 +269,7 @@ def _held(path):
 
 
 def _tats(pc):
-    """Open Tee 2's face TATs for this pc by motion name (Open Tee pc00-09 faces are the same textures)."""
+    """Open Tee 2's face TATs for this pc by motion name."""
     u = _p(USR.format(g="opentee2"))
     fs = glob.glob(f"{u}/kuwa/pc/face/motion{pc:02d}.xb/data/kuwabara/pc/face/{pc:02d}/*.tat")
     fs += glob.glob(f"{u}/tnk/result/Motion/r_mot{pc:02d}.xb/data/tanaka/result/Motion/*.tat")
@@ -333,7 +332,7 @@ def faces(game, pc):
     ch["doki_eye"] = ch["doki_mouth"] = None
     return {"face_material": mat, "neutral": _png(game, pc, None), "channels": ch,
             "labels": {"joy": [joy, js], "anger": [ang, as_], "sorrow": [sor, ss], "blink": ["a", "wait/address"]},
-            "why": "Open Tee 2 TAT face tracks" + (" (same textures as Open Tee's)" if game == "opentee" else "")}
+            "why": "Open Tee 2 TAT face tracks"}
 
 
 if __name__ == "__main__":
@@ -348,4 +347,4 @@ if __name__ == "__main__":
             lab = f and {k: v[0] for k, v in f["labels"].items()}
             print(f"pc{pc:02d} {SLUG[pc]:9} {hs[pc][0]} {st[pc]} voices {{{', '.join(f'{k}:{len(v)}' for k, v in sorted(prog.items()))}}}"
                   f" {cl} face {lab} missing={[k for k, v in (f or {}).get('channels', {}).items() if v is None]}")
-    assert MAP["opentee"]["Serv POW"][0] == ["Pow"] and "Top SPIN" not in MAP["opentee"]
+    assert MAP["opentee2"]["Serv POW"][0] == ["Pow"] and "Top SPIN" in MAP["opentee2"]
