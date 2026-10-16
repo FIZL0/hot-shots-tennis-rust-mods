@@ -13,8 +13,9 @@ What each court is made of (notes/getagrip.md "Courts"):
                      instance, `<model>__<NN|singles|doubles>`, in the models' own space (centimetres, Y up). The
                      net and the umpire's chair come as __singles / __doubles pairs -> kept, named so (§2 there).
                      bg02_cloud (+ its looping motion) -> sky.glb, the rest -> court.glb. `_col` models are the
-                     collision, not drawn; `pc_locator` / `player_locator` tracks are where the umpire / benched
-                     players stand (informational).
+                     collision, not drawn. `pc_locator` (one, or a __singles / __doubles pair) is where the umpire
+                     sits -> an `umpire_seat` node (§2 there); `player_locator` tracks, where the benched players
+                     stand, are left out.
   courtNN_gimmick    gimmick/giNN_<Name>/: the reactive set pieces (pigeons that fly off, baskets that tip over),
                      placed by setting/cNN_escape_gimmick.csv / cNN_break_gimmick.csv at the first point of their
                      route in cNN_route.dat (u32 routes; each u32 n, n x (u32 route id, f32 x, y, z metres)),
@@ -823,8 +824,14 @@ def export(n, label):
         ss.add(gpath, ss.child(ss.top, name="sky"), nodes=sky | anc, mesh_nodes=sky)
     skipped, placed, drawn_sky, folders = [], [], bool(sky), set()
     for tr in haichi(dirs):
+        if ":" not in tr.name and tr.name.split("__", 1)[0] == "pc_locator":
+            # where Get a Grip seats its umpire on the chair -> the standard's `umpire_seat` (opentennis B433)
+            kind = next((k for k in ("__singles", "__doubles") if tr.name.endswith(k)), "")
+            pos, rot, _ = i3m.evaluate(tr, 0.0)
+            sc.child(sc.top, name="umpire_seat" + kind, **placement(pos, rot))
+            continue
         if ":" in tr.name or "locator" in tr.name:
-            continue  # a Maya reference duplicate of the next track / where people stand
+            continue  # a Maya reference duplicate of the next track / where the benched players stand
         model = tr.name.split("__", 1)[0]  # `<model>__<NN>`, `<model>__<NN>__singles`, `<model>__doubles`
         if PEOPLE.search(model):
             continue  # a person, the gallery (M112)

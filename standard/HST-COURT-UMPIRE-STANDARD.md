@@ -72,6 +72,12 @@ mods/<id>/
 - **Singles / doubles variants**: a node directly under the scene's top nodes whose name ends in `__singles` or
   `__doubles` is drawn only in a match of that kind (the net with or without its singles sticks, the umpire's chair
   set further out for doubles); every other node is always drawn. Applies to `court.glb` and `gimmick.glb`.
+- **Umpire seat** (optional): an empty node named `umpire_seat` in `court.glb` (or a pair, `umpire_seat__singles` /
+  `umpire_seat__doubles`) whose origin is the top of the seat of the court's own umpire's chair: the umpire (disc or
+  mod, §3b) is drawn sitting there, turned to the court centre, instead of at the layout court's chair; on the
+  other side of the court from it she turns to the winner with the other arm. Drawn only: her calls, timing and the
+  match stay the layout's. Absent: the layout court's chair (then the venue's chair must stand where the layout's
+  does).
 - `light` may also carry `fill` / `fill_colour` (a second directional light, same conventions as `sun`), and
   `fog` an `"amount": [near, far]` (how much fog at `near` and at `far`, 0–1, linear between; absent `[0, 1]`).
 - `ambience_loop`: one `[start, end]` per `sound/ambience_<n>.wav`, as `bgm_loop`.
@@ -177,7 +183,8 @@ line, or leave the key to the donor. Check each clip says the call of its row (a
 ### 3b. Model (`umpire.glb`)
 
 - One skinned model in game space, seated: the chair's seat at the origin, facing +Z (toward the court centre; the
-  match places and turns it at the layout court's chair, mirrored on the courts whose chair is on the other side).
+  match places and turns it at the court mod's `umpire_seat` (§2) or the layout court's chair, mirrored on the
+  courts whose chair is on the other side).
   Bring the chair in the model, or leave it out and the disc chair stays.
 - Animations, 60 Hz key times, each in the slot of one of the disc umpire's three motions (`uNN_h/_r/_l.ani`):
   - `idle` (required; disc `_h`): its first frame is the pose during play; once the match is over it plays through
