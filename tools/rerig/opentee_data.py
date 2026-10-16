@@ -106,11 +106,11 @@ def _tail(p):
         return w.readframes(w.getnframes())
 
 
-def _ot2_bank(kind, pc):
-    """OT2 hats/snd bank pc_<kind>_NNa waves from the .xb1 copy (English takes: names 'Mika_..', '_US'; the .xb copy
+def _ot2_bank(kind, pc, v="a"):
+    """OT2 hats/snd bank pc_<kind>_NN<v> (v = a, or b: the second take set) waves from the .xb1 copy (English takes: names 'Mika_..', '_US'; the .xb copy
     holds the Japanese 'Yum_..'). Its names.txt does not tie names to waves reliably (pc10+), so no names."""
     d = sorted(glob.glob(_p(USR.format(g="opentee2").replace("out/files", "out/audio"),
-                            f"hats/snd/pc_*_{pc:02d}a.xb1/data/sound/pc_{kind}_{pc:02d}a.sgd")))
+                            f"hats/snd/pc_*_{pc:02d}{v}.xb1/data/sound/pc_{kind}_{pc:02d}{v}.sgd")))
     return sorted(glob.glob(os.path.join(d[0], "[0-9][0-9][0-9].wav"))) if d else []
 
 
@@ -121,8 +121,9 @@ def _shared(first, *others):
 
 
 # Won/lost lines by what they say (faster-whisper transcripts of the unused st/vs/ya/g waves, out/voice_candidates/
-# opentee2_pcNN/index.tsv; notes/opentee.md "Voice lines"). "<bank>/<wave>" of the `a` banks. ya's "Good shot!" is
-# left out: it compliments the other player. pc10-20 not sorted yet (their candidates are in out/voice_candidates).
+# opentee2_pcNN/index.tsv; notes/opentee.md "Voice lines"). "<bank>/<wave>" of the `a` banks, "<bank>b/<wave>" of the
+# `b` ones. ya (heckles) lines that talk to the other player ("Good shot!", "What's wrong?") are left out. English
+# copies only: the Japanese copy's grunts are another actor's voice.
 WON = {0: ["st/006", "vs/007", "vs/005", "g/005"],  # Good! Yeah! Amazing! Yes!
        1: ["vs/010", "st/005", "vs/007", "g/003", "g/004"],  # Woo! YES! Nice! Ha ha! Oh yeah! Woohoo!
        2: ["st/006", "st/007", "st/005", "ya/008", "g/004"],  # Good! Yes! Yes, that's it! Nice shot! All right!
@@ -132,7 +133,18 @@ WON = {0: ["st/006", "vs/007", "vs/005", "g/005"],  # Good! Yeah! Amazing! Yes!
        6: ["st/005", "st/004", "vs/006", "vs/005"],  # There's a good one! Yes, that's it! Very good! Oh, wow, yes!
        7: ["st/005", "st/006", "ya/007", "g/003"],  # Yeah! Yeah! You got it! Ha ha ha ha! Yeah!
        8: ["st/005", "g/003", "g/004", "g/005"],  # Very nice. Yes! I am that good. Yeah!
-       9: ["st/004", "vs/006"]}  # Yes! Excellent job!
+       9: ["st/004", "vs/006"],  # Yes! Excellent job!
+       10: ["st/001", "vs/009", "st/012", "vs/011", "g/004"],  # Yeah! Great! Alright! Awesome! Yes! One, two..
+       11: ["vs/009", "st/010", "st/011", "vs/007", "g/003"],  # Yeah! Good! Great! Cool! Hey, yes!
+       12: ["stb/003", "stb/011", "vsb/010", "gb/006"],  # Yes! Very nice! Wonderful! I did it! I did it!
+       13: ["st/011", "st/010", "st/012", "stb/011", "g/007"],  # Yes! Yeah! YAHOO! Oh yeah! Yay! Woohoo! Fantastic!
+       14: ["st/008", "vs/014", "stb/012", "vs/011", "vs/010"],  # Yeah! Good! I did it! Woo! Nice work!
+       15: ["st/008", "stb/012", "vs/008", "st/012", "g/006"],  # Oh yeah. Perfect! Fantastic! Yeah, great. Ha ha! Gotcha!
+       16: ["stb/009", "st/008", "st/012", "vs/010", "g/004"],  # Woo! Yeah! Yes! Excellent! Yeah! That's cool!
+       17: ["st/009", "vsb/008", "vsb/010", "stb/008", "vs/008"],  # Yes. Wow! Uncanny! There! Beyond the words!
+       18: ["stb/001", "st/012", "st/008", "vsb/014"],  # Yeah. Yes. Yes. Even I can be lucky.
+       19: ["stb/011", "vsb/010", "vs/009", "g/004", "gb/003"],  # Good. Nice! Pretty good! Hehehe! Yes! Yes, yes, on..
+       20: ["st/011", "vsb/011", "st/012", "stb/009", "stb/010"]}  # Good! Yes, yes! Did it! Perfect! That felt good!
 LOST = {0: ["st/009", "st/008", "g/001"],  # Ugh! Oh no! Oh, why?
         1: ["g/001", "g/002"],  # Ugh! Awww!
         2: ["st/010"],  # No!
@@ -141,14 +153,34 @@ LOST = {0: ["st/009", "st/008", "g/001"],  # Ugh! Oh no! Oh, why?
         5: ["st/009", "g/002"],  # This could be bad. No! No! No!
         6: ["st/003", "st/009", "st/008"],  # No! Terrible! Oh no!
         7: ["st/009", "g/001"],  # No! Nah, I didn't miss that shot!
-        8: ["st/010", "vs/008"]}  # Aww. That's awful.
+        8: ["st/010", "vs/008"],  # Aww. That's awful.
+        10: ["stb/013", "stb/015", "st/015", "g/001"],  # Oh no! UGH! Unlucky! Oh, sheesh! Why me?
+        11: ["vs/011", "st/012", "stb/013", "g/001"],  # No! No! No good! No! What went wrong?
+        12: ["stb/014", "vsb/013", "st/013"],  # No! Oh no! Oh no.
+        13: ["st/014", "stb/014", "st/013", "st/015"],  # That's bad. No! Oh no! No good.
+        14: ["st/014", "vsb/013", "stb/013"],  # NO! Shame! I've lost it!
+        15: ["st/014", "stb/015", "gb/001", "g/001"],  # No way. No cigar. Ugh, disgraceful. Horrendous, just terrible
+        16: ["vs/014", "st/013", "stb/014", "vs/012", "gb/001"],  # Ugh. No. Why me? Oh that's no good. How? Oh no.
+        17: ["stb/005", "stb/015", "st/015", "stb/014", "stb/009"],  # No. UGH! I failed. Alas! It's over!
+        18: ["stb/013", "st/014", "stb/015", "vs/012"],  # Why? But why? No way! No hope.
+        19: ["st/014", "stb/015", "stb/014", "gb/001"],  # No! Ugh. No way! Oh, no comment.
+        20: ["vsb/012", "st/013", "gb/001"]}  # That's no good. A bad one. Ugh, I think they're cheating!
+# mis-hit / whiff (programs 2, 4): "What?", "Huh?", "Hmm", "Uh-oh"
+MISS = {0: ["st/010", "vs/009"], 1: ["st/010", "st/009"], 2: ["st/009"], 4: ["vs/009"], 5: ["vs/008"], 6: ["vs/009"],
+        8: ["st/008"], 9: ["st/008", "vs/007"], 10: ["vsb/012"], 11: ["vsb/012"], 13: ["stb/015", "vsb/011"],
+        14: ["stb/003", "st/011"], 16: ["stb/015"], 17: ["stb/013", "vs/011"], 18: ["st/011", "vs/011", "st/015"],
+        19: ["st/005", "vsb/013", "vs/012"], 20: ["vs/011"]}
+# shot shouts (programs 0, 1, 3) where the shared-shout heuristic finds none or one: Shu, Patricia, Roger
+SHOUT = {3: ["st/002", "st/004", "st/003"],  # Hai! Come on! Woo!
+         6: ["st/002", "ya/002"],  # HA! Ah!
+         9: ["st/007"]}  # Behold!
 
 
 def _picks(pc, table):
     out = []
     for k in table.get(pc, []):
         bank, w = k.split("/")
-        fs = _ot2_bank(bank, pc)
+        fs = _ot2_bank(bank[:-1], pc, "b") if bank.endswith("b") else _ot2_bank(bank, pc)
         if int(w) <= len(fs):
             out.append(fs[int(w) - 1])
     return out
@@ -170,6 +202,16 @@ def voices(game, pc):
                   "(heuristic: unlabelled)")
         why[1] = "the same shared in-play shouts, loudest first (heuristic: unlabelled)"
         why[3] = "same three loudest shouts as program 0 for the dive effort (heuristic: no dive voice in golf)"
+    shout = _picks(pc, SHOUT)
+    if shout:
+        for p in (0, 1, 3):
+            prog[p] = (prog.get(p, []) + shout)[:5 if p == 1 else 3]
+        for p in (0, 1, 3):
+            why[p] = (why[p] + " + " if p in why else "") + "the shouts picked by transcript (SHOUT)"
+    miss = _picks(pc, MISS)
+    if miss:
+        prog[2], prog[4] = miss[:3], miss[:2]
+        why[2] = why[4] = "the st/vs lines that say a slip ('What?', 'Huh?', 'Hmm', 'Uh-oh'; by transcript, MISS)"
     won, lost = _picks(pc, WON), _picks(pc, LOST)
     if won:
         prog[7] = prog[9] = won

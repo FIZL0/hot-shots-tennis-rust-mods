@@ -113,7 +113,8 @@ both casts) feeds package.py's golf() path, gag_stats.overrides and sizing.py.
   of the unused st/vs/ya/g waves (`opentee_data.py` WON/LOST, e.g. Mika "Yeah!"/"Amazing!", "Oh no!"/"Ugh!"); the `g`
   bank's 2.5-4 s lines are the golf hole celebrations. Before, 7/9 were OT1's `hy_NN` awards lines, which mix losing
   lines ("Oh dear!", "This can't be!") into the win programs. OT2's own `cd_hy_NN`/`cd_ma_NN` are the caddies'.
-  pc10-20 and programs 2/4 not sorted yet: candidates in `out/voice_candidates/` (see notes/audio.md).
+  Same for pc10-20 (incl. their `b` take sets), mis-hit/whiff 2/4 (MISS: "What?", "Hmm", "Uh-oh") and extra shouts
+  for Shu (none shared), Patricia and Roger (SHOUT). Only English takes; more in `out/voice_candidates/` (notes/audio.md).
 - **Reactions** (`out/anims/<game>/pcNN_<slug>.glb`): re_gu = OT2 `kuNN_gl` (glad emote) / OT1 `ga_pcNN_bi_r00`
   (birdie); re_di = OT2 `kuNN_di` + `waitNN` / OT1 `re_pcNN_os`; re_gu_set = `winNN`; re_di_set = `lostNN` + `waitNN`.
   Celebrations walk off (root up to ~1 m): package.py PIN holds the root. Every TAT runs about twice its I3M clip
