@@ -1,10 +1,11 @@
-# The mod store's index.json (opentennis M116), hourly: a backstop for webhooks the Space missed (asleep, down).
-# The Space (tools/store_index/space) rebuilds it within a minute of any store change. Secret: HF_TOKEN, a token
-# that can write the FIZL0/opentennis-mods dataset.
+# The mod store's index.json (opentennis M116), every 5 minutes (GitHub may run it later). The webhook Space
+# (tools/store_index/space) isn't deployed: Docker Spaces need HF PRO. New uploads and pushes onto a PR show in the
+# game at once anyway (it reads PRs missing from the index or at another commit); a merge shows after the next run.
+# A no-change run is ~4 HF API calls and commits nothing. Secret: HF_TOKEN, a token that can write the dataset.
 name: Store index
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 jobs:
   build:
