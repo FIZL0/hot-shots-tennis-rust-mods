@@ -48,6 +48,7 @@ RAW = os.path.join(ROOT, "out/models/getagrip/umpires")
 F = 0.8554 / 57.9  # m per Get a Grip cm (Gloria-calibrated, sizing.py)
 HEAD = 0.6277  # head scale about the neck (sizing.py, one factor for Get a Grip's cast)
 SEAT_CM = 52.9
+SHIN = np.radians(45.0)  # the shins swung forward about the knees (bake)
 G = np.diag([-1.0, -1.0, 1.0, 1.0])  # glTF Y-up <-> HST game space (rerig.G)
 MOTIONS = {"idle": "h", "turn_r": "r", "turn_l": "l", "wait": "w"}
 HEAD_NODES = ("Bip01Head", "Bip01HeadNub")
@@ -137,6 +138,46 @@ def bake(src, dst):
 
     hw = w(head)
     centre = hw[:3, 3]
+
+    # The shins swung forward by SHIN about the knees, as the disc umpires' hang (opentennis B429): Get a Grip's
+    # umpires sit with their shins drawn back under the seat, feet on the chair's rung, and at HST size (f, ~1.5x
+    # Get a Grip's chairs) those shins pass through the front of the stand's ladder. The legs are skinned to
+    # Bip01Pelvis alone, so it's done to the mesh: in `idle`'s first frame (the pose during play) the pelvis
+    # vertices below the thighs (y > LEG_TOP, in front of the seat's back) turn about the knee's axis (game x, at the
+    # thighs' underside, KNEE behind their front), easing in over the first LEG_EASE below the thighs.
+    # Only legs whose feet hang lower than FEET under the seat (the disc umpires' reach 0.47 m; the tucked ones 0.6).
+    LEG_TOP, LEG_EASE, KNEE, FEET = 0.03, 0.07, 0.06, 0.5
+
+    def seated(i):
+        """Node i's world in `idle`'s first frame (its keys converted as the animations below are)."""
+        m = local[i].copy()
+        for c in idle["channels"]:
+            if c["target"]["node"] != i:
+                continue
+            v = glb.get_accessor(g, b, idle["samplers"][c["sampler"]]["output"])[0].astype(np.float64)
+            if c["target"]["path"] == "rotation":
+                m[:3, :3] = quat(v * np.array([-1.0, -1.0, 1.0, 1.0]))
+            elif c["target"]["path"] == "translation":
+                v = v @ (F * G[:3, :3]).T + (T[:3, 3] if i in roots else 0.0)
+                m[:3, 3] = v * (HEAD if in_head(i) else 1.0)
+        return (seated(parent[i]) if parent.get(i) in local else np.eye(4)) @ m
+
+    to_seat = seated(pelvis) @ np.linalg.inv(w(pelvis))  # the pelvis's bind -> seated
+
+    def swing_shins(P, N, on_pelvis):
+        Q = (to_seat @ np.c_[P, np.ones(len(P))].T).T[:, :3]
+        thigh = on_pelvis & (np.abs(Q[:, 1]) < 0.05)
+        if not thigh.any() or Q[on_pelvis, 1].max() < FEET:
+            return P, N  # Robo T.'s legs already hang forward
+        knee = np.array([0.0, 0.0, Q[thigh, 2].max() - KNEE])
+        a = SHIN * np.clip((Q[:, 1] - LEG_TOP) / LEG_EASE, 0.0, 1.0) * (on_pelvis & (Q[:, 2] > 0.0))
+        c, s = np.cos(a), np.sin(a)
+        y, z = Q[:, 1] - knee[1], Q[:, 2] - knee[2]
+        Q = np.c_[Q[:, 0], knee[1] + y * c - z * s, knee[2] + z * c + y * s]
+        Ns = N @ to_seat[:3, :3].T
+        Ns = np.c_[Ns[:, 0], Ns[:, 1] * c - Ns[:, 2] * s, Ns[:, 2] * c + Ns[:, 1] * s]
+        back = np.linalg.inv(to_seat)
+        return (back @ np.c_[Q, np.ones(len(Q))].T).T[:, :3], Ns @ back[:3, :3].T
     for i, n in enumerate(nodes):
         if "mesh" not in n:
             continue
@@ -148,14 +189,15 @@ def bake(src, dst):
         for p in prims:
             a = p["attributes"]
             P = glb.get_accessor(g, b, a["POSITION"]).astype(np.float64)
-            N = glb.get_accessor(g, b, a["NORMAL"]).astype(np.float64)
+            N = glb.get_accessor(g, b, a["NORMAL"]).astype(np.float64) @ G[:3, :3].T
             if skinned:
                 P = (T @ K @ np.c_[P, np.ones(len(P))].T).T[:, :3]
+                weights, on = glb.get_accessor(g, b, a["WEIGHTS_0"]), np.asarray(joints)[glb.get_accessor(g, b, a["JOINTS_0"]).astype(np.int64)]
+                P, N = swing_shins(P, N, (weights * (on == pelvis)).sum(1) > 0.99)
                 share = (glb.get_accessor(g, b, a["WEIGHTS_0"]) * heady[glb.get_accessor(g, b, a["JOINTS_0"]).astype(np.int64)]).sum(1)
                 P = centre + (P - centre) * (1 + (HEAD - 1) * share)[:, None]
             else:
                 P = (K @ np.c_[P, np.ones(len(P))].T).T[:, :3] * (HEAD if under_head(i) else 1.0)
-            N = N @ G[:3, :3].T
             a["POSITION"] = out.accessor(P.astype(np.float32), glb.FLOAT, "VEC3", 34962, minmax=True)
             a["NORMAL"] = out.accessor(N.astype(np.float32), glb.FLOAT, "VEC3", 34962)
         if skinned:
