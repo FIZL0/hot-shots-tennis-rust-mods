@@ -1,6 +1,7 @@
 """The store index's webhook Space (opentennis M116): a Hugging Face webhook on the store dataset (repo updates,
-pull requests) posts here; each post rebuilds index.json (build.py) at once. Posts that come during a rebuild make
-one more rebuild after it, so a burst (an upload's commit + its PR opening) is at most two.
+pull requests) posts here; index.json is rebuilt (build.py) once the posts stop for QUIET seconds, so a burst (an
+upload's commit, its PR opening, a maintainer merging several) is one rebuild and at most one commit: the Hub caps
+commits per repo. Posts that come during a rebuild make one more after it.
 
 Secrets: HF_TOKEN (writes the dataset), WEBHOOK_SECRET (the webhook's secret, sent as X-Webhook-Secret).
 """
@@ -17,12 +18,15 @@ import build
 app = FastAPI()
 state = {"last": "not run yet"}
 wake = threading.Event()
+QUIET = 30
 
 
 def worker():
     while True:
         wake.wait()
         wake.clear()
+        while wake.wait(QUIET):
+            wake.clear()
         try:
             state["last"] = build.run()
         except Exception:
