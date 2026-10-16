@@ -92,6 +92,7 @@ python3 tools/rerig/batch.py           # every character; writes out/rerig/<game
 python3 tools/rerig/package.py         # out/mods/<game>_pcNN_<name>/
 python3 tools/rerig/hst_umpires.py     # HST's own five chair umpires, stood up -> out/mods/hst_umpire_NN_<name>/ (needs ../opentennis: ISO, context/xb, hst-gltf + bankwav built)
 python3 tools/rerig/gag_umpires.py && python3 tools/psp2gltf/export_getagrip_umpires.py && python3 tools/psp2gltf/export_getagrip_umpire_previews.py   # Get a Grip's eight chair umpires + their select pictures
+python3 tools/psp2gltf/export_getagrip_courts.py && python3 tools/psp2gltf/export_getagrip_court_loading.py   # Get a Grip's sixteen courts + their loading pictures
 # optional: HST_MENU=chars HST_BAKE=all hst <iso> with these mods installed, then
 # python3 tools/rerig/previews.py <iso dir>/cache/previews/<boot>-r<N>   # ships the select pictures
 ```

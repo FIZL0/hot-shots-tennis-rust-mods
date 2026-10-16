@@ -42,6 +42,7 @@ mods/<id>/
   sound/bgm.wav (or .ogg)  optional: the court's music, looped
   lensflare.png        optional: the sun's lens flare sprite (outdoor courts)
   previews/court.png   optional: the court select's picture (640×360 RGBA PNG; opentennis's tools/court_previews.sh shoots one)
+  previews/loading.png optional: the pre-match loading screen's picture (PNG, any size, ideally 16:9 ≥1280×720)
 ```
 
 ```json
@@ -92,6 +93,10 @@ mods/<id>/
 - `gimmick.glb`'s animations each drive one set piece and loop on their own clocks, all playing at once; a set piece
   with none stands still. They are drawn only, like `court.glb`: no collision, the ball passes through.
 - Optional, informational: `indoor` (bool), `gimmicks` (what `gimmick.glb` holds).
+- `previews/loading.png` is drawn full screen behind the loading screen's panels before a match on the court,
+  scaled to **cover** the window at its own aspect (centred, the overhang cropped, never stretched), so keep what
+  matters away from the edges. Use the court's own art (a source game's loading or title picture of it), not a
+  screenshot of the court flown over. Absent or unreadable: the layout court's own loading picture.
 
 ### 2b. Court people (`npcs.json`)
 
