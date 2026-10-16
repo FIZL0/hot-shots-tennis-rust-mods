@@ -6,6 +6,8 @@ Creates (or updates) the Docker Space FIZL0/opentennis-mods-index from space/ + 
 HF_TOKEN and a fresh WEBHOOK_SECRET, and points a webhook on the dataset (repo updates and PR/discussion events) at
 its /webhook. Rerun it after changing build.py or space/ (the webhook is replaced, so its secret stays in step).
 The hourly GitHub Action (.github/workflows/store-index.yml) needs the same token: `gh secret set HF_TOKEN`.
+Not deployed (2026-10-16): Docker Spaces need HF PRO now (402), so only the hourly Action runs; the game lists
+PRs opened since the index itself, so the store stays current without the Space.
 """
 
 import os
