@@ -109,7 +109,8 @@ python3 tools/psp2gltf/render.py out.glb pose.png --anim sh_pc00_f_t --times 0,0
 
 All the detail is in `standard/HST-CHARACTER-STANDARD.md`. For how to rerig a character, see `standard/TUTORIAL.md`.
 Courts and umpires are `standard/HST-COURT-UMPIRE-STANDARD.md`; texture packs (replacement images for the disc's
-textures, stacked in an order) are `standard/HST-TEXTURE-PACK-STANDARD.md`.
+textures, stacked in an order) are `standard/HST-TEXTURE-PACK-STANDARD.md`; `tools/texpack.py` builds one
+(`mod.json` with its store `covers`/`look` tags) from your edited `--dump-textures` files.
 
 - **Model:** a `.glb` in HST game space (metres, Y down, facing +Z, under a `game_space` root).
 - **Skeleton:** HST's 54 Biped joints with exact names, parents and bone axes. Proportions are free, and extra

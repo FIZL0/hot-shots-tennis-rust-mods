@@ -113,3 +113,20 @@ already upscaled; rerun after adding or rebuilding mods).
 
 Per character: mapped/synthesized joints (from the rerig printout), face channels present/aliased, the render
 PNG paths you checked, and anything odd.
+
+## Texture packs
+
+A texture pack (`HST-TEXTURE-PACK-STANDARD.md`) replaces the disc's own pictures; no rerig involved.
+
+1. Dump the disc's textures: `hst "Hot Shots Tennis (USA).iso" --dump-textures` → `mods/textures-src/` beside the ISO.
+2. Copy the files you want to change to a folder of your own (keep the names, folders optional) and edit or upscale
+   them there. Any size works; keep the alpha straight.
+3. Build the pack:
+   ```
+   python3 tools/texpack.py EDITED/ out/mods/<id> --name "My pack" --author you --src PATH/mods/textures-src --zip
+   ```
+   It prints how many textures it took and the `covers` / `look` it wrote (§2 of the standard). Check them: auto
+   only knows `upscale` for look, so a repaint needs `--look recolour` or `--look new`, and a pack meant as a whole
+   new look of everything wants `--covers everything` even if it skips a few folders.
+4. Put `out/mods/<id>/` in the game's `mods/` (or the `.zip` through Add mod) and look at it: Mods → Installed →
+   Texture packs puts the newest on top.

@@ -31,7 +31,19 @@ the browser build deletes it from every installed mod.
 - `standard`: `1`.
 - `kind`: `"textures"`. Without it the folder is read as a character mod (and fails as one).
 - `id`, `name`: 1–64 characters, shown as plain text. `author` is optional (up to 64 characters).
+- `covers` (optional): what the pack changes, for the mod store's *Covers* filter. One of `"everything"`,
+  `"courts"`, `"characters"`, `"menus"` (menus and the in-match HUD) or `"mixed"` (several parts, not all).
+- `look` (optional): what kind of change it is, for the store's *Kind* filter. One of `"upscale"` (the disc's
+  pictures at a higher resolution), `"recolour"` (same pictures, new colours) or `"new"` (new pictures).
+- Both are read in any case; `"recolor"`, `"menus & hud"` and `"new look"` are taken too. A missing or unknown value
+  only means the pack shows under the filter's *Any* and nowhere else; it is never refused for them. They change
+  nothing in the game itself.
 - Any other field is ignored.
+
+```json
+{ "standard": 1, "kind": "textures", "id": "crimson_courts", "name": "Crimson Courts", "author": "you",
+  "covers": "courts", "look": "recolour" }
+```
 
 ## 3. Textures
 
@@ -64,8 +76,28 @@ texture_packs = crimson_courts, hd_menus      # top first
 texture_packs_off = old_pack                  # installed but off
 ```
 
-A pack named in neither line is on, above the listed ones, so a new install lands on top. The opentennis Installed
-tab will edit these lines (M5b). Until then, edit them by hand while the game is closed.
+A pack named in neither line is on, above the listed ones, so a new install lands on top. Mods → Installed →
+Texture packs edits these lines (order and on/off); by hand, edit them while the game is closed.
 
 The *Texture Replacements* setting (Settings → Graphics) is the master switch: off, or with the Original look, no
 pack is read. Packs are read when a match or the menu starts, so a change to the order applies from the next start.
+
+## 5. Making one
+
+`tools/texpack.py` (this repo) builds the folder and `mod.json` from your edited files:
+
+```
+python3 tools/texpack.py EDITED/ out/mods/crimson_courts --name "Crimson Courts" --author you \
+    --src ../opentennis/mods/textures-src --zip
+```
+
+It copies every key-named PNG of `EDITED/` (same names as the dump, any folders) to `textures/`, leaves out files
+that are byte-identical to the dump's (`--src`), and writes `covers` and `look`:
+
+- `--covers auto` (default): from the dump folders the keys come from (`COURT`, `COURTSET` = courts; `PC` =
+  characters; `MENU`, `AZUMA/INPANE`, `AZUMA/PRIZE`, `SAITOU` = menus; ball, effects and the rest are none of these).
+  One part → that part; courts, characters and menus together → `everything`; otherwise `mixed`.
+- `--look auto` (default): `upscale` when every file is its original at a whole multiple (2× or more, same in both
+  directions); otherwise nothing, so say `--look recolour` or `--look new`.
+- Either can be given outright, or `none` to leave it out. `--zip` also writes `out/mods/crimson_courts.zip` (the
+  folder inside) for Add mod and the store.
