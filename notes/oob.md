@@ -250,7 +250,7 @@ are no joint/weight streams, so `rem.py`'s skinned-mesh finder skips them. Per m
 bytes before the index count; streams: position f32×3, normal f32×3, colour u8×4, UV f32×2 sets, then tangent and
 binormal when header word 1 is set. Material slots index `texobjs` (→ texture names); the hole ground's textures
 are loose `.dds` in `PS3_GAME/USRDIR/data/course/courseCC/hole/`. Some DDS are uncompressed RGB(A) by channel
-masks (`dds.py`). Placements and the two-worlds-per-course layout: `notes/venues.md`.
+masks (`dds.py`).
 
 ## glTF mapping
 
