@@ -204,7 +204,8 @@ Sixteen courts (01–09, 13–18, 20) → `out/mods/gag_cNN_<stem>/` court mods 
   (or `<model>__singles`); tracks with `:` are Maya reference duplicates, `pc_locator`/`player_locator` people spots,
   `gall` the gallery (M8f7), c08's `eff560` effect emitters (no model). Models live in `obj/`, `tree/`, `bg/` and
   (c07) `gimmick/` of `courtNN_obj_0/1.xb`; `_col` = collision.
-- **Gallery** (`export_getagrip_gallery.py` → `npcs.json`, `npcs/`): `courtNN_gallery.xb` (not c09/c16)
+- **Gallery** (not exported since opentennis M112: Get a Grip's people — the gallery, the gimmicks and placed
+  figures that are people, `PEOPLE` in the court script — look out of place next to HST's cast): `courtNN_gallery.xb` (not c09/c16)
   `gallery/gall00..06.psp.i3r` = one 1 × 1.95 m card (`pPlane1`, x ±50, y −5..190 cm, u along +x; gall00 empty),
   textures `gallNN_act0..7` (gall06 act0 only): act0 front, act1 back view, act2 head down, act3 waving, act4–7
   clapping; `.tat`s (material `gallery`) front = act0, back = act1, down = act2, clap = act3..7 at 0, 0.067, 0.1,

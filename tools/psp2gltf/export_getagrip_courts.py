@@ -25,6 +25,8 @@ What each court is made of (notes/getagrip.md "Courts"):
   900_sound          020_courtNN.xb bgm_court_NN (music), stream_SE/env_coNN (the ambience loop: birds, crowd,
                      wind); loop points from vgmstream-cli -m on the raw .sgh/.sgb pair
   lensflare.xb       one flare sprite (flare3.gim) for every outdoor court
+  (left out)         the people: courtNN_gallery (the spectator cards), the gimmicks and placed figures that are
+                     people (`PEOPLE`; opentennis M112). An npcs.json / npcs/ an earlier export left is removed.
 
 Into HST game space: Get a Grip's courts are true scale in centimetres, net at the origin, long axis Z, Y up, the
 umpire's chair on +X; HST's are metres, Y down, chair on +X. So (x, y, z) cm -> (0.01x, -0.01y, -0.01z) m: under
@@ -93,6 +95,14 @@ REST = ("Stay", "stay", "Stay2", "wait", "pool", "Swim", "Fly", "WingBeat", "kyo
         "Walk", "Run")
 # the two 車 rows (ids 11 and 31) are c05's two cars
 CAR = {11: "gi10_Car", 31: "gi11_Car"}
+# Get a Grip's people are left out (opentennis M112: its chibi figures look out of place next to HST's cast): the
+# gallery (export_getagrip_gallery.py, removed), the gimmicks that are people (the ones with a `gi_<Name>_face`
+# texture: c01's Shin, c02's students, c06's fisherman, c07's clown and the clown in his cannon, c08's driver, c13's
+# walker and RC boy, c14's Karl, batter, cheerleaders and man on the bank, c15's ninja, c17's window cleaner, c18's
+# master monk, c20's tightrope walker) and the placed figures (c09's line judges, c09's and c16's cameramen). Animals,
+# vehicles and the umpire's chair stay.
+PEOPLE = re.compile(r"_gi\d\d_(shin|seito|Fisherman|Clown|ClownCannon|driver|Walkman|radioboy|Karl|BaseBallMan|cheer|dote|"
+                    r"ninja|spaceman|mastermonk|tunaman)$|^c09_ob1[56]_umpire0[12]$|_ob\d\d_camera01$|_gall", re.I)
 
 # HST's match camera (opentennis hst_sim::camera::base): 41 m from the court centre at 17 degrees, behind
 # either baseline (it turns round when its human is on the far half), 20-degree lens on the PS2's 0.7 aspect ->
@@ -614,7 +624,8 @@ def gimmicks(dirs, n, sc, todo, by_haichi):
     folders = {}
     for d in dirs:
         for g in glob(os.path.join(d, "gimmick", "gi*")):
-            folders.setdefault(os.path.basename(g), g)
+            if not PEOPLE.search(f"c{n:02d}_" + os.path.basename(g)):  # people: left out (M112)
+                folders.setdefault(os.path.basename(g), g)
     setting = next((os.path.join(d, "setting") for d in dirs if glob(os.path.join(d, "setting", "*_route.dat"))), None)
     if not setting:
         return []
@@ -631,6 +642,8 @@ def gimmicks(dirs, n, sc, todo, by_haichi):
             folder = CAR[gid]
         else:
             folder = next((f for f in folders if f.split("_", 1)[1] == GIMMICK[jp]), None)
+        if folder is None and GIMMICK.get(jp) and PEOPLE.search(f"_gi00_{GIMMICK[jp]}"):
+            continue  # a person (M112)
         if folder is None or route not in rt:
             todo.append(f"gimmick {jp} (id {gid}, route {route}): no model or route found, not placed")
             continue
@@ -783,6 +796,10 @@ def export(n, label):
     slug = f"gag_c{n:02d}_{stem}"
     mod = os.path.join(ROOT, "out/mods", slug)
     os.makedirs(mod, exist_ok=True)
+    # the gallery an earlier export wrote (M8f7), left out now (M112)
+    if os.path.exists(os.path.join(mod, "npcs.json")):
+        os.remove(os.path.join(mod, "npcs.json"))
+    shutil.rmtree(os.path.join(mod, "npcs"), ignore_errors=True)
     tex = sorted({d for c in dirs for d in glob(os.path.join(c, "**", "sourceimages"), recursive=True)}
                  | {os.path.join(c, "attr") for c in dirs})
     todo = []
@@ -806,9 +823,11 @@ def export(n, label):
         ss.add(gpath, ss.child(ss.top, name="sky"), nodes=sky | anc, mesh_nodes=sky)
     skipped, placed, drawn_sky, folders = [], [], bool(sky), set()
     for tr in haichi(dirs):
-        if ":" in tr.name or "locator" in tr.name or "_gall" in tr.name:
-            continue  # a Maya reference duplicate of the next track / where people stand / the gallery (M8f7)
+        if ":" in tr.name or "locator" in tr.name:
+            continue  # a Maya reference duplicate of the next track / where people stand
         model = tr.name.split("__", 1)[0]  # `<model>__<NN>`, `<model>__<NN>__singles`, `<model>__doubles`
+        if PEOPLE.search(model):
+            continue  # a person, the gallery (M112)
         path = object_model(dirs, n, model)
         if path is None:
             skipped.append(tr.name)
