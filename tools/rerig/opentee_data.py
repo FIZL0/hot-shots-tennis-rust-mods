@@ -349,11 +349,18 @@ def _materials(game, pc):
     return {m.get("name") for m in json.loads(b[20:20 + n]).get("materials", [])}
 
 
+# Surprised (doki) face letters picked by eye (opentennis B561; no motion shows one consistently): wide eyes or an
+# open mouth with brows that don't frown. Some share the anger texture (c), whose look is surprise more than anger.
+# None: no such face (CJ, Montcalm, Mifune, Lee's open mouths all frown), the face stays neutral.
+DOKI = {0: "e", 1: "f", 2: "e", 3: "e", 4: "e", 5: None, 6: "c", 7: "f", 8: "f", 9: "f", 10: "c", 11: "c", 12: "e",
+        13: "e", 14: "e", 15: None, 16: "c", 17: None, 18: None, 19: "c", 20: "c"}
+
+
 def faces(game, pc):
     """Get a Grip faces.json style. Letters from Open Tee 2's TAT face tracks (the same in every motion that
     shows them): a = blink (idle and address blinks), joy = most-held letter over the clap/wave/glad emotes
     (fallback win, eagle, birdie), anger = the angry emote (fallback the shake emote), sorrow = the down emote
-    (fallback lost). Eye and mouth share one whole-face texture. No consistent nervous (doki) face: null."""
+    (fallback lost), doki = DOKI's pick. Eye and mouth share one whole-face texture."""
     mat = f"face{pc:02d}"
     if mat not in _materials(game, pc):
         return None
@@ -371,9 +378,10 @@ def faces(game, pc):
     for k, l in (("joy", joy), ("anger", ang), ("sorrow", sor)):
         p = l and _png(game, pc, l)
         ch[f"{k}_eye"] = ch[f"{k}_mouth"] = p
-    ch["doki_eye"] = ch["doki_mouth"] = None
+    ch["doki_eye"] = ch["doki_mouth"] = DOKI.get(pc) and _png(game, pc, DOKI[pc])
     return {"face_material": mat, "neutral": _png(game, pc, None), "channels": ch,
-            "labels": {"joy": [joy, js], "anger": [ang, as_], "sorrow": [sor, ss], "blink": ["a", "wait/address"]},
+            "labels": {"joy": [joy, js], "anger": [ang, as_], "sorrow": [sor, ss], "blink": ["a", "wait/address"],
+                       "doki": [DOKI.get(pc), "picked by eye"]},
             "why": "Open Tee 2 TAT face tracks"}
 
 

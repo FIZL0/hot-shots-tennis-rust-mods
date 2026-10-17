@@ -51,6 +51,32 @@ FACE_WORDS["doki"] += ["a", "talk", "chu"]  # Bjorn, Kate, Alex; Fernando, Felip
 # grimace and Anya's pursed lips. A word can't name these: they are another channel's word, or HST's `kiss`.
 FACE_NAMES = {"doki_eye": ["Lbrow_up+Rbrow_up", "sorrow_eye", "sad_eye"], "anger_mouth": ["sad_mouth2"],
               "sorrow_mouth": ["kiss_mouth"]}
+# Per-character picks (opentennis B561), by mod id: Fore! faces whose stand-in no shared table gets right (one face's
+# vexing_mouth is a wide-open shock, another's a closed frown). Tried first for a channel the model lacks. Not
+# listed: eye channels behind opaque glasses (Tbone, Louise), Z (no face targets at all).
+FACE_PICKS = {
+    "fore_pc00_phoebe": {"doki_mouth": "sorrow_mouth"},  # her open, rounded mouth
+    "fore_pc02_emma": {"doki_mouth": "sorrow_mouth"},  # a wide O
+    "fore_pc03_sam": {"sorrow_mouth": "he_mouth"},  # downturned pout
+    "fore_pc04_misaki": {"doki_mouth": "su-_mouth"},  # lips parted
+    "fore_pc05_brad": {"doki_mouth": "sorrow_mouth"},  # parted grimace, the only open non-grin
+    "fore_pc07_regis": {"doki_mouth": "pain_mouth"},  # jaw dropped, fangs
+    "fore_pc08_maya": {"sorrow_mouth": "he_mouth"},  # frown
+    "fore_pc09_falcon": {"doki_mouth": "laugh_mouth"},  # open round mouth
+    "fore_pc06_chaos": {"joy_eye": "blink_eye"},  # closed happy eyes, as HST's joy
+    "fore_pc13_allan": {"doki_mouth": "pain_mouth"},  # open O
+    "fore_pc14_tiffany": {"doki_eye": "vexing_eye1", "doki_mouth": "vexing_mouth",  # wider eyes, lips parted
+                          "sorrow_eye": "vexing_eye", "sorrow_mouth": "anger_mouth1"},  # droopy lids, pout
+    "fore_pc15_kamala": {"anger_mouth": "sorrow_mouth", "doki_mouth": "sexy_mouth"},  # bared teeth; pursed O
+    "fore_pc16_toni": {"doki_mouth": "yo"},  # open O
+    "fore_pc17_tbone": {"doki_mouth": "anger_mouth", "sorrow_mouth": "vexing_mouth"},  # open shout; grimace
+    "fore_pc18_lin": {"doki_mouth": "sorrow_mouth"},  # lips parted
+    "fore_pc19_louise": {"doki_mouth": "ho"},  # open O
+    "fore_pc20_zeus": {"doki_mouth": "u"},  # small round open
+    "fore_pc21_hubert": {"doki_mouth": "vexing_mouth"},  # jaw dropped
+    "fore_pc22_ratchet": {"joy_eye": "blink_eye"},  # closed happy eyes
+    "fore_pc23_jak": {"sorrow_mouth": "vexing_mouth"},  # flat grimace
+}
 
 
 def read(g, b, i):
@@ -238,15 +264,30 @@ def face_word(name):
     return m.group(2).lower().rstrip("-"), m.group(5), side, rank
 
 
-def face_names(names):
-    """Source target names -> (short names, aliases [(HST channel, [source indices summed])] to append)."""
+def face_key(path):
+    """The mod id FACE_PICKS knows a model by: out/models/fore/pc17/pc17_tbone_c00.glb or
+    out/mods/fore_pc17_tbone/model/… -> fore_pc17_tbone."""
+    m = re.search(r"([a-z0-9]+_pc\d+_[a-z0-9]+)[/\\]model[/\\]", path)
+    if m:
+        return m.group(1)
+    m = re.search(r"out[/\\]models[/\\]([a-z0-9]+)[/\\].*?(pc\d+_[a-z0-9]+)_c\d+\.glb$", path)
+    return m and f"{m.group(1)}_{m.group(2)}"
+
+
+def face_names(names, key=None):
+    """Source target names -> (short names, aliases [(HST channel, [source indices summed])] to append); key: the
+    mod id (face_key) whose FACE_PICKS come first."""
     short = [n.split("\x01")[-1] for n in names]
     parsed = [face_word(n) for n in short]
     alias = []
+    picks = FACE_PICKS.get(key, {})
     for ch, words in FACE_WORDS.items():
         for part in ("eye", "mouth"):
             want = f"{ch}_{part}"
             if want in short or (ch == "blink" and part == "mouth"):
+                continue
+            if picks.get(want) in short:
+                alias.append((want, [short.index(picks[want])]))
                 continue
             for w in words:
                 hits = [(p[3], p[2], i) for i, p in enumerate(parsed) if p and p[0] == w and p[1] == part]
@@ -431,7 +472,7 @@ def rerig(src_path, out_path, donor=None, motions=None, height=None, head=1.0):
         jmap = np.array([jpos.get(src_new.get(j), fallback) for j in sj] or [0], dtype=np.uint16)
         hj = np.array([in_head(j) for j in sj] or [False])
         names = m.get("extras", {}).get("targetNames", [])
-        short, alias = face_names(names) if names else ([], [])
+        short, alias = face_names(names, face_key(src_path)) if names else ([], [])
         prims = []
         cache = {}
         for pr in m["primitives"]:

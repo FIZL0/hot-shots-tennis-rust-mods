@@ -2,7 +2,7 @@
 
 python3 tools/rerig/face_alias.py MOD_DIR…     (every model/*.glb of each mod)
 
-For mods already packaged when a stand-in was added to those tables: the same aliases a fresh rerig would append
+For mods already packaged when a stand-in was added to those tables (or FACE_PICKS): the same aliases a fresh rerig would append
 (each a copy, or the sum, of the model's own targets), without rerigging, mirroring or repackaging. Channels the model
 already has are left alone. Bump the mod's mod.json `version` before uploading it again.
 """
@@ -16,7 +16,7 @@ import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-from rerig import face_names, glb, read  # noqa: E402
+from rerig import face_key, face_names, glb, read  # noqa: E402
 
 
 def add_aliases(path):
@@ -39,7 +39,7 @@ def add_aliases(path):
         names = m.get("extras", {}).get("targetNames")
         if not names:
             continue
-        short, alias = face_names(names)
+        short, alias = face_names(names, face_key(path))
         if not alias:
             continue
         for pr in m["primitives"]:
