@@ -40,6 +40,17 @@ FACE_WORDS = {"blink": ["blink", "close", "wink"],
               "anger": ["anger", "angry", "vexing", "muka", "scowl", "miken", "frown", "katamayu", "provocation", "clench"],
               "sorrow": ["sorrow", "sad", "cry", "worry", "disapoint", "beaten", "tukare", "nihil", "pain"],
               "doki": ["doki", "surprise", "suprise", "amaze", "awa", "shy", "open", "o", "ayo", "oh"]}
+# Stand-ins picked by eye from the face sheets (check.py --face-sheet) where a model has none of a channel's words
+# (opentennis B546): an open vowel or talking mouth for doki, a pout or closed flat mouth for sorrow, bared teeth for
+# anger; tried after FACE_WORDS. Words here belong to one channel only and are no HST track's word.
+FACE_WORDS["anger"] += ["i"]  # Bjorn
+FACE_WORDS["sorrow"] += ["puku", "pucker", "n"]  # Jasmine, Kate, Bjorn
+FACE_WORDS["doki"] += ["a", "talk", "chu"]  # Bjorn, Kate, Alex; Fernando, Felipe; Sophie
+# HST channel <- whole source targets (`+` sums them), last resort: raised brows for surprised eyes on faces with no
+# wide-eye target (Sophie, Bloom, Dino; Fernando, Felipe, LJ, Suzuki behind sunglasses), Felipe's bared-teeth
+# grimace and Anya's pursed lips. A word can't name these: they are another channel's word, or HST's `kiss`.
+FACE_NAMES = {"doki_eye": ["Lbrow_up+Rbrow_up", "sorrow_eye", "sad_eye"], "anger_mouth": ["sad_mouth2"],
+              "sorrow_mouth": ["kiss_mouth"]}
 
 
 def read(g, b, i):
@@ -246,6 +257,11 @@ def face_names(names):
                 both = [h for h in hits if h[1] == ""] or ([h for h in hits if h[1] == "LR"]) or hits  # L+R halves sum
                 alias.append((want, [h[2] for h in (both if both[0][1] in ("", "LR") else hits)]))
                 break
+            else:
+                for n in FACE_NAMES.get(want, []):
+                    if all(k in short for k in n.split("+")):
+                        alias.append((want, [short.index(k) for k in n.split("+")]))
+                        break
     return short, alias
 
 
