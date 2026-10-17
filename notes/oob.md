@@ -407,6 +407,7 @@ Per character, takes skipped because that actor's line says something else (`SKI
 | 00 Jasmine | (0,7) (0,37) (0,40) | "Huh?", "Huh?", "Caddie!" |
 | 01 Nick | (0,40) | "Go!" |
 | 02 Sophie | (0,29) | "Oh... ahahah!" (laughs it off) |
+| 05 Fernando | (0,33) | a helicopter sound effect, not his voice |
 | 08 Bloom | (0,12) | "Not bad!" |
 | 10 Kate | (0,30) (1,10) | "It's not good enough!", "Ah. Hmm." |
 | 11 Dino | (0,12) (0,30) | 0.1 s noise, "I must do better." |

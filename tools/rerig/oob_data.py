@@ -190,7 +190,7 @@ LOST = [(0, 29), (0, 40), (0, 22), (0, 18), (0, 23), (0, 16)]
 SET_WON = [(0, 31), (0, 33), (1, 11), (1, 13), (0, 30), (1, 10)]
 SET_LOST = [(1, 9), (0, 29), (0, 25), (0, 24)]
 # takes that say something else in that actor's script (transcripts in notes/oob.md "Voice lines")
-SKIP = {0: {(0, 7), (0, 37), (0, 40)}, 1: {(0, 40)}, 2: {(0, 29)}, 8: {(0, 12)}, 10: {(0, 30), (1, 10)},
+SKIP = {0: {(0, 7), (0, 37), (0, 40)}, 1: {(0, 40)}, 2: {(0, 29)}, 5: {(0, 33)}, 8: {(0, 12)}, 10: {(0, 30), (1, 10)},
         11: {(0, 12), (0, 30)}, 12: {(0, 16), (0, 37)}, 14: {(0, 23), (0, 27), (1, 10)}, 15: {(0, 40)}, 16: {(0, 7)}}
 # HST program 5, the cry of a player the ball hits (one key): golf has no such event, so per actor one short take of
 # the English ga_ev/ga_sg/ga_vs banks (bank/wave) picked by transcript: a pain word first ('Ouch!', 'Ow'), else a
