@@ -48,7 +48,7 @@ Banks per PC `NN`: `sgv_PCNNa/b` (32-33 cues; `a`/`b` = two variants), `dgv_PCNN
 Cue names (from the SGXD NAME table; `names.txt` next to the wavs; `out/voices/getagrip/pcNN/<bank>_<cue>.wav` aliases):
 `pc_voice_` + `smash_0-2, swing_0/1, receive_0-2` (shot shouts), `st_ji_0-4, st_nb_0-2` (stroke shouts, ji/nb unknown),
 `start_0/1`, `match`, `point_get_0/1` (point won), `point_lost_0/1`, `rep_get / rep_lost` (rally?), `set_get_0/1` (set won),
-`set_lost_0/1`, `gut_0/1`, `chance`, `body`. Umpire `gag_vc*`: `vc_voice_point_*`, `tiebreak_*`, `miss_*`.
+`set_lost_0/1`, `gut_0/1`, `chance`, `body` (hit by the ball: "Ow!", "Ouch!", "Nah, I'm hit!" → HST program 5). Umpire `gag_vc*`: `vc_voice_point_*`, `tiebreak_*`, `miss_*`.
 Cue -> wave is **decoded** (2026-10-14, opentennis M8f2; `audio.py sgxd_cue_waves`): cue c plays SEQD group 0
 sequence c, which keys on with `d0 01 NN`, NN the note in decimal digits (0x32 = note 32); the RGND region whose key range
 holds the note gives the wave. Checked by whisper transcript on all 16 umpire banks (every cue says its name) and on

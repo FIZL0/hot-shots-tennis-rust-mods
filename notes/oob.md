@@ -363,6 +363,7 @@ There is no golf data for speed, stamina, agility or reach.
 | 9 set won | (0,31) (0,33) (1,11) (1,13) (0,30) (1,10) | big-win and par hole results: "I'm the best!", "Yes! I did it!" |
 | 10 set lost | (1,9) (0,29) (0,25) (0,24) | the disaster's second take + resigned: "Oh no! It's not there!", "Next time!" |
 | 6 | — | no partner call in golf |
+| 5 hit by the ball | per actor (`HIT`, ga_ev/ga_sg/ga_vs) | no such event in golf: the most pained short take by transcript ("Ouch!" Fernando, "Ow" Kate/Maruyama, "Ugh!"/"Gah!"/"Wah!"/うっ, else a startled "Ah!"/"Oh!"; never a wave other actors share) |
 
 For each cue the longest note's wave is used, because celebrations play 2–17 fragments.
 

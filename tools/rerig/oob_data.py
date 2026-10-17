@@ -192,6 +192,22 @@ SET_LOST = [(1, 9), (0, 29), (0, 25), (0, 24)]
 # takes that say something else in that actor's script (transcripts in notes/oob.md "Voice lines")
 SKIP = {0: {(0, 7), (0, 37), (0, 40)}, 1: {(0, 40)}, 2: {(0, 29)}, 8: {(0, 12)}, 10: {(0, 30), (1, 10)},
         11: {(0, 12), (0, 30)}, 12: {(0, 16), (0, 37)}, 14: {(0, 23), (0, 27), (1, 10)}, 15: {(0, 40)}, 16: {(0, 7)}}
+# HST program 5, the cry of a player the ball hits (one key): golf has no such event, so per actor one short take of
+# the English ga_ev/ga_sg/ga_vs banks (bank/wave) picked by transcript: a pain word first ('Ouch!', 'Ow'), else a
+# pained yelp ('Ugh!', 'Gah!', 'Wah!', うっ), else a startled 'Ah!'/'Oh!'; a wave other actors share is never one
+# (opentennis B560, transcripts in notes/oob.md "Voice lines")
+HIT = {0: "ev/009", 1: "sg/052", 2: "ev/008", 3: "vs/015", 4: "sg/055", 5: "sg/015", 6: "ev/038", 7: "ev/010",
+       8: "sg/059", 9: "ev/009", 10: "ev/008", 11: "ev/005", 12: "sg/053", 13: "ev/015", 14: "vs/015", 15: "sg/014",
+       16: "vs/015"}  # Oh! うっ あ! Wah! Ugh! Ouch! Ah! UGH! Ah! Oh! Ow GAH! あ! D'AH! Ow. あ! Ah!
+
+
+def hit_cry(pc):
+    """[wav] for program 5 (HIT), or []."""
+    if pc not in HIT:
+        return []
+    kind, w = HIT[pc].split("/")
+    f = os.path.join(_bank(pc, kind)[1], f"{w}.wav")
+    return [f] if os.path.exists(f) else []
 
 
 def voices(pc):
@@ -218,12 +234,13 @@ def voices(pc):
         return out
 
     prog = {0: files(SHOUT), 1: files(STROKE), 2: files(MISHIT), 3: files(SHOUT), 4: files(WHIFF),
-            7: files(WON), 8: files(LOST), 9: files(SET_WON), 10: files(SET_LOST)}
+            5: hit_cry(pc), 7: files(WON), 8: files(LOST), 9: files(SET_WON), 10: files(SET_LOST)}
     why = {0: "sg (0,6)/(1,3): the effort grunts ('Hah!', 'Hup!'; the shortest line in every bank)",
            1: "sg (0,8)/(0,7)/(0,9)/(0,10): the shot shouts ('Hya!', 'Go!', 'Fly!', 'That's it!')",
            2: "sg (0,12)/(0,14)/(1,15): 'Oops!', 'Whoops!', 'No!'",
            3: "the effort grunts of program 0 (no dive in golf)",
            4: "sg (0,38)/(0,13): 'Huh?', 'What?'",
+           5: f"{HIT.get(pc)}: no hit-by-the-ball line in golf; the actor's most pained short take (HIT)",
            7: "sg (0,28)/(0,37)/(1,8)/(0,27): the holed-putt lines ('Yes!', 'It's in!', 'I did it!')",
            8: "sg (0,29) the disaster hole result (e.g. 'No! That was awful!') and (0,40)/(0,22)/(0,18)/(0,23)/(0,16) "
               "the missed-shot lines ('Aw, shoot!', 'Oh no!', 'What a shame!')",

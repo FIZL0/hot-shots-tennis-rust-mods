@@ -39,8 +39,9 @@ PIN = {"fore": True, "oob": True, "opentee2": True}  # golf celebrations walk of
 GAG_REACT = {"re_gu": "gu01", "re_di": "di01", "re_gu_set": "gu_set01", "re_di_set": "di_set01"}
 HST_ANI = gagmap.hst_xb(ROOT) + "/PCANI"
 # Get a Grip cue -> HST voice program (programs 7-10 follow reaction motions 0x2c-0x2f: re_gu, re_di, re_gu_set,
-# re_di_set). approx: 1 and 2 (st_ji/st_nb meaning unknown).
-GAG_VOICE = {0: ["smash"], 1: ["st_ji"], 2: ["st_nb"], 3: ["receive"], 4: ["swing"], 6: ["start", "call", "go", "chance"],
+# re_di_set). approx: 1 and 2 (st_ji/st_nb meaning unknown). body = hit by the ball ('Ow!', 'Ouch!', "Nah, I'm hit!").
+GAG_VOICE = {0: ["smash"], 1: ["st_ji"], 2: ["st_nb"], 3: ["receive"], 4: ["swing"], 5: ["body"],
+             6: ["start", "call", "go", "chance"],
              7: ["point_get"], 8: ["point_lost"], 9: ["set_get"], 10: ["set_lost"]}
 
 
@@ -61,14 +62,15 @@ def gag_voices(n, dst):
         files = []
         for cue in cues:
             files += sorted(glob.glob(os.path.join(d, f"sgv_pc{n:02d}a_pc_voice_{cue}*.wav")))
-        for k, f in enumerate(files[:5]):
+        files = files[:KEYS.get(prog, 5)]
+        for k, f in enumerate(files):
             link(f, os.path.join(dst, f"voice/{prog}_{k}.wav"))
-        out[prog] = len(files[:5])
+        out[prog] = len(files)
     return out
 
 
 # HST voice program -> keys it plays (standard §5); reactions 7-10 take any number, capped like Get a Grip's at 5
-KEYS = {0: 3, 1: 5, 2: 3, 3: 3, 4: 2, 6: 5, 7: 5, 8: 5, 9: 5, 10: 5}
+KEYS = {0: 3, 1: 5, 2: 3, 3: 3, 4: 2, 5: 1, 6: 5, 7: 5, 8: 5, 9: 5, 10: 5}
 # Rackets (M1r). No source game has a per-character racket (Get a Grip's Racket_param has no character column,
 # notes/getagrip.md; the golf games have none), so each mod of a game gets a different one of the 24 there are:
 # Get a Grip's 10 models (parts/racket: racket000-008 = items Racket_0N0-0N2, which share a model each, and
@@ -338,7 +340,10 @@ def main():
                 manifest["todo"].append("confirm handedness")
             if tp:
                 gagmap.expert(manifest, tp, hst)
-            json.dump(manifest, open(os.path.join(mod, "mod.json"), "w"), indent=1, ensure_ascii=False)
+            old = os.path.join(mod, "mod.json")
+            if os.path.exists(old) and "version" in (prev := json.load(open(old))):
+                manifest["version"] = prev["version"]  # bumped by hand before an upload (opentennis AGENT.md)
+            json.dump(manifest, open(old, "w"), indent=1, ensure_ascii=False)
             made += 1
     print(made, "mods in out/mods/")
 

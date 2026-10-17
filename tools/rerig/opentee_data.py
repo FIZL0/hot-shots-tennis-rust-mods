@@ -174,6 +174,13 @@ MISS = {0: ["st/010", "vs/009"], 1: ["st/010", "st/009"], 2: ["st/009"], 4: ["vs
 SHOUT = {3: ["st/002", "st/004", "st/003"],  # Hai! Come on! Woo!
          6: ["st/002", "ya/002"],  # HA! Ah!
          9: ["st/007"]}  # Behold!
+# HST program 5, the cry of a player the ball hits (one key): golf has no such event, so per actor one short take
+# picked by transcript: a pain word first ('Ouch!', 'Ow'), else a pained yelp ('Ugh!', 'Agh!', 'Yikes!'), else a
+# startled 'Ah!'/'Oh!'/'What?!' (opentennis B560)
+HIT = {0: ["vs/008"], 1: ["st/003"], 2: ["st/003"], 3: ["st/008"], 4: ["st/010"], 5: ["st/003"],  # Ouch! Yikes! Ow. UGH! Ugh! Ouch!
+       6: ["ya/002"], 7: ["st/010"], 8: ["st/003"], 9: ["st/008"], 10: ["stb/015"], 11: ["st/013"],  # Ah! Agh! Oh! What?! UGH! Oh!
+       12: ["st/005"], 13: ["st/006"], 14: ["st/015"], 15: ["st/005"], 16: ["vs/014"], 17: ["stb/002"],  # あ! Oh! Oh! UGH! Ugh. DAH!
+       18: ["st/005"], 19: ["stb/015"], 20: ["st/005"]}  # あ! Ugh. Oh!
 
 
 def _picks(pc, table):
@@ -212,6 +219,10 @@ def voices(game, pc):
     if miss:
         prog[2], prog[4] = miss[:3], miss[:2]
         why[2] = why[4] = "the st/vs lines that say a slip ('What?', 'Huh?', 'Hmm', 'Uh-oh'; by transcript, MISS)"
+    hit = _picks(pc, HIT)
+    if hit:
+        prog[5] = hit[:1]
+        why[5] = f"{HIT[pc][0]}: no hit-by-the-ball line in golf; the actor's most pained short take (by transcript, HIT)"
     won, lost = _picks(pc, WON), _picks(pc, LOST)
     if won:
         prog[7] = prog[9] = won

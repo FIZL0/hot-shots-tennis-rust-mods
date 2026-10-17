@@ -138,6 +138,8 @@ bodies it comes from the roster.
 - GAME.BIN's sound-slot list names `ya`/`co` next to BOOING/GALLERY. `sc` is 24 lines, one per opponent; `vs`
   is versus lines. None of these are used.
 - Nothing fills 6: golf has no partner calls.
+- Nothing fills 5 (hit by the ball, opentennis B560): every Fore! take is a word line (heckles, comments, versus);
+  the only short exclamations ("Oh!" in jy3/jy0 of Regis, Maya, Kamala) are the happy shot-reaction voices.
 
 **Reactions**: all are from `pcNN_<name>_c00-03.glb`, with intro clips only (no loops).
 
