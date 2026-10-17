@@ -74,6 +74,7 @@ version = "0.1.0"
 dependencies = [
  "hst-data",
  "libm",
+ "ps2-float",
  "serde",
 ]
 
@@ -135,6 +136,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "985e7ec9bb745e6ce6535b544d84d6cd6f7ad8bd711c398938ae983b91a766d9"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "ps2-float"
+version = "0.3.0"
+source = "git+https://github.com/FIZL0/ps2-float?tag=v0.3.0#647eefb110ef56a0e4f5faaef0970ae5bcfa45f0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

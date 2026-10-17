@@ -18,13 +18,22 @@ def slug(pc):
     return f'pc{pc:02d}_' + ROSTER[pc].lower().replace('. ', '_').replace('.', '').replace(' ', '_')
 
 
-def rem_path(pc, costume):
-    g = glob.glob(os.path.join(PC, f'pc{pc:02d}/pc{pc:02d}_c{costume:02d}_0_core.xb/data/ueno/cgpc/pc/pc{pc:02d}/*.rem'))
+# Which of the game's levels of detail the models come from: 0 the full model (15-24k triangles), 1 `_lv1`
+# (9-15k), 2 `_lv2` (3.0-4.3k, about HST's 2.7k; same skeleton less a few hair/accessory nodes, fewer face targets).
+LOD = 0
+
+
+def rem_path(pc, costume, lod=None):
+    lod = LOD if lod is None else lod
+    core, rem = ('0', '') if lod == 0 else ('1_3', f'_lv{lod}')
+    g = glob.glob(os.path.join(PC, f'pc{pc:02d}/pc{pc:02d}_c{costume:02d}_{core}_core.xb/data/ueno/cgpc/pc/pc{pc:02d}/*{rem}.rem'))
+    g = [f for f in g if lod or '_lv' not in os.path.basename(f)]
     return g[0] if g else None
 
 
 def tex_dir(pc, costume):
-    return os.path.join(PC, f'pc{pc:02d}/pc{pc:02d}_c{costume:02d}_0_tex.xb/data/ueno/cgpc/pc/pc{pc:02d}')
+    # the `_1_3_tex` archive holds the same DDS files as `_0_tex` (and the LOD models name the same ones)
+    return os.path.join(PC, f'pc{pc:02d}/pc{pc:02d}_c{costume:02d}_{"0" if LOD == 0 else "1_3"}_tex.xb/data/ueno/cgpc/pc/pc{pc:02d}')
 
 
 def find_tex(pc, costume, name):

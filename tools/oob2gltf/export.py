@@ -296,7 +296,9 @@ def main():
     ap.add_argument('--costume', type=int, action='append')
     ap.add_argument('--no-anims', action='store_true')
     ap.add_argument('--no-textures', action='store_true')
+    ap.add_argument('--lod', type=int, choices=(0, 1, 2), default=0, help="the game's level of detail (paths.LOD)")
     a = ap.parse_args()
+    paths.LOD = a.lod
     pcs = a.pc or list(range(len(paths.ROSTER)))
     costumes = a.costume or list(range(6))
     for pc in pcs:
@@ -307,13 +309,13 @@ def main():
                 continue
             out = os.path.join(paths.OUT_MODELS, slug, f'{slug}_c{c:02d}.glb')
             r, skipped = export_model(pc, c, out)
-            rem0 = rem0 or r
+            rem0 = rem0 or (r if paths.LOD == 0 else None)  # motions keep the full model's nodes
             if not a.no_textures:
                 export_textures(pc, c)
             print(f'{out}: {len(r.nodes)} nodes, {len(r.meshes)} meshes' + (f', skipped untextured {skipped}' if skipped else ''))
         if not a.no_anims:
             if rem0 is None:
-                rem0 = Rem(open(paths.rem_path(pc, 0), 'rb').read())
+                rem0 = Rem(open(paths.rem_path(pc, 0, lod=0), 'rb').read())
             out = os.path.join(paths.OUT_ANIMS, f'{slug}.glb')
             names = export_anims(pc, out, rem0)
             print(f'{out}: {len(names)} clips')
